@@ -979,6 +979,7 @@ const dsaTopics = [
       "Word Ladder",
       "Network Delay Time",
     ],
+
     dp: [
         {
             id: "dp-1",
@@ -1310,6 +1311,108 @@ segmentTree: [
         ],
         answer: "Linear sorting of array"
     }
+],
+"Trie": [
+  {
+    question: "What is a Trie mainly used for?",
+    options: [
+      "Sorting numbers",
+      "Prefix-based searching",
+      "Graph traversal",
+      "Stack operations"
+    ],
+    answer: "Prefix-based searching"
+  },
+  {
+    question: "What does each node in a Trie represent?",
+    options: [
+      "A complete word",
+      "A character",
+      "An array index",
+      "A number"
+    ],
+    answer: "A character"
+  },
+  {
+    question: "What is the time complexity of searching in a Trie?",
+    options: [
+      "O(1)",
+      "O(n)",
+      "O(log n)",
+      "O(n^2)"
+    ],
+    answer: "O(n)"
+  },
+  {
+    question: "Which operation is NOT typically supported by Trie?",
+    options: [
+      "Insert",
+      "Search",
+      "Delete",
+      "Sorting"
+    ],
+    answer: "Sorting"
+  },
+  {
+    question: "Trie is also known as?",
+    options: [
+      "Binary Tree",
+      "Prefix Tree",
+      "Segment Tree",
+      "Heap"
+    ],
+    answer: "Prefix Tree"
+  },
+  {
+    question: "Which problem is best solved using Trie?",
+    options: [
+      "Binary Search",
+      "Autocomplete suggestions",
+      "Merge Sort",
+      "DFS traversal"
+    ],
+    answer: "Autocomplete suggestions"
+  },
+  {
+    question: "Root node in a Trie represents?",
+    options: [
+      "First character",
+      "Empty string",
+      "Last character",
+      "Null value"
+    ],
+    answer: "Empty string"
+  },
+  {
+    question: "What is used to mark the end of a word in Trie?",
+    options: [
+      "Boolean flag",
+      "Integer counter",
+      "Pointer only",
+      "Array index"
+    ],
+    answer: "Boolean flag"
+  },
+  {
+    question: "Which data structure is closest to Trie concept?",
+    options: [
+      "Array",
+      "HashMap",
+      "Tree",
+      "Stack"
+    ],
+    answer: "Tree"
+  },
+  {
+    question: "Main advantage of Trie is?",
+    options: [
+      "Less memory usage",
+      "Fast prefix search",
+      "Easy sorting",
+      "Random access"
+    ],
+    answer: "Fast prefix search"
+  }
 ]
 };
 
@@ -1643,6 +1746,31 @@ Backtracking places queens row by row and removes a queen whenever a conflict is
     ],
 
     difficulty: "Hard"
+},
+{
+  id: "trie",
+  name: "Trie Data Structure",
+  icon: "🌲",
+  description: "Learn about Trie data structure for efficient prefix-based searching and its applications.",
+  difficulty: "Medium",
+  theory: `
+Trie is a tree-like data structure used to store strings efficiently for prefix-based searching.
+
+It supports:
+- Insert
+- Search
+- Delete
+
+Used in:
+- Autocomplete
+- Dictionary search
+- Spell checker
+  `,
+  problems: [
+    "Implement Trie",
+    "Search in Trie",
+    "Delete a word from Trie"
+  ]
 }
 ];
 
@@ -1825,8 +1953,39 @@ const practiceProblems = [
     tags: ["Segment Tree", "Update"],
     acceptance: "57.8%",
     category: "segment-tree"
+},
+{
+    id: 36,
+    title: "Implement Trie (Insert and Search)",
+    difficulty: "medium",
+    tags: ["Trie", "Design", "String"],
+    acceptance: "62.4%",
+    category: "trie"
+},
+{
+    id: 37,
+    title: "Search Suggestions System",
+    difficulty: "hard",
+    tags: ["Trie", "Prefix", "Heap"],
+    acceptance: "48.9%",
+    category: "trie"
+},
+{
+    id: 38,
+    title: "Replace Words using Trie",
+    difficulty: "medium",
+    tags: ["Trie", "String", "Dictionary"],
+    acceptance: "55.1%",
+    category: "trie"
+},
+{
+    id: 39,
+    title: "Longest Word in Dictionary",
+    difficulty: "easy",
+    tags: ["Trie", "String"],
+    acceptance: "60.3%",
+    category: "trie"
 }
-
 
 
   },
@@ -3101,6 +3260,7 @@ function getDifficultyClass(difficulty) {
 
 // Get quiz topic key from topic object
 function getQuizTopicKey(topic) {
+
     const name = topic.name.toLowerCase();
     // Map topic names to quiz keys
     const keyMap = {
@@ -3201,6 +3361,7 @@ function initQuizSection() {
     } catch (error) {
         console.error('Error initializing quiz section:', error);
     }
+    
       quizGrid.appendChild(card);
       card.addEventListener("click", () => {
         startQuiz(topicKey);
@@ -4692,6 +4853,7 @@ window.openRoadmapStepModal = openRoadmapStepModal;
 
 // ===== PROFILE =====
 function initProfile() {
+
     var profileName = document.getElementById("profileName");
     if (profileName) {
         profileName.textContent = userProgress.name;
@@ -5920,6 +6082,7 @@ function loadUserData() {
 // currentNotesProblemId is already declared earlier; do not redeclare it here.
 
 function openTopicModal(topic) {
+
     const modal = document.getElementById('topicModal');
     document.getElementById('modalTitle').textContent = topic.name;
     document.getElementById('modalTheory').innerHTML = topic.theory;
