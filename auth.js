@@ -152,26 +152,88 @@
     const form = document.querySelector("[data-auth-form]");
     if (!form) return;
 
+    const mode = form.dataset.authForm;
     const passwordInput = form.querySelector("input[name='password']");
     const strengthBar = form.querySelector("[data-password-strength]");
-    if (passwordInput && strengthBar) {
-      passwordInput.addEventListener("input", () => {
-        strengthBar.dataset.score = String(passwordStrength(passwordInput.value));
-      });
+    
+    // Validation rules
+    const validators = {
+      name: (val) => val.trim().length >= 2 ? "" : "Name must be at least 2 characters.",
+      email: (val) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val.trim()) ? "" : "Please enter a valid email address.",
+      password: (val) => {
+        if (mode === 'login') return val.length > 0 ? "" : "Password is required.";
+        if (val.length < 8) return "Password must be at least 8 characters.";
+        if (!/[A-Z]/.test(val)) return "Must include an uppercase letter.";
+        if (!/[a-z]/.test(val)) return "Must include a lowercase letter.";
+        if (!/\d/.test(val)) return "Must include a number.";
+        if (!/[^A-Za-z0-9]/.test(val)) return "Must include a special character.";
+        return "";
+      },
+      confirmPassword: (val) => {
+        if (mode === 'login') return "";
+        return val === passwordInput?.value ? "" : "Passwords do not match.";
+      }
+    };
+
+    function showError(input, message) {
+      let errorEl = input.parentElement.querySelector(".inline-error");
+      if (!errorEl) {
+        errorEl = document.createElement("div");
+        errorEl.className = "inline-error";
+        errorEl.style.color = "#ef4444";
+        errorEl.style.fontSize = "0.8rem";
+        errorEl.style.marginTop = "0.3rem";
+        input.parentElement.appendChild(errorEl);
+      }
+      errorEl.textContent = message;
+      input.style.borderColor = message ? "#ef4444" : "rgba(255, 255, 255, 0.1)";
     }
+
+    // Real-time validation
+    form.querySelectorAll("input").forEach(input => {
+      input.addEventListener("input", () => {
+        if (validators[input.name]) {
+          showError(input, validators[input.name](input.value));
+        }
+        if (input.name === 'password' && strengthBar) {
+          strengthBar.dataset.score = String(passwordStrength(input.value));
+          // Also re-trigger confirmPassword validation if it exists
+          const confirmInput = form.querySelector("input[name='confirmPassword']");
+          if (confirmInput && confirmInput.value) {
+            showError(confirmInput, validators.confirmPassword(confirmInput.value));
+          }
+        }
+      });
+      
+      input.addEventListener("blur", () => {
+        if (validators[input.name]) {
+          showError(input, validators[input.name](input.value));
+        }
+      });
+    });
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const submitButton = form.querySelector("button[type='submit']");
-      const mode = form.dataset.authForm;
-      const formData = Object.fromEntries(new FormData(form).entries());
+      
+      let isValid = true;
+      const formData = new FormData(form);
+      const dataObj = Object.fromEntries(formData.entries());
 
-      if (mode === "signup" && formData.password !== formData.confirmPassword) {
-        setFormMessage(form, "Passwords do not match.", "error");
+      // Validate all fields on submit
+      form.querySelectorAll("input").forEach(input => {
+        if (validators[input.name]) {
+          const errorMsg = validators[input.name](input.value);
+          showError(input, errorMsg);
+          if (errorMsg) isValid = false;
+        }
+      });
+
+      if (!isValid) {
+        setFormMessage(form, "Please fix the errors above before submitting.", "error");
         return;
       }
 
-      submitButton.disabled = true;
+      const submitButton = form.querySelector("button[type='submit']");
       submitButton.dataset.loading = "true";
       setFormMessage(form, "Working...", "info");
 
@@ -180,7 +242,7 @@
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(dataObj),
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Authentication failed.");
