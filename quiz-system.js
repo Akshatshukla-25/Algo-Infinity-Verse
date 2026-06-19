@@ -511,8 +511,13 @@ class QuizUI {
         this.mistakePanel.classList.remove('visible');
     }
 
-    renderResults(scoreData, isSaving = false) {
-        this.quizProgressBar.style.width = '100%'; // max out progress
+    /**
+     * Renders the results view including a "Weak Areas" section.
+     * @param {Object} scoreData - { score, total, percentage, sessionMistakeTags }
+     * @param {Array} allTimeMistakes - sorted [{ tag, count }] from localStorage
+     */
+    renderResults(scoreData, allTimeMistakes) {
+        this.quizProgressBar.style.width = '100%';
         this.finalScoreDisplay.textContent = `${scoreData.percentage}%`;
 
         if (scoreData.percentage >= 80) {
@@ -526,10 +531,35 @@ class QuizUI {
             this.finalScoreDisplay.style.color = 'var(--quiz-danger)';
         }
 
-        // Show saving status
-        if (isSaving) {
-            this.resultsMessage.textContent += ' Saving results...';
+        // Render weak areas from this session
+        const sessionTags = scoreData.sessionMistakeTags;
+        if (sessionTags && sessionTags.length > 0) {
+            // De-dupe and count session tags
+            const tagCounts = sessionTags.reduce((acc, tag) => {
+                acc[tag] = (acc[tag] || 0) + 1;
+                return acc;
+            }, {});
+
+            this.weakAreasList.innerHTML = Object.entries(tagCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([tag, count]) => `
+                    <li class="weak-area-item">
+                        <span class="weak-tag">${this._formatTag(tag)}</span>
+                        <span class="weak-count">${count} mistake${count > 1 ? 's' : ''}</span>
+                    </li>
+                `).join('');
+            this.weakAreasSection.classList.remove('hidden');
+        } else {
+            this.weakAreasSection.classList.add('hidden');
         }
+    }
+
+    /**
+     * Converts a kebab-case tag like "hash-basics" to "Hash Basics".
+     */
+    _formatTag(tag) {
+        if (!tag) return '';
+        return tag.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
 }
 
@@ -589,9 +619,10 @@ class QuizController {
         }
     }
 
-    async handleFinishQuiz() {
+    handleFinishQuiz() {
         const scoreData = this.state.getFinalScore();
-        this.ui.renderResults(scoreData, true);
+        const allTimeMistakes = this.state.getMistakePersistence();
+        this.ui.renderResults(scoreData, allTimeMistakes);
         this.ui.switchView('results');
 
         // Save quiz result to Firestore if user is authenticated
