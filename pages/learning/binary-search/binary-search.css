@@ -576,3 +576,300 @@
     color: #333;
   }
 }
+
+/* ─────────────────────────────────────────────
+   Learning vs Interview Mode Styles
+   ───────────────────────────────────────────── */
+
+/* Mode Toggle Container & Segmented Control */
+.mode-toggle-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0 2rem;
+  width: 100%;
+}
+
+.mode-toggle-segmented {
+  position: relative;
+  display: flex;
+  background: rgba(15, 15, 25, 0.4);
+  border: 1px solid var(--glass-border);
+  padding: 4px;
+  border-radius: 99px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 420px;
+  z-index: 10;
+}
+
+.mode-toggle-btn {
+  position: relative;
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.7rem 1.25rem;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  z-index: 2;
+  outline: none;
+}
+
+.mode-toggle-btn i {
+  font-size: 0.95rem;
+  transition: transform 0.2s ease;
+}
+
+.mode-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.mode-toggle-btn:hover i {
+  transform: scale(1.1);
+}
+
+.mode-toggle-btn.active {
+  color: #ffffff;
+}
+
+.mode-toggle-glider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  height: calc(100% - 8px);
+  width: calc(50% - 4px);
+  background: var(--gradient-1);
+  border-radius: 99px;
+  z-index: 1;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Slide glider when in interview mode */
+body.mode-interview .mode-toggle-glider {
+  transform: translateX(100%);
+}
+
+/* Visibility toggling based on active mode */
+body.mode-interview [data-mode="learning"] {
+  display: none !important;
+}
+
+body.mode-learning [data-mode="interview"] {
+  display: none !important;
+}
+
+/* Smooth fade-in animation on switch */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body.mode-learning [data-mode="learning"],
+body.mode-interview [data-mode="interview"] {
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Concise Notes / Cheatsheet ── */
+.concise-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.concise-card {
+  background: var(--dark-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.concise-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.concise-card h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.concise-card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style-type: square;
+}
+
+.concise-card li {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.concise-card li:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Common Interview Traps ── */
+.interview-traps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.interview-trap-card {
+  background: rgba(239, 68, 68, 0.03);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-left: 4px solid #ef4444;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.interview-trap-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.06);
+}
+
+.interview-trap-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  color: #f87171;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.interview-trap-header i {
+  font-size: 1.15rem;
+}
+
+.interview-trap-card p {
+  margin-bottom: 0.5rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.interview-trap-card strong {
+  color: #f87171;
+}
+
+/* ── FAQ Accordion ── */
+.faq-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+
+.faq-item {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.01);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+  border-color: rgba(139, 92, 246, 0.25);
+  background: rgba(139, 92, 246, 0.02);
+}
+
+.faq-question-btn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.15rem 1.5rem;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.faq-question-btn .faq-icon {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.faq-answer-content {
+  padding: 1.15rem 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--glass-border);
+}
+
+.faq-answer-content p {
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.faq-answer-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* FAQ Active Styles */
+.faq-item.active {
+  border-color: var(--primary-light);
+  background: rgba(139, 92, 246, 0.04);
+}
+
+.faq-item.active .faq-question-btn {
+  color: var(--primary-light);
+}
+
+.faq-item.active .faq-icon {
+  transform: rotate(180deg);
+  color: var(--primary-light);
+}
+
+/* Accessibility focus indicator */
+.mode-toggle-btn:focus-visible,
+.faq-question-btn:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: -2px;
+}

@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
     initCopyButtons();
     initSidebarSpy();
     initProgressTracker();
+    initModeSwitcher();
+    initFAQAccordion();
 });
 
 /* ─────────────────────────────────────────────
@@ -125,7 +127,11 @@ function initSidebarSpy() {
     window.addEventListener("scroll", () => {
         let current = "";
         lessons.forEach(l => {
-            if (pageYOffset >= l.offsetTop - 150) current = l.getAttribute("id");
+            if (l.offsetWidth > 0 && l.offsetHeight > 0) {
+                if (window.scrollY >= l.offsetTop - 180) {
+                    current = l.getAttribute("id");
+                }
+            }
         });
         links.forEach(l => {
             l.classList.remove("active");
@@ -134,26 +140,126 @@ function initSidebarSpy() {
     });
 }
 
+let updateProgressUIFn = null;
+
 function initProgressTracker() {
     const STORAGE_KEY = "binary-search-progress";
-    const TOTAL = 5;
     const fill = document.getElementById("progressFill");
     const count = document.getElementById("progressCount");
     let completed = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
 
+    function updateProgressUI() {
+        const isInterview = document.body.classList.contains("mode-interview");
+        const activeTopics = isInterview 
+            ? ["6", "7", "8", "5"] 
+            : ["1", "2", "3", "4", "5"];
+        
+        let completedInActiveMode = 0;
+        activeTopics.forEach(t => {
+            if (completed.has(t)) completedInActiveMode++;
+        });
+
+        const total = activeTopics.length;
+        const pct = Math.round((completedInActiveMode / total) * 100);
+
+        if (fill) fill.style.width = pct + "%";
+        if (count) count.textContent = completedInActiveMode;
+        
+        const totalSpan = document.getElementById("progressTotal");
+        if (totalSpan) totalSpan.textContent = total;
+    }
+
+    updateProgressUIFn = updateProgressUI;
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(e => {
             if (e.isIntersecting) {
-                completed.add(e.target.getAttribute("data-topic"));
-                const pct = Math.round((completed.size / TOTAL) * 100);
-                fill.style.width = pct + "%";
-                count.textContent = completed.size;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed]));
+                const topic = e.target.getAttribute("data-topic");
+                if (topic) {
+                    completed.add(topic);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed]));
+                    updateProgressUI();
+                }
             }
         });
-    }, { threshold: 0.6 });
+    }, { threshold: 0.35 });
 
     document.querySelectorAll(".binary-search-lesson").forEach(l => observer.observe(l));
+    updateProgressUI();
+}
+
+function initModeSwitcher() {
+    const toggleBtns = document.querySelectorAll(".mode-toggle-btn");
+    const PREF_KEY = "learning-mode-preference";
+    
+    let currentMode = localStorage.getItem(PREF_KEY) || "learning";
+
+    function setMode(mode) {
+        currentMode = mode;
+        localStorage.setItem(PREF_KEY, mode);
+        
+        if (mode === "interview") {
+            document.body.classList.remove("mode-learning");
+            document.body.classList.add("mode-interview");
+        } else {
+            document.body.classList.remove("mode-interview");
+            document.body.classList.add("mode-learning");
+        }
+
+        toggleBtns.forEach(btn => {
+            const isMatch = btn.getAttribute("data-set-mode") === mode;
+            btn.classList.toggle("active", isMatch);
+            btn.setAttribute("aria-selected", isMatch ? "true" : "false");
+        });
+
+        if (updateProgressUIFn) {
+            updateProgressUIFn();
+        }
+    }
+
+    toggleBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const mode = btn.getAttribute("data-set-mode");
+            setMode(mode);
+        });
+    });
+
+    setMode(currentMode);
+}
+
+function initFAQAccordion() {
+    const faqItems = document.querySelectorAll(".faq-item");
+
+    faqItems.forEach(item => {
+        const btn = item.querySelector(".faq-question-btn");
+        const answer = item.querySelector(".faq-answer");
+
+        if (!btn || !answer) return;
+
+        btn.addEventListener("click", () => {
+            const isActive = item.classList.contains("active");
+
+            faqItems.forEach(otherItem => {
+                if (otherItem !== item) {
+                    otherItem.classList.remove("active");
+                    const otherBtn = otherItem.querySelector(".faq-question-btn");
+                    const otherAnswer = otherItem.querySelector(".faq-answer");
+                    if (otherBtn) otherBtn.setAttribute("aria-expanded", "false");
+                    if (otherAnswer) otherAnswer.style.maxHeight = null;
+                }
+            });
+
+            if (isActive) {
+                item.classList.remove("active");
+                btn.setAttribute("aria-expanded", "false");
+                answer.style.maxHeight = null;
+            } else {
+                item.classList.add("active");
+                btn.setAttribute("aria-expanded", "true");
+                answer.style.maxHeight = answer.scrollHeight + "px";
+            }
+        });
+    });
 }
 
 /* ─────────────────────────────────────────────
