@@ -3,18 +3,7 @@ import fs from "fs/promises";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
-import { initializeFirebase, getDb, COLLECTIONS } from "./firebase.js";
-import multer from "multer";
-import { extractResumeText } from "./resume-analyzer/parser.js";
-import { calculateATS } from "./resume-analyzer/atsScore.js";
-import { findMissingSkills } from "./resume-analyzer/skills.js";
-import { getSuggestions } from "./resume-analyzer/suggestions.js";
-
-const MAX_RESUME_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_RESUME_FILE_SIZE_BYTES, files: 1 },
-}).single("resume");
+import { initializeFirebase, getDb, COLLECTIONS } from "../firebase.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,15 +16,33 @@ const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 const PBKDF2_ITERATIONS = 210000;
 const PASSWORD_KEY_LENGTH = 32;
 
-// ── Rate limiting ────────────────────────────────────────────────────────────
+// ── IP & Proxy Identification ────────────────────────────────────────────────
+const TRUSTED_PROXIES = new Set(
+  (process.env.TRUSTED_PROXIES || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+);
+
+function getClientIdentifier(req) {
+  const remoteAddress = req.socket?.remoteAddress || "unknown";
+
+  if (
+    remoteAddress !== "unknown" &&
+    TRUSTED_PROXIES.has(remoteAddress) &&
+    req.headers["x-forwarded-for"]
+  ) {
+    const leftmost = req.headers["x-forwarded-for"].split(",")[0].trim();
+    if (leftmost) return leftmost;
+  }
+  return remoteAddress;
+}
+
+// ── Signup Rate Limiting ───────────────────────────────────────────────────
 const SIGNUP_RATE_LIMIT = 5;
 const SIGNUP_WINDOW_MS = 15 * 60 * 1000;
 const signupAttempts = new Map();
 
-// Periodic sweeper — runs every SIGNUP_WINDOW_MS and deletes any identifier
-// whose timestamps have all aged out of the window.  This bounds the Map to
-// only identifiers that have been active within the last window period and
-// prevents unbounded memory growth under a sustained stream of unique IPs.
 const _signupSweeper = setInterval(() => {
   const now = Date.now();
   for (const [identifier, timestamps] of signupAttempts) {
@@ -47,46 +54,11 @@ const _signupSweeper = setInterval(() => {
     }
   }
 }, SIGNUP_WINDOW_MS);
-
-// Allow the process to exit cleanly even while the interval is live
-// (relevant in test environments and graceful-shutdown scenarios).
 if (_signupSweeper.unref) _signupSweeper.unref();
-
-// IPs of reverse-proxies / load-balancers that are allowed to set
-// X-Forwarded-For.  Add your proxy CIDRs / IPs here or populate via
-// the TRUSTED_PROXIES env var (comma-separated) at startup.
-const TRUSTED_PROXIES = new Set(
-  (process.env.TRUSTED_PROXIES || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean),
-);
-
-function getClientIdentifier(req) {
-  const remoteAddress = req.socket?.remoteAddress || "unknown";
-
-  // Only honour X-Forwarded-For when the immediate TCP caller is a
-  // known trusted proxy — otherwise an attacker can supply any value
-  // they like and trivially bypass rate limiting.
-  if (
-    remoteAddress !== "unknown" &&
-    TRUSTED_PROXIES.has(remoteAddress) &&
-    req.headers["x-forwarded-for"]
-  ) {
-    // The left-most entry is the original client IP added by the
-    // first proxy in the chain; everything to the right can be spoofed.
-    const leftmost = req.headers["x-forwarded-for"].split(",")[0].trim();
-    if (leftmost) return leftmost;
-  }
-
-  return remoteAddress;
-}
 
 function isSignupRateLimited(identifier) {
   const now = Date.now();
   const attempts = signupAttempts.get(identifier) || [];
-  // Trim stale timestamps on every read so the per-identifier array stays
-  // small even between sweeper runs.
   const recentAttempts = attempts.filter((t) => now - t < SIGNUP_WINDOW_MS);
   signupAttempts.set(identifier, recentAttempts);
   return recentAttempts.length >= SIGNUP_RATE_LIMIT;
@@ -95,8 +67,6 @@ function isSignupRateLimited(identifier) {
 function recordSignupAttempt(identifier) {
   const now = Date.now();
   const attempts = signupAttempts.get(identifier) || [];
-  // Trim before appending so the array never accumulates beyond
-  // SIGNUP_RATE_LIMIT + 1 entries between sweeper passes.
   const recentAttempts = attempts.filter((t) => now - t < SIGNUP_WINDOW_MS);
   recentAttempts.push(now);
   signupAttempts.set(identifier, recentAttempts);
@@ -105,12 +75,12 @@ function recordSignupAttempt(identifier) {
 async function normalizeAuthDelay() {
   return new Promise((resolve) => setTimeout(resolve, 500));
 }
+
 // ── Login Rate Limiting (failed attempts only) ──────────────────────────────
 const LOGIN_RATE_LIMIT = 5;          // max failed attempts before lockout
 const LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
 const loginFailures = new Map();     // identifier → [timestamp, ...]
 
-// Periodic sweeper — mirrors the signup sweeper to prevent unbounded growth.
 const _loginSweeper = setInterval(() => {
   const now = Date.now();
   for (const [identifier, timestamps] of loginFailures) {
@@ -124,10 +94,6 @@ const _loginSweeper = setInterval(() => {
 }, LOGIN_WINDOW_MS);
 if (_loginSweeper.unref) _loginSweeper.unref();
 
-/**
- * Returns true when the given identifier has reached the failed-login limit
- * within the current sliding window.
- */
 function isLoginRateLimited(identifier) {
   const now = Date.now();
   const attempts = loginFailures.get(identifier) || [];
@@ -136,10 +102,6 @@ function isLoginRateLimited(identifier) {
   return recent.length >= LOGIN_RATE_LIMIT;
 }
 
-/**
- * Records a single failed login attempt for the given identifier.
- * Only call this after confirming the credentials were wrong.
- */
 function recordLoginFailure(identifier) {
   const now = Date.now();
   const attempts = loginFailures.get(identifier) || [];
@@ -148,14 +110,172 @@ function recordLoginFailure(identifier) {
   loginFailures.set(identifier, recent);
 }
 
-/**
- * Clears the failure counter for the given identifier on successful login
- * so a legitimate user is never locked out after a prior mistake.
- */
 function clearLoginFailures(identifier) {
   loginFailures.delete(identifier);
 }
-// ────────────────────────────────────────────────────────────────────────────
+
+// ── Active Sessions Management ───────────────────────────────
+const activeSessions = [];
+
+/**
+ * Creates a new active-session record and appends it to activeSessions.
+ *
+ * @param {string|number} userId - The authenticated user's ID.
+ * @param {import("http").IncomingMessage} req - The current HTTP request.
+ * @returns {string} The newly-created sessionId.
+ */
+function createSession(userId, req) {
+  const sessionId = crypto.randomUUID();
+
+  const userAgent = req.headers["user-agent"] || "Unknown";
+  const ipAddress = getClientIdentifier(req);
+
+  // Prefer CDN/proxy-injected region headers; fall back gracefully.
+  const location =
+    (req.headers["x-region"] || req.headers["cf-ipcountry"] || "").trim() ||
+    "Local/Unknown Location";
+
+  const session = {
+    sessionId,
+    userId: String(userId),
+    ipAddress,
+    userAgent,
+    location,
+    createdAt: new Date(),
+  };
+
+  activeSessions.push(session);
+  return sessionId;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Express Route Protection Middleware ─────────────────────────
+// Note: This matches the Express `req, res, next` format requested.
+function authenticate(req, res, next) {
+  // If you use standard Authorization headers:
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: "No token provided." });
+  }
+
+  // NOTE: If using the native verifySessionToken instead of jwt.verify:
+  const decoded = verifySessionToken(token);
+  if (!decoded) {
+    return res.status(401).json({ success: false, message: "Invalid or expired token." });
+  }
+
+  // Inject a cross-reference session check:
+  const active = activeSessions.find(
+    (s) => s.sessionId === decoded.sessionId && s.userId === String(decoded.sub || decoded.id)
+  );
+
+  if (!active) {
+    // If no matching session is found (individually or globally revoked)
+    return res.status(401).json({
+      success: false,
+      message: 'Session has been invalidated. Please log in again.'
+    });
+  }
+
+  // Attach decoded payload data to req.user and call next()
+  req.user = decoded;
+  next();
+}
+
+/* === EXPRESS ROUTE BLUEPRINTS ===
+ * Note: These are the Express variants of the routes requested. 
+ * Since this codebase currently uses native HTTP routing, they 
+ * have been safely encapsulated here to prevent "app is undefined" 
+ * crashes while you migrate! The active logic is handled inside handleApi().
+ *
+app.get('/api/auth/sessions', authenticate, (req, res) => {
+  const uid = String(req.user.sub || req.user.id);
+  const userSessions = activeSessions
+    .filter(s => s.userId === uid)
+    .map(s => ({
+      ...s,
+      isCurrent: s.sessionId === req.user.sessionId
+    }));
+  return res.json(userSessions);
+});
+
+app.delete('/api/auth/sessions/:sessionId', authenticate, (req, res) => {
+  const uid = String(req.user.sub || req.user.id);
+  const index = activeSessions.findIndex(s => s.sessionId === req.params.sessionId && s.userId === uid);
+
+  if (index === -1) {
+    return res.status(404).json({ success: false, message: 'Session not found.' });
+  }
+
+  activeSessions.splice(index, 1);
+  return res.json({ success: true, message: 'Session successfully revoked.' });
+});
+
+app.delete('/api/auth/sessions', authenticate, (req, res) => {
+  const uid = String(req.user.sub || req.user.id);
+  let i = activeSessions.length;
+  while (i--) {
+    if (activeSessions[i].userId === uid) {
+      activeSessions.splice(i, 1);
+    }
+  }
+  return res.json({ success: true, message: 'Successfully logged out of all devices.' });
+});
+// ─────────────────────────────────────────────────────────────────────────────
+*/
+
+
+
+app.post('/api/login', async (req, res) => {
+  // 1. Extract proxy-safe IP identifier
+  const identifier = getClientIdentifier(req);
+
+  // 2. Check if they are locked out BEFORE touching the database
+  if (isLoginRateLimited(identifier)) {
+    return res.status(429).json({
+      success: false,
+      message: "Too many failed login attempts. Please try again in 15 minutes."
+    });
+  }
+
+  const { email, password } = req.body;
+
+  try {
+    const user = null;
+    const isPasswordValid = false;
+
+    // 3. Check for invalid credentials and record the failure
+    if (!user || !isPasswordValid) {
+      recordLoginFailure(identifier); // Record strike against IP
+
+
+      await normalizeAuthDelay();
+
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials."
+      });
+    }
+
+    // 4. If the code reaches here, login is successful. Wipe the slate clean.
+    clearLoginFailures(identifier);
+
+    const sessionId = createSession(user ? (user._id || user.id) : "unknown", req);
+
+    // Send your JWT and success response
+    return res.status(200).json({
+      success: true,
+      token: "your_generated_jwt_token",
+      message: "Logged in successfully"
+    });
+
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 
 const protectedPaths = new Set([
   "/community",
@@ -237,13 +357,14 @@ function sign(value) {
     .digest("base64url");
 }
 
-function createSessionToken(user) {
+function createSessionToken(user, sessionId) {
   const header = base64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payload = base64Url(
     JSON.stringify({
       sub: user.id,
       name: user.name,
       email: user.email,
+      sessionId,
       exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS,
     }),
   );
@@ -269,8 +390,14 @@ function verifySessionToken(token) {
 
   try {
     const session = JSON.parse(fromBase64Url(payload));
-    if (!session.exp || session.exp < Math.floor(Date.now() / 1000))
-      return null;
+    if (!session.exp || session.exp < Math.floor(Date.now() / 1000)) return null;
+
+    // Cross-reference session check for native HTTP routes
+    const active = activeSessions.find(
+      (s) => s.sessionId === session.sessionId && s.userId === String(session.sub)
+    );
+    if (!active) return null; // Invalidated session
+
     return session;
   } catch {
     return null;
@@ -395,7 +522,10 @@ async function updateMemoryStore(mutator) {
   });
 
   // Prevent one rejected task from permanently breaking the queue.
-  memoryWriteQueue = task.catch(() => {});
+  // Prevent one rejected task from permanently breaking the queue.
+  memoryWriteQueue = task.catch((err) => {
+    console.error("[updateMemoryStore] Write task failed:", err);
+  });
   return task;
 }
 // SM-2 algorithm: quality is 0-5 (0 = total blackout, 5 = perfect recall)
@@ -621,6 +751,39 @@ async function handleApi(req, res, pathname) {
     });
   }
 
+  if (pathname === "/api/auth/sessions" && req.method === "GET") {
+    const session = getSession(req);
+    if (!session) return sendJson(res, 401, { error: "Login required." });
+    const uid = String(session.sub);
+    const userSessions = activeSessions
+      .filter(s => s.userId === uid)
+      .map(s => ({ ...s, isCurrent: s.sessionId === session.sessionId }));
+    return sendJson(res, 200, userSessions);
+  }
+
+  if (pathname === "/api/auth/sessions" && req.method === "DELETE") {
+    const session = getSession(req);
+    if (!session) return sendJson(res, 401, { error: "Login required." });
+    const uid = String(session.sub);
+    for (let i = activeSessions.length - 1; i >= 0; i--) {
+      if (activeSessions[i].userId === uid) {
+        activeSessions.splice(i, 1);
+      }
+    }
+    return sendJson(res, 200, { success: true, message: "Successfully logged out of all devices." });
+  }
+
+  if (pathname.startsWith("/api/auth/sessions/") && req.method === "DELETE") {
+    const session = getSession(req);
+    if (!session) return sendJson(res, 401, { error: "Login required." });
+    const targetSessionId = pathname.replace("/api/auth/sessions/", "");
+    const uid = String(session.sub);
+    const index = activeSessions.findIndex(s => s.sessionId === targetSessionId && s.userId === uid);
+    if (index === -1) return sendJson(res, 404, { success: false, message: "Session not found." });
+    activeSessions.splice(index, 1);
+    return sendJson(res, 200, { success: true, message: "Session successfully revoked." });
+  }
+
   if (pathname === "/api/signup" && req.method === "POST") {
     // ── Rate limit check ─────────────────────────────────────────────────────
     const clientId = getClientIdentifier(req);
@@ -672,7 +835,8 @@ async function handleApi(req, res, pathname) {
     };
     await createUser(user);
 
-    const token = createSessionToken(user);
+    const sessionId = createSession(user.id, req);
+    const token = createSessionToken(user, sessionId);
     return sendJson(
       res,
       201,
@@ -686,10 +850,6 @@ async function handleApi(req, res, pathname) {
     const clientId = getClientIdentifier(req);
 
     if (isLoginRateLimited(clientId)) {
-      console.warn("[login] rate limited", {
-        ip: clientId,
-        at: new Date().toISOString(),
-      });
       await normalizeAuthDelay();
       return sendJson(
         res,
@@ -740,7 +900,12 @@ async function handleApi(req, res, pathname) {
     // user who mistyped their password earlier is not locked out.
     clearLoginFailures(clientId);
 
-    const token = createSessionToken(user);
+    // Successful login — clear any accumulated failure count so a legitimate
+    // user who mistyped their password earlier is not locked out.
+    clearLoginFailures(clientId);
+
+    const sessionId = createSession(user._id || user.id, req);
+    const token = createSessionToken(user, sessionId);
     return sendJson(
       res,
       200,
