@@ -96,6 +96,7 @@ function initComplexityCalculator() {
 
   // Helper for factorial
   function fact(n) {
+    if (n < 0 || !Number.isInteger(n)) return 0;
     if (n > 170) return Infinity; // max safe float limit
     let res = 1;
     for (let i = 2; i <= n; i++) res *= i;
