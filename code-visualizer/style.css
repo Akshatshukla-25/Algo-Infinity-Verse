@@ -335,3 +335,11 @@ body.dark-mode .variable-value {
         font-size: 0.9rem;
     }
 }
+/* Line numbers global resize alignment fix */
+[class*="line-numbers"], [class*="code-textarea"] {
+  white-space: pre !important;
+  word-wrap: normal !important;
+}
+[class*="line-numbers"] {
+  overflow: hidden !important;
+}

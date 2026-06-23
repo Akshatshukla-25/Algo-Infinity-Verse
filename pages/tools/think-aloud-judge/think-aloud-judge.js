@@ -973,3 +973,8 @@ function getSocraticQuestionForMisconception(title) {
   return "If you dry-run this logic step-by-step on paper with a negative bound, does it execute correctly?";
 }
 
+
+
+window.addEventListener("resize", () => {
+  if (typeof updateLineNumbers === 'function') updateLineNumbers();
+});

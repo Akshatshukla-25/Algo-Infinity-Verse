@@ -395,3 +395,12 @@
   .ihm-bar-label      { width: 90px; font-size: 0.75rem; }
   .ihm-stats-grid     { grid-template-columns: 1fr 1fr; }
 }
+
+/* Line numbers global resize alignment fix */
+[class*="line-numbers"], [class*="code-textarea"] {
+  white-space: pre !important;
+  word-wrap: normal !important;
+}
+[class*="line-numbers"] {
+  overflow: hidden !important;
+}

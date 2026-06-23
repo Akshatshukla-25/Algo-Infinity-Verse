@@ -669,3 +669,8 @@ function initKotlinEditor() {
     statusBadge.className = `kt-status-badge ${cls}`;
   }
 }
+
+
+window.addEventListener("resize", () => {
+  if (typeof updateLineNumbers === 'function') updateLineNumbers();
+});

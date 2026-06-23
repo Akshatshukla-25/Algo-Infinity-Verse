@@ -3681,7 +3681,8 @@ section[id] {
   resize: none;
   tab-size: 4;
   overflow: auto;
-  white-space: pre;
+  white-space: pre !important;
+  word-wrap: normal !important;
   overflow-x: auto;
   z-index: 2;
   box-sizing: border-box;
@@ -3709,9 +3710,10 @@ section[id] {
   line-height: 1.6;
   user-select: none;
   pointer-events: none;
-  overflow: hidden;
+  overflow: hidden !important;
   z-index: 3;
-  white-space: pre;
+  white-space: pre !important;
+  word-wrap: normal !important;
   box-sizing: border-box;
 }
 

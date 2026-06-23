@@ -676,3 +676,8 @@ function initHaskellEditor() {
     statusBadge.className = `hs-status-badge ${cls}`;
   }
 }
+
+
+window.addEventListener("resize", () => {
+  if (typeof updateLineNumbers === 'function') updateLineNumbers();
+});

@@ -249,3 +249,12 @@
   .ce-output-pane { height: 250px; border-left: none; border-top: 1px solid var(--glass-border); }
   .ce-toolbar { flex-direction: column; align-items: flex-start; }
 }
+
+/* Line numbers global resize alignment fix */
+[class*="line-numbers"], [class*="code-textarea"] {
+  white-space: pre !important;
+  word-wrap: normal !important;
+}
+[class*="line-numbers"] {
+  overflow: hidden !important;
+}

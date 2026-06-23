@@ -452,3 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
     annotationDetailsContent.style.display = 'block';
   }
 });
+
+
+window.addEventListener("resize", () => {
+  if (typeof updateLineNumbers === 'function') updateLineNumbers();
+});

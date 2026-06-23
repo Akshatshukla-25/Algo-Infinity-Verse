@@ -710,3 +710,12 @@
   color: rgba(255,255,255,0.6);
   letter-spacing: 0.5px;
 }
+
+/* Line numbers global resize alignment fix */
+[class*="line-numbers"], [class*="code-textarea"] {
+  white-space: pre !important;
+  word-wrap: normal !important;
+}
+[class*="line-numbers"] {
+  overflow: hidden !important;
+}

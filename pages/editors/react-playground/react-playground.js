@@ -460,3 +460,8 @@ function initDivider() {
     document.body.style.cursor = "";
   });
 }
+
+
+window.addEventListener("resize", () => {
+  if (typeof updateLineNumbers === 'function') updateLineNumbers();
+});

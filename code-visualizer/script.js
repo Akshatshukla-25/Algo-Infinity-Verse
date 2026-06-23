@@ -375,3 +375,7 @@ document.getElementById('codeEditor').addEventListener('input', () => {
         updateConsoleUI([]);
     }
 });
+
+window.addEventListener("resize", () => {
+  if (typeof updateLineNumbers === 'function') updateLineNumbers();
+});

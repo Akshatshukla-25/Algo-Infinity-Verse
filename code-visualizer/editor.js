@@ -45,3 +45,7 @@ codeEditor.addEventListener('keydown', (e) => {
 
 // ====== INIT ======
 updateLineNumbers();
+
+window.addEventListener("resize", () => {
+  if (typeof updateLineNumbers === 'function') updateLineNumbers();
+});

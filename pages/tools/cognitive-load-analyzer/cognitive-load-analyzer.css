@@ -229,3 +229,12 @@
 
 /* Footer */
 .footer{padding:2rem 0;background:var(--cla-bg);color:var(--text-muted);text-align:center;}
+
+/* Line numbers global resize alignment fix */
+[class*="line-numbers"], [class*="code-textarea"] {
+  white-space: pre !important;
+  word-wrap: normal !important;
+}
+[class*="line-numbers"] {
+  overflow: hidden !important;
+}

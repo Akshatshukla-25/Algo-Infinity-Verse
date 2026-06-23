@@ -6140,3 +6140,11 @@ html.light-mode {
     white-space: nowrap !important;
     border: 0 !important;
 }
+/* Line numbers global resize alignment fix */
+[class*="line-numbers"], [class*="code-textarea"] {
+  white-space: pre !important;
+  word-wrap: normal !important;
+}
+[class*="line-numbers"] {
+  overflow: hidden !important;
+}

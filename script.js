@@ -2148,6 +2148,11 @@ function getEditorDraft(problemId) { try { return localStorage.getItem(`editorDr
 
 function clearEditorDraft(problemId) { try { localStorage.removeItem(`editorDraft_${problemId}`); } catch (e) { console.warn('Could not clear draft:', e); } }
 
+window.addEventListener("resize", () => {
+  if (typeof updateLineNumbers === 'function') updateLineNumbers();
+  if (typeof syncScroll === 'function') syncScroll();
+});
+
 function updateLineNumbers() {
   const editor = document.getElementById("codeEditor");
   const lineNumbers = document.getElementById("lineNumbers");
