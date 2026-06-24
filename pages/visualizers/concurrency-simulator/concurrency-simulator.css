@@ -21,10 +21,9 @@ body.conc-body {
     background-color: var(--dark-surface);
     color: var(--text-primary);
     font-family: 'Poppins', sans-serif;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 /* Scrollbar styling */
@@ -47,9 +46,9 @@ body.conc-body {
 .conc-workspace {
     flex: 1;
     display: flex;
-    overflow: hidden;
     background: #020617;
     position: relative;
+    min-height: calc(100vh - 60px);
 }
 
 /* Left Panel (Controller, Scenarios, Custom Builder) */
