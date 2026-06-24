@@ -367,9 +367,6 @@ function showNotification(msg, type = 'info') {
         console.log(`[Notification] ${type}: ${msg}`);
     }
 }
-        console.log(`[Notification] ${type}: ${msg}`);
-    }
-}
 
 // Standard project page load handler
 document.addEventListener('DOMContentLoaded', () => {
