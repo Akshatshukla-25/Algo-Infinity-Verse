@@ -21,18 +21,17 @@ body.heap-body {
     background-color: var(--dark-surface);
     color: var(--text-primary);
     font-family: 'Poppins', sans-serif;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 /* Workspace Layout */
 .heap-workspace {
     flex: 1;
     display: flex;
-    overflow: hidden;
     background: #020617;
+    min-height: calc(100vh - 60px);
 }
 
 /* Left Panel */
