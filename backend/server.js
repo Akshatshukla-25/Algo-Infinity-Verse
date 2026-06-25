@@ -11,6 +11,7 @@ const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, "data");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 const MEMORY_FILE = path.join(DATA_DIR, "memory.json");
+const TEAM_PROFILES_FILE = path.join(DATA_DIR, "team_profiles.json");
 const SESSION_COOKIE = "aiv_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 const PBKDF2_ITERATIONS = 210000;
@@ -528,6 +529,46 @@ async function updateMemoryStore(mutator) {
   });
   return task;
 }
+
+let teamProfilesWriteQueue = Promise.resolve();
+
+async function ensureTeamProfilesStore() {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fs.access(TEAM_PROFILES_FILE);
+  } catch {
+    await fs.writeFile(TEAM_PROFILES_FILE, "{}\n");
+  }
+}
+
+async function readTeamProfilesStore() {
+  await ensureTeamProfilesStore();
+  const raw = await fs.readFile(TEAM_PROFILES_FILE, "utf8");
+  return JSON.parse(raw || "{}");
+}
+
+async function writeTeamProfilesStoreAtomic(filePath, store) {
+  const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(tmpPath, `${JSON.stringify(store, null, 2)}\n`);
+  await fs.rename(tmpPath, filePath);
+}
+
+async function updateTeamProfilesStore(mutator) {
+  const task = teamProfilesWriteQueue.then(async () => {
+    await ensureTeamProfilesStore();
+    const raw = await fs.readFile(TEAM_PROFILES_FILE, "utf8");
+    const store = JSON.parse(raw || "{}");
+    const updated = await mutator(store);
+    await writeTeamProfilesStoreAtomic(TEAM_PROFILES_FILE, store);
+    return updated;
+  });
+
+  teamProfilesWriteQueue = task.catch((err) => {
+    console.error("[updateTeamProfilesStore] Write task failed:", err);
+  });
+  return task;
+}
+
 // SM-2 algorithm: quality is 0-5 (0 = total blackout, 5 = perfect recall)
 function applySM2(card, quality) {
   const q = Math.max(0, Math.min(5, Number(quality)));
@@ -701,6 +742,141 @@ function validateRequest(req) {
 }
 
 async function handleApi(req, res, pathname) {
+  if (pathname === "/api/team-profile" && req.method === "GET") {
+    try {
+      const urlParams = new URL(req.url, `http://${req.headers.host}`).searchParams;
+      const teamId = urlParams.get("id");
+      
+      if (!teamId) {
+        return sendJson(res, 400, { error: "Missing team id." });
+      }
+
+      let profileData = null;
+
+      if (!useFirestore) {
+        const store = await readTeamProfilesStore();
+        profileData = store[teamId] || null;
+      } else {
+        const docRef = db.collection(COLLECTIONS.TEAM_PROFILES).doc(teamId);
+        const snapshot = await docRef.get();
+        if (snapshot.exists) {
+          profileData = snapshot.data();
+        }
+      }
+
+      if (!profileData) {
+        // Return default profile with version 1
+        return sendJson(res, 200, {
+          id: teamId,
+          version: 1,
+          name: "New Team Profile",
+          description: "",
+          members: []
+        });
+      }
+
+      return sendJson(res, 200, profileData);
+    } catch (error) {
+      console.error("Fetch team profile error:", error);
+      return sendJson(res, 500, { error: "Failed to fetch team profile." });
+    }
+  }
+
+  if (pathname === "/api/team-profile" && req.method === "POST") {
+    try {
+      const payload = await readJsonBody(req);
+      const { id: teamId, version, name, description, members } = payload;
+
+      if (!teamId) {
+        return sendJson(res, 400, { error: "Missing team id." });
+      }
+
+      if (version === undefined || version === null) {
+        return sendJson(res, 400, { error: "Missing version for concurrency control." });
+      }
+
+      let updatedProfile = null;
+
+      if (!useFirestore) {
+        try {
+          updatedProfile = await updateTeamProfilesStore(store => {
+            const currentProfile = store[teamId] || { version: 1 };
+            
+            // OCC version check
+            if (currentProfile.version !== version) {
+              const conflictError = new Error("Conflict");
+              conflictError.status = 409;
+              conflictError.currentVersion = currentProfile.version;
+              throw conflictError;
+            }
+
+            // Update data and increment version
+            const newProfile = {
+              id: teamId,
+              name: name || currentProfile.name || "New Team Profile",
+              description: description !== undefined ? description : (currentProfile.description || ""),
+              members: members || currentProfile.members || [],
+              version: version + 1,
+              updatedAt: new Date().toISOString()
+            };
+
+            store[teamId] = newProfile;
+            return newProfile;
+          });
+        } catch (error) {
+          if (error.status === 409) {
+            return sendJson(res, 409, { 
+              error: "Conflict detected: The profile was updated by someone else.",
+              currentVersion: error.currentVersion
+            });
+          }
+          throw error;
+        }
+      } else {
+        const docRef = db.collection(COLLECTIONS.TEAM_PROFILES).doc(teamId);
+        try {
+          updatedProfile = await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(docRef);
+            
+            const currentVersion = doc.exists ? doc.data().version : 1;
+
+            if (currentVersion !== version) {
+              const conflictError = new Error("Conflict");
+              conflictError.status = 409;
+              conflictError.currentVersion = currentVersion;
+              throw conflictError;
+            }
+
+            const newProfile = {
+              id: teamId,
+              name: name || (doc.exists ? doc.data().name : "New Team Profile"),
+              description: description !== undefined ? description : (doc.exists ? doc.data().description : ""),
+              members: members || (doc.exists ? doc.data().members : []),
+              version: version + 1,
+              updatedAt: new Date().toISOString()
+            };
+
+            transaction.set(docRef, newProfile);
+            return newProfile;
+          });
+        } catch (error) {
+          if (error.status === 409) {
+            return sendJson(res, 409, { 
+              error: "Conflict detected: The profile was updated by someone else.",
+              currentVersion: error.currentVersion
+            });
+          }
+          throw error;
+        }
+      }
+
+      return sendJson(res, 200, updatedProfile);
+    } catch (error) {
+      console.error("Update team profile error:", error);
+      return sendJson(res, 500, { error: "Failed to update team profile." });
+    }
+  }
+
   if (pathname === "/api/analyze-resume" && req.method === "POST") {
     try {
       await new Promise((resolve, reject) => {

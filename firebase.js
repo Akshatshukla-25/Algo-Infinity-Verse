@@ -87,4 +87,5 @@ export const COLLECTIONS = {
   AUDITS_HISTORY: "audits_history",
   BATTLES:  "battles",
   PROBLEMS: "problems",
+  TEAM_PROFILES: "teamProfiles",
 };
