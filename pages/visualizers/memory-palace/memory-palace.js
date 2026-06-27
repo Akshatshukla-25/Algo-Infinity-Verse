@@ -139,7 +139,7 @@ function mpAlloc(startAddr, count, type, values, label, dsId) {
   }
   return true;
 }
-}
+
 
 /* ─── Free cells ─── */
 function mpFree(addrs) {
@@ -161,7 +161,6 @@ function mpFlashCells(addrs) {
         setTimeout(function() { cellEl.classList.remove('mp-active'); }, 500);
       }
     }, 0);
-  });
   });
 }
 
