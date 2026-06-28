@@ -235,7 +235,11 @@ Users can:
    Generate secure secrets for your environment:
 
     ```bash
-    node -e "console.log('SESSION_SECRET=' + require('crypto').randomBytes(64).toString('hex')); console.log('PASSWORD_PEPPER=' + require('crypto').randomBytes(32).toString('hex'));"
+    node -e "
+      console.log('SESSION_SECRET=' + require('crypto').randomBytes(64).toString('hex'));
+      console.log('PASSWORD_PEPPER=' + require('crypto').randomBytes(32).toString('hex'));
+      console.log('CSRF_SALT=' + require('crypto').randomBytes(32).toString('hex'));
+    "
     ```
 
     Copy the generated values into your `.env` file:
@@ -243,7 +247,33 @@ Users can:
     ```env
     SESSION_SECRET=your_generated_session_secret
     PASSWORD_PEPPER=your_generated_password_pepper
+    CSRF_SALT=your_generated_csrf_salt
     ```
+
+    ### Required Environment Variables
+
+    | Variable | Description |
+    |----------|-------------|
+    | `SESSION_SECRET` | HMAC key for signing session JWTs |
+    | `PASSWORD_PEPPER` | Extra secret mixed into password hashes |
+    | `CSRF_SALT` | Salt for CSRF token HMAC signatures |
+
+    ### Firebase (for authentication & persistence)
+
+    Set these if you want Google sign-in and Firestore-backed user data:
+
+    | Variable | Description |
+    |----------|-------------|
+    | `FIREBASE_API_KEY` | Web SDK API key (public) |
+    | `FIREBASE_AUTH_DOMAIN` | Auth domain (e.g. `your-project.firebaseapp.com`) |
+    | `FIREBASE_PROJECT_ID` | Firebase project ID |
+    | `FIREBASE_STORAGE_BUCKET` | Storage bucket |
+    | `FIREBASE_MESSAGING_SENDER_ID` | Sender ID for FCM |
+    | `FIREBASE_APP_ID` | Firebase app ID |
+    | `FIREBASE_CLIENT_EMAIL` | Admin SDK service account email |
+    | `FIREBASE_PRIVATE_KEY` | Admin SDK service account private key |
+
+    > **Note:** Without Firebase credentials, user data is stored locally in `data/users.json`. With Firebase, it uses Firestore and the local file is not used.
 
    Start the server:
    ```bash

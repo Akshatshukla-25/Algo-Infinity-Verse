@@ -165,7 +165,7 @@ export default async function handler(req, res) {
     }
     const users=await readUsers();
     const user=users.find(u=>u.email===cleanEmail);
-    if (!user || !passwordMatches(pwd, user.password)) {
+    if (!user || !user.password || !passwordMatches(pwd, user.password)) {
       recordLoginAttempt(clientId);
       await normalizeAuthDelay();
       return res.status(401).json({

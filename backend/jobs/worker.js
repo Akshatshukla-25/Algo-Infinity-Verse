@@ -4,68 +4,74 @@ import { analyzeWorkflow } from '../repository-analyzer/cicdValidator.js';
 import { VCSFactory } from '../vcs/VCSFactory.js';
 import { batchStore, redisAvailable } from './queue.js';
 
-// Only start the bullmq Worker if Redis is actually available.
-// This prevents ECONNREFUSED spam when running without Redis locally.
-if (redisAvailable) {
-  const conn = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
-    maxRetriesPerRequest: null,
-  });
+let auditWorker = null;
+const conn = redisAvailable
+  ? new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+      maxRetriesPerRequest: null,
+    })
+  : null;
 
-redisConnection.on('error', (err) => {
-  console.warn('Redis Connection Error (worker):', err.message);
-});
+if (conn) {
+  auditWorker = new Worker('bulk-audit-queue', async (job) => {
+    const { batchId, repoUrl } = job.data;
 
-// Configure the worker process
-export const auditWorker = new Worker('bulk-audit-queue', async (job) => {
-  const { batchId, repoUrl } = job.data;
-  
-  if (!repoUrl || !repoUrl.includes("github.com")) {
-    throw new Error("Invalid GitHub URL");
-  }
-
-    const provider = VCSFactory.getProvider(repoUrl);
-    const workflows = await provider.getNormalizedWorkflows();
-
-    let bestScore = 0;
-    for (const wf of workflows) {
-      const result = analyzeWorkflow(wf.commands);
-      if (result.score > bestScore) bestScore = result.score;
+    let parsedRepoUrl;
+    try {
+      parsedRepoUrl = new URL(repoUrl);
+    } catch {
+      throw new Error("Invalid GitHub URL");
     }
 
-    return { repoUrl, score: bestScore };
+    if (
+      !['http:', 'https:'].includes(parsedRepoUrl.protocol) ||
+      !['github.com', 'www.github.com'].includes(parsedRepoUrl.hostname.toLowerCase())
+    ) {
+      throw new Error("Invalid GitHub URL");
+    }
 
-  } catch (error) {
-    console.error(`Job ${job.id} failed for repo ${repoUrl}:`, error.message);
-    throw error;
-  }
-}, {
-  connection: redisConnection,
-  concurrency: 5 // Process up to 5 jobs simultaneously
-});
+    try {
+      const provider = VCSFactory.getProvider(repoUrl);
+      const workflows = await provider.getNormalizedWorkflows();
 
-auditWorker.on('error', (err) => {
-  console.warn('Worker Redis Connection Error:', err.message);
-});
+      let bestScore = 0;
+      for (const wf of workflows) {
+        const result = analyzeWorkflow(wf.commands);
+        if (result.score > bestScore) bestScore = result.score;
+      }
 
-// Event listeners for tracking batch progress
-auditWorker.on('completed', (job, result) => {
-  const { batchId } = job.data;
-  const batch = batchStore.get(batchId);
-  if (batch) {
-    batch.completed += 1;
-    batch.results.push(result);
-  }
-});
+      return { repoUrl, score: bestScore };
+    } catch (error) {
+      console.error(`Job ${job.id} failed for repo ${repoUrl}:`, error.message);
+      throw error;
+    }
+  }, {
+    connection: conn,
+    concurrency: 5,
+  });
 
-auditWorker.on('failed', (job, err) => {
-  const { batchId } = job.data;
-  const batch = batchStore.get(batchId);
-  if (batch) {
-    batch.failed += 1;
-    batch.results.push({ repoUrl: job.data.repoUrl, error: err.message, score: 0 });
-  }
-});
+  auditWorker.on('error', (err) => {
+    console.warn('Worker Redis Connection Error:', err.message);
+  });
 
-console.log('Background Audit Worker started and listening for jobs...');
+  auditWorker.on('completed', (job, result) => {
+    const { batchId } = job.data;
+    const batch = batchStore.get(batchId);
+    if (batch) {
+      batch.completed += 1;
+      batch.results.push(result);
+    }
+  });
+
+  auditWorker.on('failed', (job, err) => {
+    const { batchId } = job.data;
+    const batch = batchStore.get(batchId);
+    if (batch) {
+      batch.failed += 1;
+      batch.results.push({ repoUrl: job.data.repoUrl, error: err.message, score: 0 });
+    }
+  });
+
+  console.log('Background Audit Worker started and listening for jobs...');
+}
 
 

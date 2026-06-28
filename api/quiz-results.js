@@ -1,3 +1,11 @@
+/**
+ * Vercel serverless function — POST/GET /api/quiz-results
+ *
+ * ⚠️ IMPORTANT: On Vercel each file must have a default export.
+ *    This file previously only exported named functions, which caused
+ *    Vercel to return 500 on every request.
+ */
+
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
@@ -194,5 +202,22 @@ export async function getQuizResults(req, res) {
   } catch (error) {
     console.error("Failed to fetch quiz results:", error);
     return { status: 500, body: { error: "Failed to fetch quiz results." } };
+  }
+}
+
+export default async function handler(req, res) {
+  try {
+    let result;
+    if (req.method === "POST") {
+      result = await saveQuizResult(req, res);
+    } else if (req.method === "GET") {
+      result = await getQuizResults(req, res);
+    } else {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+    return res.status(result.status).json(result.body);
+  } catch (error) {
+    console.error("[quiz-results] Unhandled error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

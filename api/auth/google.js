@@ -1,6 +1,7 @@
 import crypto from "crypto";
-import { getDb, COLLECTIONS } from "../../firebase.js";
+import { initializeFirebase, getDb, COLLECTIONS } from "../../firebase.js";
 
+initializeFirebase();
 const db = getDb();
 const useFirestore = !!db;
 

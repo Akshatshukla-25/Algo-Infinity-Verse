@@ -1,52 +1,44 @@
 import IORedis from 'ioredis';
 import { Queue } from 'bullmq';
 
-// A simple in-memory store to track batch progress
+// ── Redis availability check ───────────────────────────────────────────────
+// Test once at startup with a short timeout. If Redis isn't running we fall
+// back to an in-process queue (bullmq is never instantiated).
+
 export const batchStore = new Map();
 
-// ── Redis availability check ───────────────────────────────────────────────
-// Test once at startup with a short timeout. If Redis isn't running we export
-// no-op stubs so bullmq is never instantiated and the console stays clean.
-
 let bulkAuditQueue = null;
-let redisAvailable = false;
+export let redisAvailable = false;
+
+// Initialize Redis and the queue at module load time
+checkRedis().catch(() => {});
 
 async function checkRedis() {
   const probe = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
     maxRetriesPerRequest: 1,
     connectTimeout: 1000,
-    retryStrategy: () => null,        // do NOT retry the probe connection
+    retryStrategy: () => null,
     enableOfflineQueue: false,
   });
-  // Suppress the expected ECONNREFUSED on the probe instance
   probe.on('error', () => {});
 
   try {
     await probe.ping();
     redisAvailable = true;
+    const connection = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+      maxRetriesPerRequest: null,
+      enableOfflineQueue: false,
+    });
+    bulkAuditQueue = new Queue('bulk-audit-queue', { connection });
+    bulkAuditQueue.on('error', (err) => {
+      console.warn('Queue Redis Connection Error:', err.message);
+    });
   } catch {
     redisAvailable = false;
   } finally {
     probe.disconnect();
   }
 }
-
-redisConnection.on('error', (err) => {
-  console.warn('Redis Connection Error (queue):', err.message);
-});
-
-// Create the shared queue instance
-export const bulkAuditQueue = new Queue('bulk-audit-queue', {
-  connection: redisConnection
-});
-
-bulkAuditQueue.on('error', (err) => {
-  console.warn('Queue Redis Connection Error:', err.message);
-});
-
-// A simple in-memory store to track batch progress
-// In a real production app, this would be stored in Redis or a DB.
-export const batchStore = new Map();
 
 /**
  * Enqueues a batch of repositories for analysis.

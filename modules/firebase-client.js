@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
 
 let configPromise = null;
 let app = null;
@@ -47,37 +47,61 @@ async function ensureAuth() {
 export async function getRedirectUser() {
   const authInstance = await ensureAuth();
 
-  await new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(authInstance, async (user) => {
-      if (user) {
-        unsubscribe();
-        resolve(user);
-      }
-    });
-
-    setTimeout(() => {
-      unsubscribe();
-      resolve(null);
-    }, 5000);
-  });
-
-  const user = authInstance.currentUser;
-  if (!user) return null;
-
   try {
-    const idToken = await user.getIdToken(true);
-    return { idToken, user };
-  } catch (tokenError) {
-    console.warn("getIdToken after redirect failed:", tokenError);
+    const result = await getRedirectResult(authInstance);
+    if (result?.user) {
+      const idToken = await result.user.getIdToken(true);
+      return { idToken, user: result.user };
+    }
+  } catch (error) {
+    console.warn("[firebase-client] getRedirectResult error:", error?.code || error?.message || error);
+  }
+
+  if (authInstance.currentUser) {
+    try {
+      const idToken = await authInstance.currentUser.getIdToken(true);
+      return { idToken, user: authInstance.currentUser };
+    } catch (tokenError) {
+      console.warn("[firebase-client] getCurrentUser getIdToken failed:", tokenError);
+    }
     return null;
   }
+
+  return new Promise((resolve) => {
+    let fallbackTimer;
+    const unsubscribe = onAuthStateChanged(authInstance, (user) => {
+      if (user) {
+        unsubscribe();
+        clearTimeout(fallbackTimer);
+        user.getIdToken(true).then((idToken) => {
+          resolve({ idToken, user });
+        }).catch(() => {
+          resolve(null);
+        });
+      }
+    });
+    fallbackTimer = setTimeout(() => {
+      unsubscribe();
+      resolve(null);
+    }, 3000);
+  });
 }
 
 export async function signInWithGoogle() {
   const authInstance = await ensureAuth();
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  await signInWithRedirect(authInstance, provider);
+
+  try {
+    const result = await signInWithPopup(authInstance, provider);
+    return result;
+  } catch (error) {
+    if (error.code === "auth/popup-blocked") {
+      await signInWithRedirect(authInstance, provider);
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function signOutUser() {

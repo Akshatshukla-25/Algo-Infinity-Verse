@@ -408,6 +408,16 @@ function validateRequest(req) {
 }
 
 async function handleApi(req, res, pathname) {
+  if (pathname === "/api/csrf-token" && req.method === "GET") {
+    const secret = crypto.randomBytes(32).toString("hex");
+    const token = crypto.createHmac("sha256", process.env.CSRF_SALT || "infinity-verse-secure-salt")
+                        .update(secret)
+                        .digest("hex");
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieString = `csrfSecret=${secret}; HttpOnly; ${isProd ? "Secure; " : ""}SameSite=Strict; Path=/; Max-Age=3600`;
+    return sendJson(res, 200, { csrfToken: token }, { "Set-Cookie": cookieString });
+  }
+
   if (pathname === "/api/log-error" && req.method === "POST") {
     try {
       const payload = await readJsonBody(req);
@@ -431,9 +441,6 @@ async function handleApi(req, res, pathname) {
   
   if (pathname === "/api/execute" && req.method === "POST") {
     try {
-     
-      const payload = await readJsonBody(req);
-      const { sourceCode, language, stdin } = payload;
       const session = getSession(req);
       if (!session) {
         return sendJson(res, 401, {
@@ -441,7 +448,7 @@ async function handleApi(req, res, pathname) {
           message: "Authentication required.",
         });
       }
-     
+
       let payload;
       try {
         payload = await readJsonBody(req);
@@ -918,87 +925,100 @@ if (pathname === "/api/session" && req.method === "GET") {
   }
 
   if (pathname === "/api/signup" && req.method === "POST") {
-    if (!applyRateLimit(req, res, signupLimiter, "Too many signup attempts. Please try again later.")) {
-      return;
-    }
-
-    const payload = await readJsonBody(req);
-    const validationError = validateSignup(payload);
-    if (validationError) return sendJson(res, 400, { error: validationError });
-
-    const email = String(payload.email).trim().toLowerCase();
-    const existing = await getUserByEmail(email);
-    if (existing) {
-      await normalizeAuthDelay();
-      return sendJson(res, 200, { ok: true });
-    }
-
-    const verifyToken = crypto.randomBytes(32).toString("hex");
-    const user = {
-      id: crypto.randomUUID(),
-      name: String(payload.name).trim(),
-      email,
-      password: hashPassword(String(payload.password)),
-      createdAt: new Date().toISOString(),
-      isDeactivated: false,
-      deactivatedAt: null,
-      emailVerified: false,
-      verifyToken,
-      verifyTokenExpiry: Date.now() + 24 * 60 * 60 * 1000,
-    };
     try {
+      if (!applyRateLimit(req, res, signupLimiter, "Too many signup attempts. Please try again later.")) {
+        return;
+      }
+
+      const payload = await readJsonBody(req);
+      const validationError = validateSignup(payload);
+      if (validationError) return sendJson(res, 400, { error: validationError });
+
+      const email = String(payload.email).trim().toLowerCase();
+      const existing = await getUserByEmail(email);
+      if (existing) {
+        await normalizeAuthDelay();
+        return sendJson(res, 409, { error: "An account with this email already exists." });
+      }
+
+      const verifyToken = crypto.randomBytes(32).toString("hex");
+      const user = {
+        id: crypto.randomUUID(),
+        name: String(payload.name).trim(),
+        email,
+        password: hashPassword(String(payload.password)),
+        createdAt: new Date().toISOString(),
+        isDeactivated: false,
+        deactivatedAt: null,
+        emailVerified: true,
+        verifyToken,
+        verifyTokenExpiry: Date.now() + 24 * 60 * 60 * 1000,
+      };
       await createUser(user);
-    } catch (createError) {
-      console.error("Signup user creation failed:", createError);
-      return sendJson(res, 500, { error: "Failed to create user account." });
+
+      const token = createAccessToken(user);
+      loginLimiter.reset(getClientIdentifier(req));
+      return sendJson(
+        res, 200,
+        { user: { id: user.id, name: user.name, email: user.email } },
+        { "Set-Cookie": authCookies(token, req) },
+      );
+    } catch (error) {
+      console.error("[signup] Unexpected error:", error);
+      return sendJson(res, 500, { error: "Signup failed due to a server error." });
     }
-
-    sendVerificationEmail(user.email, user.name, verifyToken).catch((err) =>
-      console.error("[email] Failed to send verification email:", err)
-    );
-
-    return sendJson(res, 200, {
-      ok: true,
-      requiresVerification: true,
-      email: user.email,
-    });
   }
 
   if (pathname === "/api/login" && req.method === "POST") {
-    if (!applyRateLimit(req, res, loginLimiter, "Too many login attempts. Please try again later.")) {
-      return;
-    }
-    const payload = await readJsonBody(req);
-    const email = String(payload.email || "").trim().toLowerCase();
-    const password = String(payload.password || "");
-    const user = await getUserByEmail(email);
-    if (!user || !passwordMatches(password, user.password)) {
-      return sendJson(res, 401, { error: "Invalid email or password." });
-    }
+    try {
+      if (!applyRateLimit(req, res, loginLimiter, "Too many login attempts. Please try again later.")) {
+        return;
+      }
+      const payload = await readJsonBody(req);
+      const email = String(payload.email || "").trim().toLowerCase();
+      const password = String(payload.password || "");
+      const user = await getUserByEmail(email);
+      if (!user || !user.password || !passwordMatches(password, user.password)) {
+        return sendJson(res, 401, { error: "Invalid email or password." });
+      }
 
-    if (!user.emailVerified) {
-      return sendJson(res, 403, {
-        error: "Please verify your email before logging in.",
-        requiresVerification: true,
-        email: user.email,
-      });
-    }
+      if (!user.emailVerified) {
+        return sendJson(res, 403, {
+          error: "Please verify your email before logging in.",
+          requiresVerification: true,
+          email: user.email,
+        });
+      }
 
-    if (user.isDeactivated) {
-      user.isDeactivated = false;
-      user.deactivatedAt = null;
-      const users = await readUsers();
-      const index = users.findIndex((u) => u.id === user.id);
-      if (index !== -1) { users[index] = user; await writeUsers(users); }
-    }
+      if (user.isDeactivated) {
+        user.isDeactivated = false;
+        user.deactivatedAt = null;
+        if (useFirestore) {
+          await db.collection(COLLECTIONS.USERS).doc(user.id).update({
+            isDeactivated: false,
+            deactivatedAt: null,
+          });
+        } else {
+          const users = await readUsers();
+          const index = users.findIndex((u) => u.id === user.id);
+          if (index !== -1) {
+            users[index] = user;
+            await writeUsers(users);
+          }
+        }
+      }
 
-    const token = createAccessToken(user);
-    loginLimiter.reset(getClientIdentifier(req));
-    return sendJson(
-      res, 200,
-      { user: { id: user.id, name: user.name, email: user.email } },
-      { "Set-Cookie": authCookies(token, req) },
-    );
+      const token = createAccessToken(user);
+      loginLimiter.reset(getClientIdentifier(req));
+      return sendJson(
+        res, 200,
+        { user: { id: user.id, name: user.name, email: user.email } },
+        { "Set-Cookie": authCookies(token, req) },
+      );
+    } catch (error) {
+      console.error("[login] Unexpected error:", error);
+      return sendJson(res, 500, { error: "Login failed due to a server error." });
+    }
   }
 
   if (pathname === "/api/auth/google" && req.method === "POST") {
@@ -1401,148 +1421,6 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
     }
 
     if (!feedbackType.trim() || !subject.trim() || !message.trim()) {
-      return sendJson(res, 400, {
-        error: "Feedback type, subject, and message are required.",
-      });
-    }
-
-    const allowedTypes = [
-      "Suggestion",
-      "Bug Report",
-      "Feature Request",
-      "General Feedback",
-    ];
-    if (!allowedTypes.includes(feedbackType)) {
-      return sendJson(res, 400, { error: "Invalid feedback type." });
-    }
-
-    if (subject.trim().length < 3) {
-      return sendJson(res, 400, {
-        error: "Subject must be at least 3 characters long.",
-      });
-    }
-
-    if (message.trim().length < 10) {
-      return sendJson(res, 400, {
-        error: "Message must be at least 10 characters long.",
-      });
-    }
-
-    const feedbackData = {
-      userId: session ? session.sub : null,
-      userName: session ? session.name : null,
-      userEmail: session ? session.email : null,
-      feedbackType,
-      subject: subject.trim(),
-      message: message.trim(),
-      status: "new",
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      if (useFirestore) {
-        const docRef = await db.collection("feedback").add(feedbackData);
-        feedbackData.id = docRef.id;
-      } else {
-        const feedbackFile = path.join(DATA_DIR, "feedback.json");
-        await fs.mkdir(DATA_DIR, { recursive: true });
-        let feedbackList = [];
-        try {
-          const raw = await fs.readFile(feedbackFile, "utf8");
-          feedbackList = JSON.parse(raw || "[]");
-        } catch (err) {
-          if (err.code !== "ENOENT") throw err;
-        }
-        feedbackData.id = crypto.randomUUID();
-        feedbackList.push(feedbackData);
-        await fs.writeFile(
-          feedbackFile,
-          JSON.stringify(feedbackList, null, 2) + "\n",
-        );
-      }
-
-      if (pathname === "/api/feedback" && req.method === "POST") {
-    const session = getSession(req);
-    let payload;
-    try {
-      payload = await readJsonBody(req);
-    } catch (err) {
-      return sendJson(res, 400, { error: "Invalid JSON body." });
-    }
-
-    const { feedbackType, subject, message } = payload;
-    if (!feedbackType || !subject || !message) {
-      return sendJson(res, 400, {
-        error: "Feedback type, subject, and message are required.",
-      });
-    }
-
-    const allowedTypes = [
-      "Suggestion",
-      "Bug Report",
-      "Feature Request",
-      "General Feedback",
-    ];
-    if (!allowedTypes.includes(feedbackType)) {
-      return sendJson(res, 400, { error: "Invalid feedback type." });
-    }
-
-    if (subject.trim().length < 3) {
-      return sendJson(res, 400, {
-        error: "Subject must be at least 3 characters long.",
-      });
-    }
-
-    if (message.trim().length < 10) {
-      return sendJson(res, 400, {
-        error: "Message must be at least 10 characters long.",
-      });
-    }
-
-    const feedbackData = {
-      userId: session ? session.sub : null,
-      userName: session ? session.name : null,
-      userEmail: session ? session.email : null,
-      feedbackType,
-      subject: subject.trim(),
-      message: message.trim(),
-      status: "new",
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      if (useFirestore) {
-        const docRef = await db.collection("feedback").add(feedbackData);
-        feedbackData.id = docRef.id;
-      } else {
-        const feedbackFile = path.join(DATA_DIR, "feedback.json");
-        await fs.mkdir(DATA_DIR, { recursive: true });
-        let feedbackList = [];
-        try {
-          const raw = await fs.readFile(feedbackFile, "utf8");
-          feedbackList = JSON.parse(raw || "[]");
-        } catch (err) {
-          if (err.code !== "ENOENT") throw err;
-        }
-        feedbackData.id = crypto.randomUUID();
-        feedbackList.push(feedbackData);
-        await fs.writeFile(
-          feedbackFile,
-          JSON.stringify(feedbackList, null, 2) + "\n",
-        );
-      }
-
-      if (pathname === "/api/feedback" && req.method === "POST") {
-    const session = getSession(req);
-    let payload;
-    try {
-      payload = await readJsonBody(req);
-    } catch (err) {
-      return sendJson(res, 400, { error: "Invalid JSON body." });
-    }
-
-    const { feedbackType, subject, message } = payload;
-    if (!feedbackType || !subject || !message) {
       return sendJson(res, 400, {
         error: "Feedback type, subject, and message are required.",
       });
