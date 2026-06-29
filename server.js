@@ -22,9 +22,9 @@ import { generateSdlcAdvice } from "./sdlcAdvisor.js";
 import { handleReportRequest } from "./backend/reports/reportGenerator.js";
 import { getUserBenchmark } from "./backend/benchmarking/percentileService.js";
 import { Server as SocketIOServer } from "socket.io";
-import { 
-  ACCESS_TOKEN_MAX_AGE_SECONDS, getClientIdentifier, isSignupRateLimited, 
-  recordSignupAttempt, normalizeAuthDelay, createAccessToken, 
+import {
+  ACCESS_TOKEN_MAX_AGE_SECONDS, REFRESH_TOKEN_MAX_AGE_SECONDS, getClientIdentifier, isSignupRateLimited,
+  recordSignupAttempt, normalizeAuthDelay, createAccessToken,
   verifyAccessToken, hashPassword, passwordMatches, validateSignup,
   createRefreshToken, verifyRefreshToken, revokeTokenFamily,
   activeRefreshFamilies
@@ -166,22 +166,36 @@ function getRefreshToken(req) {
   return cookies[REFRESH_COOKIE] || null;
 }
 
-function authCookies(token, req) {
+// Builds the Set-Cookie header value(s) for an authenticated response. Returns
+// an array of two cookies: the short-lived access token (read by getSession)
+// and the long-lived refresh token (read by getRefreshToken on /api/refresh).
+// Previously this set only the access cookie, so the aiv_refresh cookie was
+// never issued and silent token refresh could never succeed (#1225).
+function authCookies(accessToken, refreshToken, req) {
   const secure = req.headers["x-forwarded-proto"] === "https";
+  const cookie = (name, value, maxAge) =>
+    [
+      `${name}=${encodeURIComponent(value)}`,
+      "HttpOnly",
+      "SameSite=Lax",
+      "Path=/",
+      `Max-Age=${maxAge}`,
+      secure ? "Secure" : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+
   return [
-    `${SESSION_COOKIE}=${encodeURIComponent(token)}`,
-    "HttpOnly",
-    "SameSite=Lax",
-    "Path=/",
-    `Max-Age=${ACCESS_TOKEN_MAX_AGE_SECONDS}`,
-    secure ? "Secure" : "",
-  ]
-    .filter(Boolean)
-    .join("; ");
+    cookie(SESSION_COOKIE, accessToken, ACCESS_TOKEN_MAX_AGE_SECONDS),
+    cookie(REFRESH_COOKIE, refreshToken, REFRESH_TOKEN_MAX_AGE_SECONDS),
+  ];
 }
 
 function clearAuthCookies() {
-  return `${SESSION_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`;
+  return [
+    `${SESSION_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`,
+    `${REFRESH_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`,
+  ];
 }
 
 let db = null;
@@ -1277,11 +1291,12 @@ if (pathname === "/api/session" && req.method === "GET") {
       await createUser(user);
 
       const token = createAccessToken(user);
+      const refreshToken = createRefreshToken(user);
       loginLimiter.reset(getClientIdentifier(req));
       return sendJson(
         res, 200,
         { user: { id: user.id, name: user.name, email: user.email } },
-        { "Set-Cookie": authCookies(token, req) },
+        { "Set-Cookie": authCookies(token, refreshToken, req) },
       );
     } catch (error) {
       console.error("[signup] Unexpected error:", error);
@@ -1329,11 +1344,12 @@ if (pathname === "/api/session" && req.method === "GET") {
       }
 
       const token = createAccessToken(user);
+      const refreshToken = createRefreshToken(user);
       loginLimiter.reset(getClientIdentifier(req));
       return sendJson(
         res, 200,
         { user: { id: user.id, name: user.name, email: user.email } },
-        { "Set-Cookie": authCookies(token, req) },
+        { "Set-Cookie": authCookies(token, refreshToken, req) },
       );
     } catch (error) {
       console.error("[login] Unexpected error:", error);
@@ -1437,7 +1453,8 @@ if (pathname === "/api/session" && req.method === "GET") {
       }
 
       const token = createAccessToken(user);
-      const cookie = authCookies(token, req);
+      const refreshToken = createRefreshToken(user);
+      const cookie = authCookies(token, refreshToken, req);
 
       return sendJson(res, 200, {
         authenticated: true,
@@ -2587,7 +2604,8 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
     await writeUsers(users);
 
     const sessionToken = createAccessToken(users[idx]);
-    res.setHeader("Set-Cookie", authCookies(sessionToken, req));
+    const refreshToken = createRefreshToken(users[idx]);
+    res.setHeader("Set-Cookie", authCookies(sessionToken, refreshToken, req));
     return sendJson(res, 200, { ok: true });
   }
 
