@@ -11,13 +11,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const allList = document.getElementById("allList");
 
   // Local Storage Helpers
+  let isAuthenticated = false;
+
   function getMemoryData() {
     let data;
     try {
       data = JSON.parse(localStorage.getItem("algoInfinityVerse")) || {};
     } catch (e) {
       data = {};
-  let isAuthenticated = false;
+    }
+    if (!data.memoryScanner) data.memoryScanner = {};
+    return data;
+  }
 
   // CodeRabbit-proof: Safe JSON parser to gracefully handle HTML 404/500 errors
   async function safeJsonParse(response) {
@@ -29,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return response.json();
   }
 
-async function verifySession() {
+  async function verifySession() {
     try {
       const response = await fetch("/api/session", { credentials: "include" });
       const data = await safeJsonParse(response);
@@ -63,28 +68,6 @@ async function verifySession() {
       logBtn.disabled = true;
       return; 
     }
-        if (data.authenticated && data.user) {
-          isAuthenticated = true;
-          sessionNotice.className = "session-notice authenticated";
-          sessionNotice.textContent = "";
-          const icon = document.createElement("i");
-          icon.className = "fas fa-circle-check";
-          const strong = document.createElement("strong");
-          strong.textContent = data.user.name;
-          sessionNotice.append(
-            icon,
-            " Tracking memory for ",
-            strong,
-            ` (${data.user.email})`
-          );
-          return;
-        }
-      }
-    } catch (err) {
-      console.error("Failed to check user session:", err);
-    }
-    if (!data.memoryScanner) data.memoryScanner = {};
-    return data;
   }
 
   function saveMemoryData(data) {
@@ -137,37 +120,11 @@ async function verifySession() {
       dueList.innerHTML = `<p class="empty-state">Nothing due right now. Log a session to start!</p>`;
       allList.innerHTML = `<p class="empty-state">No topics tracked yet. Log a practice session above to get started.</p>`;
       return;
-  async function loadDueTopics() {
-    if (!isAuthenticated) return;
-    try {
-      const response = await fetch("/api/memory/due", { credentials: "include" });
-      const data = await safeJsonParse(response);
-      
-      if (!response.ok) throw new Error(data.error || "Failed to load due topics.");
-
-      if (!data.due || data.due.length === 0) {
-        dueList.innerHTML = `<p class="empty-state">Nothing due right now. Great job staying on top of things!</p>`;
-        return;
-      }
-
-      dueList.innerHTML = data.due
-        .map((card) => renderTopicCard(card, { dueClass: "due" }))
-        .join("");
-    } catch (err) {
-      console.error(err);
-      dueList.innerHTML = `<p class="empty-state" style="color: #dc3545;">${err.message}</p>`;
     }
 
     const now = new Date();
     const dueCards = [];
     const allCardsHtml = [];
-  async function loadAllTopics() {
-    if (!isAuthenticated) return;
-    try {
-      const response = await fetch("/api/memory/all", { credentials: "include" });
-      const data = await safeJsonParse(response);
-      
-      if (!response.ok) throw new Error(data.error || "Failed to load topics.");
 
     cards.forEach(card => {
       const nextDate = new Date(card.nextReviewDate);
@@ -181,17 +138,6 @@ async function verifySession() {
 
     dueList.innerHTML = dueCards.length > 0 ? dueCards.join("") : `<p class="empty-state">Nothing due right now. Great job staying on top of things!</p>`;
     allList.innerHTML = allCardsHtml.join("");
-      const now = new Date();
-      allList.innerHTML = data.cards
-        .map((card) => {
-          const isDue = new Date(card.nextReviewDate) <= now;
-          return renderTopicCard(card, { dueClass: isDue ? "due" : "upcoming" });
-        })
-        .join("");
-    } catch (err) {
-      console.error(err);
-      allList.innerHTML = `<p class="empty-state" style="color: #dc3545;">${err.message}</p>`;
-    }
   }
 
   logForm.addEventListener("submit", (e) => {
@@ -229,8 +175,7 @@ async function verifySession() {
       }
 
       const card = memData[topicKey];
-      const result = await safeJsonParse(response);
-      if (!response.ok) throw new Error(result.error || "Failed to log session.");
+
 
       // SM-2 Math Calculation
       if (quality >= 3) {
