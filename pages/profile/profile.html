@@ -200,16 +200,30 @@
                     aria-label="Upload profile picture"
                 >
             </div>
-            
             <div class="profile-user-info">
                 <h1 id="userName">Learner</h1>
                 <p class="profile-level" id="userLevel">Level 1 - Beginner</p>
-                <div class="profile-badges">
-                    <span class="badge"><i class="fas fa-fire"></i> <span id="userStreak">0</span> Day Streak</span>
-                    <span class="badge"><i class="fas fa-star"></i> <span id="userXP">0</span> XP</span>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon fire">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stat-value"><span id="userStreak">0</span></div>
+                        <div class="stat-label">Day Streak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon star">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-value"><span id="userXP">0</span></div>
+                        <div class="stat-label">Total XP</div>
+                    </div>
                 </div>
             </div>
-            <button type="button" class="profile-edit-btn" id="profilePageEditBtn" title="Edit Profile" aria-label="Edit Profile">
+
+
+            <button class="profile-edit-btn" id="profilePageEditBtn" title="Edit Profile" aria-label="Edit Profile">
                 <i class="fas fa-pen"></i>
             </button>
         </header>
