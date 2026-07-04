@@ -105,6 +105,44 @@
     .light-mode .modal-stat-label { color: #6b7280; }
     .light-mode .modal-section h4 { color: #374151; }
     .light-mode .modal-list li { background: #f9fafb; color: #111827; }
+    /* ========================================================
+   FIX #1547: PREMIUM GITHUB PROFILE BUTTON
+======================================================== */
+.github-profile-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #2d3748; /* Dark charcoal grey */
+    color: #f3f4f6;
+    padding: 6px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.github-profile-btn:hover {
+    background: #374151;
+    transform: translateY(-2px); /* Lift effect */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    color: #f3f4f6;
+    text-decoration: none;
+}
+
+/* ===== Light Mode Overrides ===== */
+.light-mode .github-profile-btn {
+    background: #e5e7eb;
+    color: #111827;
+    border-color: #d1d5db;
+}
+
+.light-mode .github-profile-btn:hover {
+    background: #d1d5db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+} 
     @media (max-width: 768px) {
       .contributors-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
       .leaderboard-item { flex-wrap: wrap; gap: 0.5rem; }
@@ -304,7 +342,7 @@
       content.innerHTML = `
         <div class="modal-avatar"><img loading="lazy" src="${contributor.avatar_url}" alt="${contributor.login}"></div>
         <div class="modal-name">${contributor.login}</div>
-        <div class="modal-username">@${contributor.login} · <a href="${contributor.html_url}" target="_blank" rel="noopener" style="color:#60a5fa;">GitHub Profile</a></div>
+       <div class="modal-username">@${contributor.login} · <a href="${contributor.html_url}" target="_blank" rel="noopener" class="github-profile-btn"><i class="fab fa-github"></i> GitHub Profile</a></div>
         <div class="modal-stats-grid">
           <div class="modal-stat"><div class="modal-stat-value">#${rank}</div><div class="modal-stat-label">Rank</div></div>
           <div class="modal-stat"><div class="modal-stat-value">${contributor.contributions || 0}</div><div class="modal-stat-label">Total Commits</div></div>
