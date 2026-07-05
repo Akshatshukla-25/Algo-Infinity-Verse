@@ -196,3 +196,5 @@ export function initSyntaxHighlight() {
     editor.addEventListener('click', updateCurrentLineHighlight);
   }
 }
+// Legacy global exports
+window.initSyntaxHighlight = initSyntaxHighlight;

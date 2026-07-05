@@ -119,7 +119,5 @@ export function cleanupLoadingScreen() {
     
     window.removeEventListener('load', () => {});
 }
-
-export function isReducedMotionPreferred() {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}   
+// Legacy global exports
+window.initLoadingScreen = initLoadingScreen;

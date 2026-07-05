@@ -92,3 +92,5 @@ window.syncProblemNotesDown = async function() {
 };
 
 export function initProblemNotes() {}
+// Legacy global exports
+window.initProblemNotes = initProblemNotes;

@@ -183,3 +183,5 @@ window.syncSpacedRepetitionDown = async function() {
     console.warn("Could not sync spaced repetition down:", err);
   }
 };
+// Legacy global exports
+window.initServiceWorker = initServiceWorker;

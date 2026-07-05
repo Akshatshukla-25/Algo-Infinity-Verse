@@ -1389,3 +1389,6 @@ function getTimerStatus() {
     isRunning: isTimerRunning
   };
 }
+
+// Legacy global exports
+window.initQuiz = initQuiz;

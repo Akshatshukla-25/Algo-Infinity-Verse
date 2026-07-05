@@ -163,3 +163,5 @@ export function initModalManager() {
 
     document.querySelectorAll('.modal, .modal-overlay, [class*="modal"]').forEach(checkElement);
 }
+// Legacy global exports
+window.initModalManager = initModalManager;

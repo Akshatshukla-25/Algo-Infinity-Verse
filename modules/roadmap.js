@@ -14,7 +14,8 @@ function getDifficultyClass(difficulty) {
 function isRoadmapStepCompleted(step) {
   const userProgress = window.userProgress || {};
   if (step.type === "quiz") return userProgress.completedRoadmapSteps.includes(step.id);
-  return step.problems.some(pid => userProgress.completedProblems.includes(pid));
+  if (!step.problems) return false;
+  return (step.problems || []).some(pid => userProgress.completedProblems.includes(pid));
 }
 
 function initRoadmap() {
@@ -113,7 +114,7 @@ function renderBasicRoadmap() {
     else if (isUnlocked) { statusClass = "active"; statusText = "Active"; statusTagClass = "active-tag"; }
     let progressPercent = 0, progressText = "";
     if (step.type === "quiz") { progressPercent = isCompleted ? 100 : 0; progressText = isCompleted ? "Passed" : "Not Started"; }
-    else { const solved = step.problems.filter(pid => userProgress.completedProblems.includes(pid)).length; progressPercent = Math.round((solved / step.problems.length) * 100); progressText = `${solved}/${step.problems.length} Solved`; }
+    else { const problemIds = step.problems || []; const solved = problemIds.filter(pid => userProgress.completedProblems.includes(pid)).length; progressPercent = problemIds.length ? Math.round((solved / problemIds.length) * 100) : 0; progressText = problemIds.length ? `${solved}/${problemIds.length} Solved` : 'N/A'; }
     let stepIcon = `<i class="fa-solid ${step.icon}"></i>`;
     if (isCompleted) stepIcon = `<i class="fa-solid fa-check"></i>`;
     else if (statusClass === "locked") stepIcon = `<i class="fa-solid fa-lock"></i>`;
@@ -149,7 +150,7 @@ function renderAdvancedRoadmap() {
     else if (isUnlocked) { statusClass = "active"; statusText = "Active"; statusTagClass = "active-tag"; }
     let progressPercent = 0, progressText = "";
     if (step.type === "quiz") { progressPercent = isCompleted ? 100 : 0; progressText = isCompleted ? "Passed" : "Not Started"; }
-    else { const solved = step.problems.filter(pid => userProgress.completedProblems.includes(pid)).length; progressPercent = Math.round((solved / step.problems.length) * 100); progressText = `${solved}/${step.problems.length} Solved`; }
+    else { const problemIds = step.problems || []; const solved = problemIds.filter(pid => userProgress.completedProblems.includes(pid)).length; progressPercent = problemIds.length ? Math.round((solved / problemIds.length) * 100) : 0; progressText = problemIds.length ? `${solved}/${problemIds.length} Solved` : 'N/A'; }
     let stepIcon = `<i class="fa-solid ${step.icon}"></i>`;
     if (isCompleted) stepIcon = `<i class="fa-solid fa-check"></i>`;
     else if (statusClass === "locked") stepIcon = `<i class="fa-solid fa-lock"></i>`;
@@ -198,7 +199,7 @@ function openRoadmapStepModal(stepIndex, type = 'basic') {
     quizSection.classList.add("hidden");
     problemsSection.classList.remove("hidden");
     const problemsList = document.getElementById("roadmapStepProblemsList");
-    problemsList.innerHTML = step.problems.map(pid => {
+    problemsList.innerHTML = (step.problems || []).map(pid => {
       const prob = practiceProblems.find(p => p.id === pid);
       if (!prob) return "";
       const isSolved = userProgress.completedProblems.includes(pid);

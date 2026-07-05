@@ -43,6 +43,14 @@ function loadUserData() {
   }
 }
 
+function initFooterCurrentDate() {
+  const yearEl = document.getElementById("footer-current-year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+  const dateEl = document.getElementById("footer-current-date");
+  if (dateEl) dateEl.textContent = "Today: " + new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+}
+window.initFooterCurrentDate = initFooterCurrentDate;
+
 function initializeApp() {
   loadUserData();
   initLoadingScreen();
@@ -64,6 +72,7 @@ function initializeApp() {
   initFlashcardsRevision();
   initKeyboardShortcuts();
   initDidYouKnow();
+  initFooterCurrentDate();
   initLanguageDetect();
   initActivityFeed();
   initModalManager();

@@ -834,3 +834,5 @@ window.toggleOutputPanel = toggleOutputPanel;
 export function initEditor() {
   initializeQuizEditor();
 }
+// Legacy global exports
+window.initEditor = initEditor;

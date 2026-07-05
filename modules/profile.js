@@ -209,3 +209,5 @@ function renderProfileLeaderboardEntries(container, rows, currentUserId) {
     </div>`;
   }).join("");
 }
+// Legacy global exports
+window.updateProfile = updateProfile;

@@ -72,3 +72,5 @@ function closeShortcutModal() {
 
 window.openShortcutModal = openShortcutModal;
 window.closeShortcutModal = closeShortcutModal;
+// Legacy global exports
+window.initKeyboardShortcuts = initKeyboardShortcuts;

@@ -261,3 +261,13 @@ export default {
     isLightTheme,
     THEME_CHANGE_EVENT
 };
+
+// Legacy global exports
+window.getCurrentTheme = getCurrentTheme;
+window.setTheme = setTheme;
+window.toggleTheme = toggleTheme;
+window.initTheme = initTheme;
+window.onThemeChange = onThemeChange;
+window.getTheme = getTheme;
+window.isDarkTheme = isDarkTheme;
+window.isLightTheme = isLightTheme;

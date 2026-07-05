@@ -167,3 +167,8 @@ export function extractSnapshotsFromOutput(stdout) {
   } catch {}
   return null;
 }
+// Legacy global exports (browser only)
+if (typeof window !== 'undefined') {
+  window.instrumentJS = instrumentJS;
+  window.extractSnapshotsFromOutput = extractSnapshotsFromOutput;
+}

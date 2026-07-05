@@ -16,3 +16,5 @@ export async function executeCode({ source_code, language, stdin = '' }) {
 
   return res.json();
 }
+// Legacy global exports
+window.executeCode = executeCode;

@@ -46,3 +46,5 @@ window.renderMistakeDnaCard = renderMistakeDnaCard;
 export function initMistakeDna() {
   renderMistakeDnaCard();
 }
+// Legacy global exports
+window.initMistakeDna = initMistakeDna;

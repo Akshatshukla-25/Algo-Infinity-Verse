@@ -12,3 +12,5 @@ export function initNewsletterValidation() {
   input.addEventListener("input", clearState);
   form.addEventListener("submit", (e) => { e.preventDefault(); const val = input.value.trim(); if (!val) { showError("Email address is required."); input.focus(); return; } if (!validateEmail(val)) { showError("Please enter a valid email address."); input.focus(); return; } showSuccess(); if (typeof showNotification === 'function') showNotification("🎉 Successfully subscribed to the newsletter!", "success"); input.value = ""; setTimeout(clearState, 1500); });
 }
+// Legacy global exports
+window.initNewsletterValidation = initNewsletterValidation;

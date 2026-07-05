@@ -68,7 +68,10 @@
     <div id="footer-placeholder"></div>
 
     <script src="../../theme.js"></script>
+    <script src="/bootstrap-legacy.js"></script>
+
     <script src="../../script.js"></script>
+    <script type="module" src="/dist/legacy-bundle.mjs"></script>
     <script>
       if(typeof loadPartial === 'function') {
           loadPartial("navbar-placeholder", "../../partials/navbar.html").then(() => {

@@ -324,7 +324,10 @@
     <div id="footer-placeholder"></div>
 
     <script src="/auth.js"></script>
+    <script src="/bootstrap-legacy.js"></script>
+
     <script src="/script.js"></script>
+    <script type="module" src="/dist/legacy-bundle.mjs"></script>
     <script src="/theme.js"></script>
     <script src="personalized-learning-path.js" defer></script>
   
@@ -334,6 +337,7 @@
           loadPartial('footer-placeholder', '/partials/footer.html');
       } else {
           console.error("loadPartial is not defined. Ensure script.js is loaded.");
+    <script type="module" src="/dist/legacy-bundle.mjs"></script>
       }
     </script>
   </body>

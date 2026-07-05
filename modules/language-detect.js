@@ -40,3 +40,5 @@ function detectLanguage(code) {
 export function initLanguageDetect() {
     addLanguageBadges();
 }
+// Legacy global exports
+window.initLanguageDetect = initLanguageDetect;

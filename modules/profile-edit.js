@@ -166,3 +166,5 @@ function setupProfileListeners() {
 export function initProfileEdit() {
     setupProfileListeners();
 }
+// Legacy global exports
+window.initProfileEdit = initProfileEdit;

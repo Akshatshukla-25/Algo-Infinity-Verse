@@ -74,3 +74,7 @@ export function initNavbar() {
     }
   });
 }
+// Legacy global exports
+window.lockBodyScroll = lockBodyScroll;
+window.unlockBodyScroll = unlockBodyScroll;
+window.initNavbar = initNavbar;

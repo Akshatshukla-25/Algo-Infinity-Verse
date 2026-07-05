@@ -28,3 +28,5 @@ function animateValue(element) {
   let current = 0;
   const timer = setInterval(() => { current += increment; if (current >= target) { current = target; clearInterval(timer); } element.textContent = Math.ceil(current).toLocaleString(); }, 16);
 }
+// Legacy global exports
+window.initHeroSection = initHeroSection;

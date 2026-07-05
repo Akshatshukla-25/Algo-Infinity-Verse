@@ -87,3 +87,5 @@ export function initPersonalityQuiz() {
   const quizBtn = document.getElementById("personalityQuizBtn");
   if (quizBtn) quizBtn.addEventListener("click", openPersonalityQuiz);
 }
+// Legacy global exports
+window.initPersonalityQuiz = initPersonalityQuiz;

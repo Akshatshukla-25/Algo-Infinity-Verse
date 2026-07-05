@@ -52,3 +52,5 @@ window.showNextFact = showNextFact;
 export function initDidYouKnow() {
     showDailyFact();
 }
+// Legacy global exports
+window.initDidYouKnow = initDidYouKnow;

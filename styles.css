@@ -105,6 +105,11 @@ body {
   transform: scale(1.05);
 }
 
+#profile .big-box:hover {
+  transform: none;
+}
+
+
 .infinity-loader {
   font-size: 6rem;
   font-weight: 900;

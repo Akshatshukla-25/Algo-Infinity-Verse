@@ -115,3 +115,6 @@ export function drawRadarChart(svg, topicStats) {
       .join("")}
   `;
 }
+// Legacy global exports
+window.drawLineChart = drawLineChart;
+window.drawRadarChart = drawRadarChart;

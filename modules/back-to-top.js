@@ -13,3 +13,5 @@ export function initScrollEffects() {
   const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add("animate-in"); }); }, { threshold: 0.1 });
   document.querySelectorAll(".topic-card, .problem-card, .interview-card, .dashboard-card").forEach(el => observer.observe(el));
 }
+// Legacy global exports
+window.initScrollEffects = initScrollEffects;

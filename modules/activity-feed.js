@@ -83,3 +83,5 @@ window.trackBadgeEarned = trackBadgeEarned;
 export function initActivityFeed() {
     renderActivityFeed();
 }
+// Legacy global exports
+window.initActivityFeed = initActivityFeed;

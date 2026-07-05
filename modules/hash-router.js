@@ -18,3 +18,5 @@ export function initHashRouter() {
     }
   });
 }
+// Legacy global exports
+window.initHashRouter = initHashRouter;
