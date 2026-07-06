@@ -1,4 +1,56 @@
+import crypto from 'crypto';
 import { runUserCode } from '../backend/jsSandboxRunner.js';
+
+// ─── Auth helpers (mirrors the pattern used by api/battles.js and
+// backend/controllers/apiController.js's executeCode) ───────────────────────
+const SESSION_COOKIE = "aiv_session";
+
+function sessionSecret() {
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  if (process.env.NODE_ENV === "production") throw new Error("SESSION_SECRET required");
+  return "dev-only-change-me-with-SESSION_SECRET-before-deploying";
+}
+
+function sign(value) {
+  return crypto.createHmac("sha256", sessionSecret()).update(value).digest("base64url");
+}
+
+function fromBase64Url(input) {
+  return Buffer.from(input.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+}
+
+function timingSafeEqStr(a, b) {
+  const ab = Buffer.from(a || "", "utf8");
+  const bb = Buffer.from(b || "", "utf8");
+  if (ab.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ab, bb);
+}
+
+function verifySessionToken(token) {
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const [header, payload, signature] = parts;
+  if (!timingSafeEqStr(signature, sign(`${header}.${payload}`))) return null;
+  try {
+    const session = JSON.parse(fromBase64Url(payload));
+    if (!session.exp || session.exp < Math.floor(Date.now() / 1000)) return null;
+    return session;
+  } catch { return null; }
+}
+
+function parseCookies(h = "") {
+  return h.split(";").reduce((c, p) => {
+    const [k, ...v] = p.trim().split("=");
+    if (k) c[k] = decodeURIComponent(v.join("="));
+    return c;
+  }, {});
+}
+
+function getUser(req) {
+  const cookies = parseCookies(req.headers.cookie || "");
+  return verifySessionToken(cookies[SESSION_COOKIE]);
+}
 
 const LANGUAGE_IDS = {
   python:      71,
@@ -20,6 +72,13 @@ const LANGUAGE_IDS = {
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Auth check — running user-submitted code in a Docker container is
+  // expensive and must not be reachable anonymously.
+  const user = getUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized — please log in' });
   }
 
   // Validate request body size via Content-Length header
