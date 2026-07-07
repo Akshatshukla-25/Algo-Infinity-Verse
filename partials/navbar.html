@@ -1577,16 +1577,180 @@
         <a href="/Playground/playground.html" class="dropdown-item" role="menuitem">Playground</a>
       </div>
     </li>
-    <li class="nav-item has-dropdown nav-interview-dropdown">
+    <li class="nav-item">
+  <a href="/pages/interview/interview.html" class="nav-link">
+    Interview
+  </a>
+</li>
+    <li class="nav-item has-dropdown">
       <button
         type="button"
-        id="menuToggle"
-        class="menu-toggle"
-        aria-label="Toggle navigation menu"
+        class="nav-link dropdown-toggle"
+        aria-haspopup="menu"
         aria-expanded="false"
       >
-        <i class="fas fa-bars"></i>
+        <span>Community</span>
+        <i class="fas fa-chevron-down dropdown-icon"></i>
       </button>
-    </div>
+      <div class="dropdown-menu" role="menu">
+        <a href="/pages/community/community/community.html" class="dropdown-item" role="menuitem"
+          >Discussions</a
+        >
+        <a href="/index.html#dashboard" class="dropdown-item" role="menuitem" data-auth-required
+          >Leaderboard</a
+        >
+        <a href="/pages/community/support/index.html" class="dropdown-item" role="menuitem"
+          >Support</a
+        >
+        <a href="/support-page/index.html" class="dropdown-item" role="menuitem">Support Center</a>
+        <a href="/pages/community/feedback/feedback.html" class="dropdown-item" role="menuitem"
+          >Feedback</a
+        >
+        <a href="/pages/resources/faq/faq.html" class="dropdown-item" role="menuitem">FAQ</a>
+        <a href="/pages/resources/about-us.html" class="dropdown-item" role="menuitem">About Us</a>
+        <a href="/pages/resources/blog/blog.html" class="dropdown-item" role="menuitem">Blog</a>
+        <a href="/contributors/index.html" class="dropdown-item" role="menuitem"
+          >Meet the Contributors</a
+        >
+        <a href="/pages/team-profile/index.html" class="dropdown-item" role="menuitem"
+          >Team Profile</a
+        >
+        <a href="/pages/resources/privacy-policy.html" class="dropdown-item" role="menuitem"
+          >Privacy Policy</a
+        >
+      </div>
+    </li>
+    <li class="nav-item has-dropdown nav-profile-dropdown">
+      <button
+        type="button"
+        class="nav-link dropdown-toggle"
+        aria-haspopup="menu"
+        aria-expanded="false"
+      >
+        <span>Profile</span>
+        <i class="fas fa-chevron-down dropdown-icon"></i>
+      </button>
+      <div class="dropdown-menu dropdown-menu-end" role="menu">
+        <a href="/index.html#dashboard" class="dropdown-item" role="menuitem" data-auth-required>
+          <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        <a
+          href="/pages/profile/profile.html"
+          class="dropdown-item"
+          role="menuitem"
+          data-auth-required
+        >
+          <i class="fas fa-user"></i> My Profile
+        </a>
+        <a href="/execution-history.html" class="dropdown-item" role="menuitem" data-auth-required>
+          <i class="fas fa-history"></i> Execution History
+        </a>
+        <a
+          href="/pages/career/resume/resume.html"
+          class="dropdown-item"
+          role="menuitem"
+          data-auth-required
+        >
+          <i class="fas fa-file-alt"></i> Coding Resume
+        </a>
+        <div class="dropdown-divider" data-auth-required></div>
+        <button
+          type="button"
+          class="dropdown-item nav-auth-link"
+          role="menuitem"
+          data-auth-logout
+          data-auth-required
+          style="cursor: pointer; font-family: inherit; text-align: left; width: 100%"
+        >
+          <i class="fas fa-right-from-bracket"></i> Logout
+        </button>
+        <a
+          href="/pages/auth/login.html"
+          class="dropdown-item nav-auth-link"
+          role="menuitem"
+          id="navLoginBtn"
+          data-guest-only
+        >
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </a>
+        <a
+          href="/pages/auth/signup.html"
+          class="dropdown-item nav-auth-link"
+          role="menuitem"
+          id="navSignupBtn"
+          data-guest-only
+        >
+          <i class="fas fa-user-plus"></i> Sign Up
+        </a>
+        <a
+          href="/pages/auth/setting.html"
+          class="dropdown-item nav-auth-link"
+          role="menuitem"
+          id="navSettingsBtn"
+          data-auth-required
+        >
+          <i class="fas fa-cog"></i> Settings
+        </a>
+        <a
+          href="/pages/auth/2FA-Security/2FA-Security.html"
+          class="dropdown-item nav-auth-link"
+          role="menuitem"
+        >
+          <i class="fas fa-shield-alt"></i> 2FA Security
+        </a>
+        <a
+          href="/pages/auth/forgot-password.html"
+          class="dropdown-item nav-auth-link"
+          role="menuitem"
+          id="navForgotPasswordBtn"
+          data-guest-only
+        >
+          <i class="fas fa-key"></i> Forgot Password
+        </a>
+        <a
+          href="/pages/auth/verify-email.html"
+          class="dropdown-item nav-auth-link"
+          role="menuitem"
+          id="navVerifyEmailBtn"
+          data-auth-required
+        >
+          <i class="fas fa-envelope"></i> Verify Email
+        </a>
+        <a
+          href="/pages/profile/public-profile.html"
+          class="dropdown-item"
+          role="menuitem"
+          data-auth-required
+        >
+          <i class="fas fa-globe"></i> Public Profile
+        </a>
+        <a href="/contributors/profile.html" class="dropdown-item" role="menuitem">
+          <i class="fas fa-users"></i> Contributor Profile
+        </a>
+      </div>
+    </li>
+    <li class="nav-item nav-cta desktop-only">
+      <a
+        href="/index.html#practice"
+        class="btn btn-primary nav-cta-btn"
+        aria-label="Start learning practice problems"
+      >
+        <i class="fas fa-rocket"></i> Start Learning
+      </a>
+    </li>
+  </ul>
+  <div class="nav-buttons">
+    <button type="button" id="darkModeToggle" class="dark-mode-btn" aria-label="Toggle dark mode">
+      <i class="fas fa-moon"></i>
+    </button>
+    <button
+      type="button"
+      id="menuToggle"
+      class="menu-toggle"
+      aria-label="Toggle navigation menu"
+      aria-expanded="false"
+    >
+      <i class="fas fa-bars"></i>
+    </button>
   </div>
 </nav>
