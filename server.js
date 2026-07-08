@@ -879,6 +879,17 @@ async function handleApi(req, res, pathname) {
     });
   }
 
+  if (pathname === "/api/csrf-token" && req.method === "GET") {
+    const secret = crypto.randomBytes(32).toString("hex");
+    const token = crypto
+      .createHmac("sha256", process.env.CSRF_SALT || "infinity-verse-secure-salt")
+      .update(secret)
+      .digest("hex");
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieString = `csrfSecret=${secret}; HttpOnly; ${isProd ? "Secure; " : ""}SameSite=Lax; Path=/; Max-Age=3600`;
+    return sendJson(res, 200, { csrfToken: token }, { "Set-Cookie": cookieString });
+  }
+
   if (pathname === "/api/analyze-resume" && req.method === "POST") {
     if (!applyRateLimit(req, res, resumeAnalysisLimiter, "Too many resume analysis requests. Please try again later.")) {
       return;
