@@ -224,8 +224,63 @@
   box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.32);
 }
 
+/* Mode hint + warnings */
+.mode-hint {
+  margin-top: 0.6rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: rgba(167, 139, 250, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  border-radius: 12px;
+  padding: 0.6rem 0.7rem;
+}
+
+.warn-box {
+  margin-top: 0.5rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  display: none;
+}
+
+.toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.toggle-item input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.mode-subtext {
+  margin-top: 0.25rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
 /* Round explainer */
 .round-explainer {
+
   margin-top: 1rem;
   display: flex;
   flex-direction: column;

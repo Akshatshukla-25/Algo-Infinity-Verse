@@ -153,9 +153,33 @@
                   value="banana"
                   placeholder="Enter text (e.g., banana)"
                 />
+                <div class="mode-hint" id="saModeHint" aria-live="polite"></div>
+                <div class="warn-box" id="saInputWarning" aria-live="polite"></div>
               </div>
 
               <div class="control-group">
+                <label for="saCaseInsensitiveToggle">
+                  <span>Character Mode</span>
+                  <span class="val-display">Toggle rules</span>
+                </label>
+
+                <div class="toggle-row">
+                  <label class="toggle-item" for="saCaseInsensitiveToggle">
+                    <input type="checkbox" id="saCaseInsensitiveToggle" checked />
+                    <span>Case-insensitive</span>
+                  </label>
+
+                  <label class="toggle-item" for="saAllowSpacesToggle">
+                    <input type="checkbox" id="saAllowSpacesToggle" checked />
+                    <span>Allow spaces</span>
+                  </label>
+                </div>
+
+                <div class="mode-subtext">Changing these options regenerates the character ranking.</div>
+              </div>
+
+              <div class="control-group">
+
                 <label for="saMethodSelect">Build Method</label>
                 <select id="saMethodSelect" class="control-input" disabled>
                   <option value="doubling" selected>Doubling (rank by pairs)</option>

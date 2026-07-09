@@ -8,7 +8,11 @@
     timer: null,
     delay: 400,
     activeSuffixRow: -1,
+
+    caseInsensitive: true,
+    allowSpaces: true,
   };
+
 
   // ===== DOM =====
   const el = {
@@ -37,17 +41,81 @@
 
     timeComplexity: document.getElementById('saTimeComplexity'),
     spaceComplexity: document.getElementById('saSpaceComplexity'),
+
+    caseInsensitiveToggle: document.getElementById('saCaseInsensitiveToggle'),
+    allowSpacesToggle: document.getElementById('saAllowSpacesToggle'),
+    modeHint: document.getElementById('saModeHint'),
+    inputWarning: document.getElementById('saInputWarning'),
   };
+
 
   // ===== Helpers =====
   const safeStr = (x) => (typeof x === 'string' ? x : '');
 
   function normalizeInput(str) {
-    // Keep user input simple for education.
-    // Remove whitespace at ends but keep internal spaces.
-    // Also keep as-is for suffixes.
-    return safeStr(str).trim();
+    const raw = safeStr(str);
+
+    // Trim ends always (keeps behavior predictable across modes).
+    let s = raw.trim();
+
+    if (state.caseInsensitive) {
+      s = s.toLowerCase();
+    }
+
+    if (!state.allowSpaces) {
+      // Educational rule: if spaces aren't allowed, we remove ALL space characters.
+      // That means "a b" becomes "ab".
+      s = s.replace(/\s+/g, '');
+    }
+
+    return s;
   }
+
+  function renderModeHint() {
+    if (!el.modeHint) return;
+
+    const caseText = state.caseInsensitive
+      ? 'Using case-insensitive mode: “A” equals “a”.'
+      : 'Using case-sensitive mode: “A” is different from “a”.';
+
+    const spacesText = state.allowSpaces
+      ? 'Spaces are allowed inside the string.'
+      : 'Spaces are not allowed: they are removed before ranking.';
+
+    el.modeHint.textContent = `${caseText} ${spacesText}`;
+  }
+
+  function validateAndWarn() {
+    if (!el.inputWarning || !el.status) return;
+
+    const raw = el.textInput ? el.textInput.value : '';
+    const normalized = normalizeInput(raw);
+    const n = normalized.length;
+
+    const hardMax = 60;
+
+    if (n === 0) {
+      el.inputWarning.textContent = 'Warning: input is empty after applying the mode rules.';
+      el.inputWarning.style.display = 'block';
+      return;
+    }
+
+    // Use a gentle warning threshold for learning/performance.
+    const warnings = [];
+    if (n > hardMax) {
+      warnings.push(`Input length ${n} exceeds ${hardMax} (animation may be slow).`);
+    }
+
+    if (n > 50) {
+      warnings.push('Tip: shorter strings (n ≤ 50) make the learning loop smoother.');
+    }
+
+    el.inputWarning.textContent = warnings.length ? warnings.join(' ') : '';
+    el.inputWarning.style.display = warnings.length ? 'block' : 'none';
+  }
+
+
+
 
   function getCharCodeMap(s) {
     // Compress initial ranks by character.
@@ -376,8 +444,11 @@
       ? 'Ready. Step through rounds to watch rank changes.'
       : 'Enter a non-empty string to generate suffix array rounds.';
 
+    validateAndWarn();
+    renderModeHint();
     renderRound();
   }
+
 
   // ===== Init =====
   function init() {
@@ -416,15 +487,48 @@
     if (el.stepBackBtn) el.stepBackBtn.addEventListener('click', () => stepBack());
     if (el.resetBtn) el.resetBtn.addEventListener('click', () => generateAndReset());
 
-    // Input: press Enter generates
+    // Toggles
+    const applyTogglesFromUI = () => {
+      if (el.caseInsensitiveToggle) state.caseInsensitive = !!el.caseInsensitiveToggle.checked;
+      if (el.allowSpacesToggle) state.allowSpaces = !!el.allowSpacesToggle.checked;
+      // Also re-render hints/warnings live, even before Generate/Reset.
+      validateAndWarn();
+      renderModeHint();
+    };
+
+    if (el.caseInsensitiveToggle) {
+      el.caseInsensitiveToggle.addEventListener('change', () => {
+        applyTogglesFromUI();
+        generateAndReset();
+      });
+    }
+
+    if (el.allowSpacesToggle) {
+      el.allowSpacesToggle.addEventListener('change', () => {
+        applyTogglesFromUI();
+        generateAndReset();
+      });
+    }
+
+    // Input validation (real-time)
     if (el.textInput) {
+      el.textInput.addEventListener('input', () => {
+        validateAndWarn();
+        renderModeHint();
+      });
+
+      // Input: press Enter generates
       el.textInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') generateAndReset();
       });
     }
 
+    // Sync initial toggle states
+    applyTogglesFromUI();
+
     // Initial render
     generateAndReset();
+
   }
 
   document.addEventListener('DOMContentLoaded', init);
