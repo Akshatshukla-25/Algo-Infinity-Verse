@@ -158,10 +158,7 @@ function initPredictor() {
   // Initial Calculation
   recalculateForecasts();
 
-  // Hide loading screen
-  const s = document.getElementById("loading-screen");
-  if (s) s.classList.add("hidden");
-}
+  }
 
 // ──────────────────────────────────────────────────────────────────────────
 // 💾 LOCAL STORAGE LINK
