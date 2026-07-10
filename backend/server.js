@@ -12,6 +12,7 @@ import { setupApiRoutes } from "./routes/apiRoutes.js";
 import { CodingPersonalityAnalyzer } from "./personalityAnalyzer.js";
 import { applySM2 } from "./utils/sm2.js";
 import { getSession, clearSessionCookie } from "./utils/sessionToken.js";
+import { commonPasswords } from "./config/passwordBlacklist.js";
 import { validateAndNormalizeEmail } from "./utils/emailValidation.js";
 
 const MAX_RESUME_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -319,6 +320,7 @@ function validateSignup({ name, email, password, confirmPassword }) {
   }
   const cleanEmail = emailValidation.normalizedEmail; // Normalized email
 
+  // Common weak passwords check
   // Password strength checks
   if (rawPassword.length < 8) return { isValid: false, error: "Password must be at least 8 characters long." };
   if (rawPassword.length > 64) return { isValid: false, error: "Password must not exceed 64 characters." };
