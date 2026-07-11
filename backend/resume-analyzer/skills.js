@@ -1,18 +1,8 @@
-export function findMissingSkills(text){
+export function findMissingSkills(text) {
+  const skills = ['React', 'Node', 'SQL', 'Git', 'Python'];
 
-const skills=[
-"React",
-"Node",
-"SQL",
-"Git",
-"Python"
-];
-
-
-return skills.filter(skill=>
-!text.toLowerCase()
-.includes(skill.toLowerCase())
-);
-
-
+  return skills.filter((skill) => {
+    const regex = new RegExp(`\\b${skill}\\b`, 'i');
+    return !regex.test(text);
+  });
 }
