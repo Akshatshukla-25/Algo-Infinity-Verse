@@ -15,6 +15,7 @@ import { getSession, clearSessionCookie } from "./utils/sessionToken.js";
 import { commonPasswords } from "./config/passwordBlacklist.js";
 import { validateAndNormalizeEmail } from "./utils/emailValidation.js";
 import securityConfig from "./config/security.js";
+import { protectedPaths } from "./config/protectedPaths.js";
 import { getClientIdentifier } from "./utils/clientIdentifier.js";
 
 const MAX_RESUME_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -150,14 +151,6 @@ function clearLoginFailures(identifier) {
   loginFailures.delete(identifier);
 }
 // ────────────────────────────────────────────────────────────────────────────
-
-const protectedPaths = new Set([
-  "/community",
-  "/community.html",
-  "/support-page",
-  "/support-page/",
-  "/support-page/index.html",
-]);
 
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
