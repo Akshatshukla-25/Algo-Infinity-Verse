@@ -1,6 +1,5 @@
 let loadingTimeout = null;
 let animationObserver = null;
-let isPageLoaded = false;
 
 export function initLoadingScreen() {
     const loadingScreen = document.getElementById("loading-screen");
@@ -24,6 +23,13 @@ export function initLoadingScreen() {
         loadingScreen.classList.add("hidden");
         initializeAnimations();
         return;
+    }
+
+    // NEW: set context-specific loading text
+    const textEl = loadingScreen.querySelector('#loadingScreenText');
+    if (textEl) {
+        const customMessage = document.body.getAttribute('data-loading-message');
+        textEl.textContent = customMessage || 'Loading...';
     }
 
     const FALLBACK_TIMEOUT = 3000;
