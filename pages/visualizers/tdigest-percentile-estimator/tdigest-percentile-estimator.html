@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>t-Digest Percentile Estimator | Algo Infinity Verse</title>
+    <meta name="description" content="See how monitoring dashboards estimate p50/p95/p99 latency from millions of requests using a handful of adaptive centroids instead of storing every value." />
+    <link rel="stylesheet" href="../../../styles.css" />
+    <link rel="stylesheet" href="tdigest-percentile-estimator.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+  <body data-page="tdigest-percentile-estimator">
+
+    <div id="navbar-placeholder"></div>
+
+    <button id="scrollTopBtn" aria-label="Scroll to top" class="scroll-top-btn">
+      <i class="fas fa-circle-chevron-up"></i>
+    </button>
+
+    <section class="td-hero">
+      <div class="hero-background">
+        <div class="stars"></div><div class="stars2"></div><div class="stars3"></div>
+      </div>
+      <div class="td-hero-inner">
+        <div class="td-hero-eyebrow">📈 Datadog · Prometheus · New Relic Latency Dashboards</div>
+        <h1 class="td-hero-title">t-Digest Percentile Estimator</h1>
+        <p class="td-hero-sub">p99 latency for a billion requests, from a few hundred numbers.</p>
+        <p class="td-hero-desc">t-Digest maintains a small set of weighted "centroids" instead of storing every value — and deliberately keeps them SMALL near the tails (p99, p99.9) and LARGE near the median. This non-uniform sizing is the entire trick: it spends its limited precision budget exactly where extreme-percentile accuracy actually matters.</p>
+        <a href="#lab" class="btn btn-primary td-btn-primary"><i class="fas fa-chart-column"></i> Open Estimator</a>
+      </div>
+    </section>
+
+    <section id="lab" class="section td-section">
+      <div class="container">
+
+        <div class="td-control-card">
+          <div class="td-row">
+            <span class="td-row-label">Distribution</span>
+            <div class="td-dist-btns">
+              <button class="td-dist-btn active" data-dist="lognormal">Log-normal (realistic latency)</button>
+              <button class="td-dist-btn" data-dist="uniform">Uniform</button>
+              <button class="td-dist-btn" data-dist="bimodal">Bimodal (fast + slow paths)</button>
+            </div>
+          </div>
+          <div class="td-row">
+            <span class="td-row-label">Compression (δ)</span>
+            <input type="range" id="tdDeltaSlider" class="td-range" min="20" max="300" step="10" value="100" />
+            <span class="td-delta-val" id="tdDeltaVal">100</span>
+            <button class="btn td-btn-primary td-stream-btn" id="tdStreamBtn"><i class="fas fa-play"></i> Stream 10,000 Values</button>
+            <button class="btn btn-secondary td-reset-btn" id="tdResetBtn"><i class="fas fa-undo"></i> Reset</button>
+          </div>
+        </div>
+
+        <div class="td-status" id="tdStatus">Choose a distribution and compression level, then stream values to build the digest.</div>
+
+        <div class="td-main-layout">
+
+          <div class="td-viz-section">
+            <div class="td-panel-title"><i class="fas fa-braille"></i> Centroids (size ∝ weight, position ∝ value)</div>
+            <canvas id="tdCentroidCanvas" class="td-centroid-canvas"></canvas>
+            <div class="td-centroid-hint">Notice: centroids are small and dense at the tails, large and sparse near the median — this is the accuracy trick.</div>
+          </div>
+
+          <div class="td-right-panel">
+
+            <div class="td-panel-card">
+              <div class="td-panel-title"><i class="fas fa-gauge-high"></i> Live Stats</div>
+              <div class="td-stat-rows">
+                <div class="td-stat-row"><span>Values streamed</span><span id="tdStreamed">0</span></div>
+                <div class="td-stat-row"><span>Centroids maintained</span><span id="tdCentroidCount">0</span></div>
+                <div class="td-stat-row"><span>Memory (centroids)</span><span id="tdMemDigest">—</span></div>
+                <div class="td-stat-row"><span>Memory (raw values)</span><span id="tdMemRaw">—</span></div>
+                <div class="td-stat-row td-mem-savings"><span>Savings</span><span id="tdMemSavings">—</span></div>
+              </div>
+            </div>
+
+            <div class="td-panel-card">
+              <div class="td-panel-title"><i class="fas fa-percent"></i> Percentile Comparison</div>
+              <div class="td-percentile-table" id="tdPercentileTable"></div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="td-chart-card">
+          <div class="td-panel-title"><i class="fas fa-chart-line"></i> Error by Percentile — Where t-Digest Shines</div>
+          <canvas id="tdErrorCanvas" class="td-error-canvas"></canvas>
+          <div class="td-chart-hint">Error stays low across the entire range, including deep into the tails — because centroid size shrinks exactly where it needs to.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="learn" class="section">
+      <div class="container">
+        <h2 class="section-title"><span class="title-icon">📈</span> Why Uneven Centroid Sizing Works</h2>
+        <div class="td-learn-grid">
+          <div class="td-learn-card" style="--lc:#06b6d4">
+            <div class="td-learn-icon">⚖️</div>
+            <h3>The Scale Function</h3>
+            <p>A centroid spanning quantile range [q_low, q_high] is allowed a maximum size proportional to q(1−q). Near q=0.5, this is at its largest (0.25) — near q=0 or q=1, it shrinks toward zero. This single function is what makes tail centroids small automatically.</p>
+          </div>
+          <div class="td-learn-card" style="--lc:#a855f7">
+            <div class="td-learn-icon">🔗</div>
+            <h3>Sequential Merging</h3>
+            <p>New values merge into the current centroid if doing so wouldn't exceed its size limit for its current quantile position; otherwise a new centroid starts. This single pass keeps the digest compact and self-adjusting to any distribution shape.</p>
+          </div>
+          <div class="td-learn-card" style="--lc:#22c55e">
+            <div class="td-learn-icon">🎯</div>
+            <h3>Why p99 Matters More Than p50</h3>
+            <p>A slow p50 means half your users have a mediocre experience. A slow p99 means your worst 1% — often your angriest, most vocal users — have a terrible one. Monitoring systems obsess over tail percentiles precisely because that's where user pain concentrates.</p>
+          </div>
+          <div class="td-learn-card" style="--lc:#f59e0b">
+            <div class="td-learn-icon">🏢</div>
+            <h3>Production Scale</h3>
+            <p>Datadog and Prometheus's histogram-based summaries use t-digest or similar sketches to report accurate p99/p99.9 latency across millions of requests per second, using a fixed memory budget of a few hundred centroids per metric — regardless of total request volume.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="../../../auth.js"></script>
+    <script src="../../../script.js"></script>
+    <script src="../../../theme.js"></script>
+    <script src="../../../auth-gate.js"></script>
+    <script src="tdigest-percentile-estimator.js"></script>
+    <script>
+      if (typeof loadPartial === 'function') {
+        loadPartial('navbar-placeholder', '/partials/navbar.html').then(function() {
+          if (typeof initNavbar === 'function') initNavbar();
+        });
+        loadPartial('footer-placeholder', '/partials/footer.html');
+      }
+    </script>
+  </body>
+</html>
