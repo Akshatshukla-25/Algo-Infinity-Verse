@@ -425,6 +425,13 @@ const visualizers = [
     icon: 'fa-code-branch',
     desc: 'Visualize Git internals: commits, branches, merges, and the DAG commit graph.',
   },
+  {
+    name: 'Spanning Tree Protocol (STP)',
+    path: '/pages/visualizers/stp-simulator/stp-simulator.html',
+    category: 'Systems & OS',
+    icon: 'fa-network-wired',
+    desc: 'Simulate STP to prevent network loops and elect root bridges.',
+  },
 
   // ── CPU Scheduling ──
   {
