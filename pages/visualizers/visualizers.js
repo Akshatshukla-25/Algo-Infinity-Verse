@@ -1020,6 +1020,13 @@ const visualizers = [
     icon: 'fa-eye',
     desc: 'Spectre side-channel attack — speculative execution visualized.',
   },
+  {
+    name: 'WebRTC Signaling & ICE Simulator',
+    path: '/pages/visualizers/webrtc-simulator/webrtc-simulator.html',
+    category: 'Systems & OS',
+    icon: 'fa-tower-broadcast',
+    desc: 'Visualize Peer-to-Peer connections, STUN hole-punching, and TURN relays.',
+  },
 ];
 
 /* ─── Categories ─── */
