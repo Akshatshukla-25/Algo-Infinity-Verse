@@ -1021,6 +1021,11 @@ const visualizers = [
     desc: 'Spectre side-channel attack — speculative execution visualized.',
   },
   {
+    name: 'gRPC & HTTP/2 Multiplexing Visualizer',
+    path: '/pages/visualizers/grpc-simulator/grpc-simulator.html',
+    category: 'Architecture',
+    icon: 'fa-network-wired',
+    desc: 'Compare HTTP/1.1 REST to HTTP/2 multiplexed streams and Protocol Buffers.',
     name: 'WebRTC Signaling & ICE Simulator',
     path: '/pages/visualizers/webrtc-simulator/webrtc-simulator.html',
     category: 'Systems & OS',
