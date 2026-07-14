@@ -226,6 +226,15 @@ const academies = [
     difficulty: 'Intermediate',
     desc: 'Master PostgreSQL for relational databases, advanced queries, indexing, and data integrity.',
   },
+  {
+    id: 'redis',
+    name: 'Redis Academy',
+    path: '/pages/redis-academy/redis-academy.html',
+    category: 'Databases',
+    icon: 'fa-solid fa-database',
+    difficulty: 'Intermediate',
+    desc: 'Master Redis for in-memory caching, pub/sub messaging, sorted sets, and high-performance data structures.',
+  },
 
   // ── AI / Misc ──
   {
@@ -245,7 +254,7 @@ const categoryDefs = [
   { label: 'Frontend', key: 'frontend', count: 8 },
   { label: 'Backend', key: 'backend', count: 9 },
   { label: 'Cloud & DevOps', key: 'cloud-devops', count: 2 },
-  { label: 'Databases', key: 'databases', count: 5 },
+  { label: 'Databases', key: 'databases', count: 6 },
   { label: 'AI / Misc', key: 'ai-misc', count: 1 },
 ];
 
@@ -491,6 +500,7 @@ function initFlipAnimation() {
     { name: 'Elasticsearch', cat: 'databases' },
     { name: 'Neo4j', cat: 'databases' },
     { name: 'SQLite', cat: 'databases' },
+    { name: 'Redis', cat: 'databases' },
     { name: 'Fail', cat: 'ai-misc' },
   ];
 
