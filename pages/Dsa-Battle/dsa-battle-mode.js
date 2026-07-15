@@ -1,3 +1,4 @@
+/* global Y, CodeMirror */
 // dsa-battle-mode.js
 let currentBattleId = null;
 let pollInterval = null;
@@ -9,6 +10,98 @@ let isTyping = false;
 let typingTimeout = null;
 let stateDebounceTimeout = null;
 let battleStartTime = null;
+
+// Collaborative CRDT (Yjs) & Editor (CodeMirror) globals
+let editor = null;
+let ydoc = null;
+let ytext = null;
+let ybinding = null;
+let remoteCursors = new Map();
+
+// Base64 serialization helpers for Yjs update payloads
+function uint8ArrayToBase64(uint8Array) {
+  let binary = '';
+  const len = uint8Array.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return window.btoa(binary);
+}
+
+function base64ToUint8Array(base64) {
+  const binaryString = window.atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// Two-way synchronization binding between Y.Text and CodeMirror
+class YCodeMirrorBinding {
+  constructor(ytext, editor) {
+    this.ytext = ytext;
+    this.editor = editor;
+    this.isApplying = false;
+
+    // Initialize CodeMirror with Yjs content
+    this.editor.setValue(this.ytext.toString());
+
+    // Listen to CodeMirror changes
+    this.editor.on('change', this.onCodeMirrorChange.bind(this));
+
+    // Listen to Yjs changes
+    this.ytext.observe(this.onYjsChange.bind(this));
+  }
+
+  onCodeMirrorChange(instance, changeObj) {
+    if (this.isApplying) return;
+    if (changeObj.origin === '*remote' || changeObj.origin === 'setValue') return;
+
+    this.isApplying = true;
+    this.ytext.doc.transact(() => {
+      const fromIndex = this.editor.indexFromPos(changeObj.from);
+      const removedLength = changeObj.removed.join('\n').length;
+      const addedText = changeObj.text.join('\n');
+
+      if (removedLength > 0) {
+        this.ytext.delete(fromIndex, removedLength);
+      }
+      if (addedText.length > 0) {
+        this.ytext.insert(fromIndex, addedText);
+      }
+    }, 'local');
+    this.isApplying = false;
+  }
+
+  onYjsChange(event) {
+    if (this.isApplying) return;
+    this.isApplying = true;
+
+    const doc = this.editor.getDoc();
+    this.ytext.doc.transact(() => {
+      let index = 0;
+      event.changes.delta.forEach((op) => {
+        if (op.retain) {
+          index += op.retain;
+        } else if (op.insert) {
+          const text = op.insert;
+          const pos = doc.posFromIndex(index);
+          doc.replaceRange(text, pos, pos, '*remote');
+          index += text.length;
+        } else if (op.delete) {
+          const len = op.delete;
+          const startPos = doc.posFromIndex(index);
+          const endPos = doc.posFromIndex(index + len);
+          doc.replaceRange('', startPos, endPos, '*remote');
+        }
+      });
+    }, 'remote');
+
+    this.isApplying = false;
+  }
+}
 
 // DOM refs
 const submitSolutionBtn = document.getElementById('submitSolutionBtn');
@@ -103,10 +196,69 @@ function initSocket() {
       if (myProgressText) myProgressText.textContent = '0%';
       if (opponentProgressText) opponentProgressText.textContent = '0%';
       if (submitStatusMsg) submitStatusMsg.textContent = '';
+
+      // Initialize CodeMirror and bind Yjs
       if (solutionCode) {
-        solutionCode.value = '';
-        solutionCode.disabled = false;
+        if (!editor) {
+          editor = CodeMirror.fromTextArea(solutionCode, {
+            mode: 'javascript',
+            theme: 'dracula',
+            lineNumbers: true,
+            matchBrackets: true,
+            indentUnit: 4,
+            lineWrapping: true,
+          });
+          editor.setSize('100%', '450px'); // Ensure height fits the panel layout
+
+          // Hook CodeMirror change event to WPM & telemetry updates
+          editor.on('change', (instance, changeObj) => {
+            if (changeObj.origin === '*remote' || changeObj.origin === 'setValue') {
+              return;
+            }
+            onEditorInput();
+          });
+
+          // Hook cursor change event to sync position
+          editor.on('cursorActivity', () => {
+            if (!currentBattleId || !socket) return;
+            const doc = editor.getDoc();
+            const anchor = doc.getCursor('anchor');
+            const head = doc.getCursor('head');
+            socket.emit('battle-cursor-update', {
+              battleId: currentBattleId,
+              userId: currentUserId,
+              position: { anchor, head },
+            });
+          });
+        }
+
+        // Reset and create fresh Yjs document
+        if (ydoc) ydoc.destroy();
+        ydoc = new Y.Doc();
+        ytext = ydoc.getText('codemirror');
+        ybinding = new YCodeMirrorBinding(ytext, editor);
+
+        // Bind update listener to serialize and emit deltas
+        ydoc.on('update', (update, origin) => {
+          if (origin === 'local' || origin === null) {
+            const base64Update = uint8ArrayToBase64(update);
+            socket.emit('battle-code-update', {
+              battleId: currentBattleId,
+              userId: currentUserId,
+              update: base64Update,
+            });
+          }
+        });
+
+        editor.setOption('readOnly', false);
       }
+
+      // Explicitly register with the server for battle updates
+      socket.emit('battle-join', {
+        battleId: currentBattleId,
+        userId: currentUserId,
+      });
+
       if (submitSolutionBtn) submitSolutionBtn.disabled = false;
 
       // Reset Telemetry card UI elements
@@ -170,7 +322,8 @@ function initSocket() {
           stopPolling();
           submitStatusMsg.textContent = "Time's up!";
           submitSolutionBtn.disabled = true;
-          solutionCode.disabled = true;
+          if (editor) editor.setOption('readOnly', true);
+          else solutionCode.disabled = true;
         }
       }, 1000);
     });
@@ -188,7 +341,8 @@ function initSocket() {
     socket.on('battle-over', (data) => {
       stopPolling();
       submitSolutionBtn.disabled = true;
-      solutionCode.disabled = true;
+      if (editor) editor.setOption('readOnly', true);
+      else solutionCode.disabled = true;
 
       const isWinner = data.winnerId === currentUserId;
       if (isWinner) {
@@ -226,6 +380,87 @@ function initSocket() {
           const gridContainer = document.getElementById('localTestGridContainer');
           if (gridContainer) gridContainer.style.display = 'flex';
         }
+      }
+    });
+
+    // ── Collaborative CRDT Sync Receivers ──
+    socket.on('battle-init-state', (data) => {
+      if (data && data.updates && ydoc) {
+        ydoc.transact(() => {
+          data.updates.forEach((updateBase64) => {
+            const update = base64ToUint8Array(updateBase64);
+            Y.applyUpdate(ydoc, update, 'remote');
+          });
+        }, 'remote');
+      }
+    });
+
+    socket.on('battle-code-update', (data) => {
+      if (data.userId === currentUserId) return;
+      if (ydoc && data.update) {
+        const update = base64ToUint8Array(data.update);
+        Y.applyUpdate(ydoc, update, 'remote');
+      }
+    });
+
+    socket.on('battle-cursor-update', (data) => {
+      if (data.userId === currentUserId) return;
+      if (editor && data.position) {
+        const { anchor, head } = data.position;
+        const color = '#3b82f6'; // Blue remote cursor
+        const name = opponentNameDisplay ? opponentNameDisplay.textContent : 'Opponent';
+
+        // Clear previous cursor/selection
+        if (remoteCursors.has(data.userId)) {
+          const prev = remoteCursors.get(data.userId);
+          prev.cursor?.clear();
+          prev.selection?.clear();
+          clearTimeout(prev.nameTimeout);
+        }
+
+        // Draw selection range if anchor and head differ
+        let selectionMark = null;
+        const hasSelection = anchor.line !== head.line || anchor.ch !== head.ch;
+        if (hasSelection) {
+          selectionMark = editor.markText(anchor, head, {
+            className: 'opponent-selection',
+          });
+        }
+
+        // Create remote cursor element
+        const cursorEl = document.createElement('div');
+        cursorEl.className = 'remote-cursor-widget';
+        cursorEl.setAttribute('aria-hidden', 'true');
+        cursorEl.style.borderColor = color;
+        cursorEl.style.height = '1.2em';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'remote-cursor-name';
+        nameEl.style.backgroundColor = color;
+        nameEl.textContent = name;
+        cursorEl.appendChild(nameEl);
+
+        let nameTimeout = setTimeout(() => {
+          nameEl.style.display = 'none';
+        }, 2000);
+
+        const cursorBookmark = editor.setBookmark(head, { widget: cursorEl, insertLeft: true });
+
+        remoteCursors.set(data.userId, {
+          cursor: cursorBookmark,
+          selection: selectionMark,
+          nameTimeout,
+        });
+      }
+    });
+
+    socket.on('battle-user-left', (data) => {
+      if (remoteCursors.has(data.userId)) {
+        const prev = remoteCursors.get(data.userId);
+        prev.cursor?.clear();
+        prev.selection?.clear();
+        clearTimeout(prev.nameTimeout);
+        remoteCursors.delete(data.userId);
       }
     });
 
@@ -367,7 +602,7 @@ if (findMatchBtn) {
 if (submitSolutionBtn) {
   submitSolutionBtn.addEventListener('click', () => {
     if (!currentBattleId || !socket) return;
-    const code = solutionCode.value || '';
+    const code = editor ? editor.getValue() : solutionCode.value || '';
     if (!code.trim()) return;
 
     submitSolutionBtn.disabled = true;
@@ -386,77 +621,81 @@ if (submitSolutionBtn) {
 }
 
 // ─── Real-time typing logic ───
-if (solutionCode) {
-  solutionCode.addEventListener('input', () => {
-    if (!currentBattleId || !socket) return;
+function onEditorInput() {
+  if (!currentBattleId || !socket) return;
 
-    // Play tactile keystroke feedback sound
-    SoundSynth.playKeystroke();
+  // Play tactile keystroke feedback sound
+  SoundSynth.playKeystroke();
 
-    // Initialize start time on first keystroke if not already set
-    if (!battleStartTime) {
-      battleStartTime = Date.now();
-    }
+  // Initialize start time on first keystroke if not already set
+  if (!battleStartTime) {
+    battleStartTime = Date.now();
+  }
 
-    // Typing Status Emission
-    if (!isTyping) {
-      isTyping = true;
-      socket.emit('battle-typing', {
-        battleId: currentBattleId,
-        userId: currentUserId,
-        typing: true,
-      });
-    }
-
-    if (typingTimeout) clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-      isTyping = false;
-      socket.emit('battle-typing', {
-        battleId: currentBattleId,
-        userId: currentUserId,
-        typing: false,
-      });
-    }, 1500);
-
-    // Progress broadcast (mock progress update based on line counts)
-    const lines = solutionCode.value.split('\n').length;
-    const progress = Math.min(100, lines * 5);
-    socket.emit('battle-progress-update', {
+  // Typing Status Emission
+  if (!isTyping) {
+    isTyping = true;
+    socket.emit('battle-typing', {
       battleId: currentBattleId,
       userId: currentUserId,
-      progress,
+      typing: true,
     });
-    if (myProgressBar) myProgressBar.style.width = progress + '%';
-    if (myProgressText) myProgressText.textContent = progress + '%';
+  }
 
-    // Debounce Editor State updates (WPM, Chars, Syntax)
-    if (stateDebounceTimeout) clearTimeout(stateDebounceTimeout);
-    stateDebounceTimeout = setTimeout(() => {
-      const code = solutionCode.value;
-      const charCount = code.length;
+  if (typingTimeout) clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    isTyping = false;
+    socket.emit('battle-typing', {
+      battleId: currentBattleId,
+      userId: currentUserId,
+      typing: false,
+    });
+  }, 1500);
 
-      // Syntax checking
-      let syntaxErrors = 0;
-      try {
-        new Function(code);
-      } catch (e) {
-        syntaxErrors = 1;
-      }
+  const code = editor ? editor.getValue() : solutionCode.value || '';
 
-      // WPM calculations
-      const wordCount = code.split(/\s+/).filter((w) => w.length > 0).length;
-      const elapsedMins = (Date.now() - battleStartTime) / 60000;
-      const wpm = Math.round(wordCount / Math.max(0.1, elapsedMins));
-
-      socket.emit('battle-editor-state', {
-        battleId: currentBattleId,
-        userId: currentUserId,
-        charCount,
-        syntaxErrors,
-        wpm,
-      });
-    }, 1000);
+  // Progress broadcast (mock progress update based on line counts)
+  const lines = code.split('\n').length;
+  const progress = Math.min(100, lines * 5);
+  socket.emit('battle-progress-update', {
+    battleId: currentBattleId,
+    userId: currentUserId,
+    progress,
   });
+  if (myProgressBar) myProgressBar.style.width = progress + '%';
+  if (myProgressText) myProgressText.textContent = progress + '%';
+
+  // Debounce Editor State updates (WPM, Chars, Syntax)
+  if (stateDebounceTimeout) clearTimeout(stateDebounceTimeout);
+  stateDebounceTimeout = setTimeout(() => {
+    const codeVal = editor ? editor.getValue() : solutionCode.value || '';
+    const charCount = codeVal.length;
+
+    // Syntax checking
+    let syntaxErrors = 0;
+    try {
+      new Function(codeVal);
+    } catch (e) {
+      syntaxErrors = 1;
+    }
+
+    // WPM calculations
+    const wordCount = codeVal.split(/\s+/).filter((w) => w.length > 0).length;
+    const elapsedMins = (Date.now() - battleStartTime) / 60000;
+    const wpm = Math.round(wordCount / Math.max(0.1, elapsedMins));
+
+    socket.emit('battle-editor-state', {
+      battleId: currentBattleId,
+      userId: currentUserId,
+      charCount,
+      syntaxErrors,
+      wpm,
+    });
+  }, 1000);
+}
+
+if (solutionCode) {
+  solutionCode.addEventListener('input', onEditorInput);
 }
 
 // Spectator

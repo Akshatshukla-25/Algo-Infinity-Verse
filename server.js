@@ -3078,7 +3078,7 @@ async function handleApi(req, res, pathname) {
   }
 
   // Helper function to run javascript in child process securely for complexity profiling
-  function runInChild(code, N) {
+  function _runInChild(code, N) {
     return new Promise((resolve) => {
       // Spawn node with 16MB heap memory limit and read from stdin (-)
       const child = spawn(process.execPath, ['--max-old-space-size=16', '-'], {
@@ -4056,16 +4056,36 @@ io.on('connection', (socket) => {
     });
     if (!valid) return;
     socket.join(`battle_${valid.battleId}`);
+    socket.battleId = valid.battleId;
+    socket.battleUserId = valid.userId;
     socket.to(`battle_${valid.battleId}`).emit('battle-user-joined', { userId: valid.userId });
+
+    // Send all existing updates to the joining user for synchronization
+    const battle = activeBattles.get(valid.battleId);
+    if (battle && battle.updates) {
+      socket.emit('battle-init-state', {
+        updates: battle.updates,
+      });
+    }
   });
 
   socket.on('battle-code-update', (data) => {
     const valid = validateSocketInput(data, {
       battleId: { type: 'string', required: true },
       userId: { type: 'string', required: true },
-      code: { type: 'string', string: true },
+      update: { type: 'string', required: true, maxLength: 50000 },
     });
     if (!valid) return;
+
+    // Save update in room state
+    const battle = activeBattles.get(valid.battleId);
+    if (battle) {
+      if (!battle.updates) {
+        battle.updates = [];
+      }
+      battle.updates.push(valid.update);
+    }
+
     socket.to(`battle_${valid.battleId}`).emit('battle-code-update', valid);
   });
 
@@ -4214,6 +4234,7 @@ io.on('connection', (socket) => {
     if (passed) {
       battle.status = 'completed';
       battle.winner = valid.userId;
+      delete battle.updates;
       io.to(`battle_${valid.battleId}`).emit('battle-over', {
         winnerId: valid.userId,
         winnerName: battle.participants[valid.userId].name,
@@ -4505,6 +4526,12 @@ io.on('connection', (socket) => {
     if (socket.wbRoomId && socket.wbUserId) {
       const wbRoom = 'wb_' + socket.wbRoomId;
       socket.to(wbRoom).emit('wb-user-left', { userId: socket.wbUserId });
+    }
+    // Handle clean disconnect for Battle Mode CRDT presence and cursors
+    if (socket.battleId && socket.battleUserId) {
+      socket
+        .to(`battle_${socket.battleId}`)
+        .emit('battle-user-left', { userId: socket.battleUserId });
     }
   });
 
