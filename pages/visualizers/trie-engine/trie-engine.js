@@ -44,6 +44,7 @@ class TrieVisualizer {
     this.animating = false;
     this.generator = null;
     this.timer = null;
+    this.traceTimeout = null;
 
     this.tracePanel = document.getElementById('live-trace-overlay');
     this.traceWord = document.getElementById('trace-word');
@@ -57,6 +58,7 @@ class TrieVisualizer {
 
     this.layoutTree();
     this.renderLoop();
+    this.updateA11ySummary();
   }
 
   bindEvents() {
@@ -72,26 +74,27 @@ class TrieVisualizer {
 
     document.getElementById('btn-insert').addEventListener('click', () => {
       const word = insertInput.value;
-      if (word && !this.animating) this.startAlgorithm(this.insertAlgo(word), 'Insert', word);
+      if (word && !this.generator) this.startAlgorithm(this.insertAlgo(word), 'Insert', word);
     });
 
     document.getElementById('btn-search-word').addEventListener('click', () => {
       const word = searchInput.value;
-      if (word && !this.animating)
+      if (word && !this.generator)
         this.startAlgorithm(this.searchAlgo(word, false), 'Search', word);
     });
 
     document.getElementById('btn-search-prefix').addEventListener('click', () => {
       const word = searchInput.value;
-      if (word && !this.animating) this.startAlgorithm(this.searchAlgo(word, true), 'Prefix', word);
+      if (word && !this.generator) this.startAlgorithm(this.searchAlgo(word, true), 'Prefix', word);
     });
 
     document.getElementById('btn-reset').addEventListener('click', () => {
-      if (this.animating) return;
+      if (this.generator) return;
       this.root = new TrieNode('Root', 0);
       this.nodeCount = 1;
       this.layoutTree();
       this.updateStatus(`Status: Trie Cleared | Nodes: 1`);
+      this.updateA11ySummary();
     });
 
     document.getElementById('btn-play').addEventListener('click', () => this.togglePlay());
@@ -203,6 +206,8 @@ class TrieVisualizer {
 
     this.highlightCode('ins-6', 'Insert');
     curr.isEnd = true;
+    this.updateStatus(`Status: Successfully Inserted "${word}" | Nodes: ${this.nodeCount}`);
+    this.updateA11ySummary();
     this.traceWord.innerHTML = this.formatTraceWord(word, word.length, 'eq-ok');
     yield;
   }
@@ -259,28 +264,74 @@ class TrieVisualizer {
     yield;
   }
 
+  formatTraceWord(word, index, state) {
+    if (state === 'eq-ok') {
+      return `<span class="eq-ok">${word}</span>`;
+    }
+    if (state === 'eq-err') {
+      const okPart = word.slice(0, index);
+      const errChar = word[index] || '';
+      const remaining = word.slice(index + 1);
+      return `<span class="eq-ok">${okPart}</span><span class="eq-err">${errChar}</span><span>${remaining}</span>`;
+    }
+
+    const okPart = word.slice(0, index);
+    const hlChar = word[index] || '';
+    const remaining = word.slice(index + 1);
+    return `<span class="eq-ok">${okPart}</span><span class="eq-hl">${hlChar}</span><span>${remaining}</span>`;
+  }
+
+  updateA11ySummary() {
+    const words = [];
+    const traverse = (node, prefix) => {
+      if (node.isEnd) {
+        words.push(prefix);
+      }
+      for (let [char, child] of node.children) {
+        traverse(child, prefix + char);
+      }
+    };
+    traverse(this.root, '');
+    const summaryEl = document.getElementById('trie-a11y-summary');
+    if (summaryEl) {
+      summaryEl.innerText =
+        words.length > 0
+          ? `Trie contains the following words: ${words.join(', ')}.`
+          : 'Trie is currently empty.';
+    }
+  }
+
   // --- Control Flow ---
   startAlgorithm(generator, _mode, _word) {
-    if (this.animating) return;
+    if (this.generator) return;
+
+    if (this.traceTimeout) {
+      clearTimeout(this.traceTimeout);
+      this.traceTimeout = null;
+    }
 
     this.resetNodeStates();
     this.generator = generator;
     this.animating = true;
 
     // UI Reset
-    document.getElementById('btn-play').innerHTML = '<i class="fas fa-pause"></i> Pause';
-    document.getElementById('btn-play').disabled = false;
+    const btnPlay = document.getElementById('btn-play');
+    btnPlay.innerHTML = '<i class="fas fa-pause"></i> Pause';
+    btnPlay.setAttribute('aria-label', 'Pause simulation');
+    btnPlay.disabled = false;
     document.getElementById('btn-step').disabled = false;
 
     this.autoStep();
   }
 
   togglePlay() {
+    if (!this.generator) return;
     this.animating = !this.animating;
     const btnPlay = document.getElementById('btn-play');
     btnPlay.innerHTML = this.animating
       ? '<i class="fas fa-pause"></i> Pause'
       : '<i class="fas fa-play"></i> Auto Run';
+    btnPlay.setAttribute('aria-label', this.animating ? 'Pause simulation' : 'Resume simulation');
     if (this.animating) {
       this.autoStep();
     } else {
@@ -295,11 +346,13 @@ class TrieVisualizer {
     if (res.done) {
       this.generator = null;
       this.animating = false;
-      document.getElementById('btn-play').innerHTML = '<i class="fas fa-check"></i> Done';
-      document.getElementById('btn-play').disabled = true;
+      const btnPlay = document.getElementById('btn-play');
+      btnPlay.innerHTML = '<i class="fas fa-check"></i> Done';
+      btnPlay.setAttribute('aria-label', 'Simulation done');
+      btnPlay.disabled = true;
       document.getElementById('btn-step').disabled = true;
       this.resetNodeStates();
-      setTimeout(() => {
+      this.traceTimeout = setTimeout(() => {
         this.tracePanel.classList.add('hidden');
       }, 3000);
       return false;
