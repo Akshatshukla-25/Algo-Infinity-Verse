@@ -91,6 +91,13 @@ const visualizers = [
     icon: 'fa-arrows-left-right',
     desc: "Visualize Floyd's cycle detection algorithm with fast and slow pointers.",
   },
+  {
+    name: 'Sliding Window Invariant Lab',
+    path: '/pages/visualizers/sliding-window-lab/sliding-window-lab.html',
+    category: 'Sorting & Searching',
+    icon: 'fa-window-maximize',
+    desc: 'Expand/shrink a sliding window live, track sum/count invariants, and learn why each move happens.',
+  },
 
   // ── Trees & BSTs ──
   {
