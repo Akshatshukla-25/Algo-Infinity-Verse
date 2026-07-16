@@ -4,6 +4,11 @@
 
 const visualizers = [
   {
+    name: 'OAuth 2.0 PKCE Sandbox',
+    path: '/pages/visualizers/oauth-pkce-sandbox/oauth-pkce-sandbox.html',
+    category: 'Security & Crypto',
+    icon: 'fa-lock',
+    desc: 'Interactive sandbox for the OAuth 2.0 Authorization Code Flow with PKCE.',
     name: 'CQRS & Event Sourcing',
     path: '/pages/visualizers/cqrs-visualizer/cqrs-visualizer.html',
     category: 'Distributed Systems',
@@ -303,11 +308,11 @@ const visualizers = [
     desc: 'Find the majority element in one pass with O(1) space — step through candidate replacement, verification, and the n/3 extension.',
   },
   {
-  name: 'Circuit Breaker Visualizer',
-  path: '/pages/visualizers/circuit-breaker/circuit-breaker.html',
-  category: 'System Design',
-  icon: 'fa-bolt',
-  desc: 'Netflix resilience pattern — watch CLOSED, OPEN, HALF-OPEN state transitions, cooldown timers, and see wasted cost without a breaker.',
+    name: 'Circuit Breaker Visualizer',
+    path: '/pages/visualizers/circuit-breaker/circuit-breaker.html',
+    category: 'System Design',
+    icon: 'fa-bolt',
+    desc: 'Netflix resilience pattern — watch CLOSED, OPEN, HALF-OPEN state transitions, cooldown timers, and see wasted cost without a breaker.',
   },
 
   // ── Dynamic Programming ──
