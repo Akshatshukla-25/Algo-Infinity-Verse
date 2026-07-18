@@ -2147,21 +2147,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // New Topic Quiz Modal close handlers
-  const topicQuizCloseBtn = document.getElementById('topicQuizModalClose');
-  if (topicQuizCloseBtn) {
-    topicQuizCloseBtn.addEventListener('click', closeQuizModal);
-  }
-
-  const topicQuizModal = document.getElementById('quizModal');
-  if (topicQuizModal) {
-    topicQuizModal.addEventListener('click', (e) => {
-      if (e.target === topicQuizModal) {
-        closeQuizModal();
-      }
-    });
-  }
 });
 
 // ===== LOADING SCREEN =====
