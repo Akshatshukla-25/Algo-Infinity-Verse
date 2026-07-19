@@ -21,6 +21,7 @@ const practiceTools = [
   { name: "Algorithm Personality", path: "/pages/tools/algorithm-personality/algorithm-personality.html", category: "Practice Aids", icon: "fa-face-smile", desc: "Discover which algorithm matches your coding personality through a fun assessment quiz." },
   { name: "Problem Deconstructor", path: "/pages/tools/problem-deconstructor/problem-deconstructor.html", category: "Practice Aids", icon: "fa-cubes", desc: "Deconstruct complex problems into sub-problems and identify reusable solution templates." },
   { name: "Approach Tradeoff Matrix", path: "/pages/tools/approach-tradeoff-matrix/approach-tradeoff-matrix.html", category: "Practice Aids", icon: "fa-table-cells", desc: "Compare brute, better, and optimal approaches on time, space, code length, and interview wow factor — save to localStorage." },
+  { name: "Brute → Optimal Diff Studio", path: "/pages/tools/brute-to-optimal-studio/brute-to-optimal-studio.html", category: "Practice Aids", icon: "fa-code-compare", desc: "Side-by-side brute vs optimal code with annotated evolution steps (e.g. sorted → two pointers) and complexity upgrades." },
   { name: "Keyboard Shortcut Trainer", path: "/pages/tools/editor-shortcut-trainer/editor-shortcut-trainer.html", category: "Practice Aids", icon: "fa-keyboard", desc: "Practice code-editor shortcuts (run, format, comment, undo) in a score-and-streak trainer game." },
 
   // ── Learning Tools ──
