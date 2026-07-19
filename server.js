@@ -1117,6 +1117,9 @@ async function handleApi(req, res, pathname) {
         id: `guest-${guestId}`,
         name: 'Guest',
         email: `guest-${guestId}@local`,
+        // Elo rating defaults for Elo-based multiplayer battles
+        rating: 1200,
+        ratingHistory: [],
       };
       const token = createAccessToken(guestUser);
       const refreshToken = await createRefreshToken(guestUser);
@@ -1190,6 +1193,9 @@ async function handleApi(req, res, pathname) {
         emailVerified: !emailConfigured,
         verifyToken,
         verifyTokenExpiry: emailConfigured ? Date.now() + 24 * 60 * 60 * 1000 : null,
+        // Elo rating system for multiplayer coding battles
+        rating: 1200,
+        ratingHistory: [],
       };
       await createUser(user);
 
@@ -1604,6 +1610,18 @@ async function handleApi(req, res, pathname) {
         { action: 'Joined Algo Infinity Verse', date: new Date().toISOString().slice(0, 10) },
       ],
     };
+
+    // Elo rating + tier derived from persisted user record
+    const rating = persisted?.rating ?? 1200;
+    // Compute tier using local thresholds (must match backend/utils/eloRating.js)
+    let tier = 'Novice';
+    if (rating >= 1800) tier = 'Master';
+    else if (rating >= 1600) tier = 'Expert';
+    else if (rating >= 1400) tier = 'Advanced';
+    else if (rating >= 1200) tier = 'Intermediate';
+
+    userData.stats.rating = rating;
+    userData.stats.tier = tier;
 
     return sendJson(res, 200, { success: true, data: userData });
   }
@@ -2603,11 +2621,15 @@ async function handleApi(req, res, pathname) {
     const { codeA, codeB, inputSizes } = payload;
 
     if (typeof codeA !== 'string' || typeof codeB !== 'string' || !codeA || !codeB) {
-      return sendJson(res, 400, { error: 'Both codeA and codeB are required and must be strings.' });
+      return sendJson(res, 400, {
+        error: 'Both codeA and codeB are required and must be strings.',
+      });
     }
 
     if (!inputSizes || !Array.isArray(inputSizes) || !inputSizes.every(Number.isInteger)) {
-      return sendJson(res, 400, { error: 'inputSizes is required and must be an array of integers.' });
+      return sendJson(res, 400, {
+        error: 'inputSizes is required and must be an array of integers.',
+      });
     }
 
     if (inputSizes.length > 8) {
@@ -2842,7 +2864,11 @@ CRITICAL RULES:
       });
     } catch (err) {
       console.error('Leaderboard error:', err);
-      return sendJson(res, 200, { leaders: [], currentUserId: null, pagination: { totalUsers: 0, totalPages: 1 } });
+      return sendJson(res, 200, {
+        leaders: [],
+        currentUserId: null,
+        pagination: { totalUsers: 0, totalPages: 1 },
+      });
     }
   }
 
@@ -3703,7 +3729,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('battle-submit', (data) => {
+  socket.on('battle-submit', async (data) => {
     const valid = validateSocketInput(data, {
       battleId: { type: 'string', required: true },
       userId: { type: 'string', required: true },
@@ -3735,6 +3761,107 @@ io.on('connection', (socket) => {
       battle.status = 'completed';
       battle.winner = valid.userId;
       delete battle.updates;
+
+      // Persist Elo rating updates
+      try {
+        const { applyElo } = await import('./backend/utils/eloRating.js');
+
+        const participants = Object.keys(battle.participants || {});
+        const winnerId = valid.userId;
+        const loserId = participants.find((id) => id !== winnerId) || null;
+
+        if (loserId) {
+          const users = await readUsers();
+          const winnerIdx = users.findIndex((u) => u.id === winnerId);
+          const loserIdx = users.findIndex((u) => u.id === loserId);
+
+          if (winnerIdx !== -1 && loserIdx !== -1) {
+            users[winnerIdx].rating = Number(users[winnerIdx].rating ?? 1200);
+            users[winnerIdx].ratingHistory = Array.isArray(users[winnerIdx].ratingHistory)
+              ? users[winnerIdx].ratingHistory
+              : [];
+
+            users[loserIdx].rating = Number(users[loserIdx].rating ?? 1200);
+            users[loserIdx].ratingHistory = Array.isArray(users[loserIdx].ratingHistory)
+              ? users[loserIdx].ratingHistory
+              : [];
+
+            const winnerBefore = users[winnerIdx].rating;
+            const loserBefore = users[loserIdx].rating;
+
+            // Elo outcomes (no draws in current battle flow)
+            const kFactor = 32;
+            const winnerRes = applyElo({
+              playerRating: winnerBefore,
+              opponentRating: loserBefore,
+              score: 1,
+              kFactor,
+            });
+            const loserRes = applyElo({
+              playerRating: loserBefore,
+              opponentRating: winnerBefore,
+              score: 0,
+              kFactor,
+            });
+
+            users[winnerIdx].rating = winnerRes.newRating;
+            users[loserIdx].rating = loserRes.newRating;
+
+            const timestamp = new Date().toISOString();
+            const battleId = battle.id || valid.battleId;
+
+            const winnerEntry = {
+              battleId,
+              opponentId: loserId,
+              outcome: 'win',
+              before: winnerBefore,
+              after: users[winnerIdx].rating,
+              delta: users[winnerIdx].rating - winnerBefore,
+              expected: winnerRes.expected,
+              kFactor,
+              timestamp,
+              opponentExpected: loserRes.expected,
+            };
+
+            const loserEntry = {
+              battleId,
+              opponentId: winnerId,
+              outcome: 'loss',
+              before: loserBefore,
+              after: users[loserIdx].rating,
+              delta: users[loserIdx].rating - loserBefore,
+              expected: loserRes.expected,
+              kFactor,
+              timestamp,
+              opponentExpected: winnerRes.expected,
+            };
+
+            users[winnerIdx].ratingHistory.push(winnerEntry);
+            users[loserIdx].ratingHistory.push(loserEntry);
+
+            // Cap history to prevent unbounded growth
+            const MAX_HISTORY = 2000;
+            if (users[winnerIdx].ratingHistory.length > MAX_HISTORY) {
+              users[winnerIdx].ratingHistory.splice(
+                0,
+                users[winnerIdx].ratingHistory.length - MAX_HISTORY
+              );
+            }
+            if (users[loserIdx].ratingHistory.length > MAX_HISTORY) {
+              users[loserIdx].ratingHistory.splice(
+                0,
+                users[loserIdx].ratingHistory.length - MAX_HISTORY
+              );
+            }
+
+            await writeUsers(users);
+          }
+        }
+      } catch (e) {
+        // Elo updates should never break battle completion.
+        console.error('Elo update failed:', e);
+      }
+
       io.to(`battle_${valid.battleId}`).emit('battle-over', {
         winnerId: valid.userId,
         winnerName: battle.participants[valid.userId].name,
