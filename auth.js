@@ -521,6 +521,7 @@ function showAccountActionModal({ title, message, confirmText, requirePassword =
       if (settled) return;
       settled = true;
       document.removeEventListener('keydown', onKeydown);
+      modal.classList.remove('active');
       modal.remove();
       resolve(result);
     }
@@ -554,18 +555,91 @@ function showAccountActionModal({ title, message, confirmText, requirePassword =
   });
 }
 
+function showDeactivateAccountModal() {
+  return new Promise((resolve) => {
+    let settled = false;
+    const isGuest =
+      window.algoAuth?.user?.id && String(window.algoAuth.user.id).startsWith('guest-');
+
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `
+      <div class="modal-content deactivate-modal-content">
+        <button type="button" class="modal-close" id="deactivateModalClose" aria-label="Close">
+          &times;
+        </button>
+        <div class="deactivate-icon">
+          <div class="deactivate-icon-ring">
+            <i class="fas ${isGuest ? 'fa-lock' : 'fa-triangle-exclamation'} deactivate-icon-symbol"></i>
+          </div>
+        </div>
+        <h2 class="deactivate-title">Deactivate Account</h2>
+        <p class="deactivate-subtitle">
+          ${isGuest
+            ? 'Guest accounts cannot be deactivated.'
+            : 'Are you sure you want to deactivate your account?'}
+        </p>
+        <div class="deactivate-info-box">
+          <p class="deactivate-info-text">
+            ${isGuest
+              ? 'Sign in to manage your account settings and access all features.'
+              : 'Your profile, progress, and data will be hidden. You can reactivate at any time by logging back in.'}
+          </p>
+        </div>
+        <div class="deactivate-actions">
+          <div class="deactivate-actions__main">
+            <button type="button" class="deactivate-btn deactivate-btn--outline" id="deactivateCancel">Cancel</button>
+            <button type="button" class="deactivate-btn deactivate-btn--danger" id="deactivateConfirm" ${isGuest ? 'disabled' : ''}>
+              <i class="fas fa-user-slash"></i> Deactivate
+            </button>
+          </div>
+        </div>
+        <p class="deactivate-dismiss">
+          <button type="button" class="deactivate-dismiss-btn" id="deactivateDismiss">Maybe later</button>
+        </p>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    function settle(confirmed) {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKeydown);
+      modal.classList.remove('active');
+      modal.remove();
+      resolve({ confirmed });
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') settle(false);
+    }
+
+    document.addEventListener('keydown', onKeydown);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) settle(false);
+    });
+    modal.querySelector('#deactivateModalClose').addEventListener('click', () => settle(false));
+    modal.querySelector('#deactivateCancel').addEventListener('click', () => settle(false));
+    modal.querySelector('#deactivateDismiss').addEventListener('click', () => settle(false));
+    modal.querySelector('#deactivateConfirm').addEventListener('click', () => {
+      if (isGuest) return;
+      settle(true);
+    });
+
+    setTimeout(() => modal.querySelector('#deactivateCancel').focus(), 50);
+  });
+}
+
 function wireDeactivateAccount() {
   const btn = document.getElementById('deactivateAccountBtn');
 
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
-    const { confirmed } = await showAccountActionModal({
-      title: 'Deactivate Account',
-      message:
-        'Are you sure you want to deactivate your account? You can reactivate it by logging in again.',
-      confirmText: 'Deactivate',
-    });
+    const { confirmed } = await showDeactivateAccountModal();
 
     if (!confirmed) return;
 
