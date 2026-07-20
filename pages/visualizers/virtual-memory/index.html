@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Virtual Memory & Paging Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🖥️ Virtual Memory & Paging Visualizer</h1>
+      <p>Understand how virtual memory works</p>
+    </header>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>Page Size:</label>
+        <select id="pageSize">
+          <option value="4">4 KB</option>
+          <option value="8">8 KB</option>
+          <option value="16">16 KB</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Algorithm:</label>
+        <select id="algorithm">
+          <option value="fifo">FIFO</option>
+          <option value="lru">LRU</option>
+          <option value="clock">Clock</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Frames:</label>
+        <input type="number" id="frames" value="4" min="2" max="8" />
+      </div>
+      <button id="runBtn">▶️ Run Simulation</button>
+      <button id="stepBtn">⏭️ Step</button>
+      <button id="resetBtn">🔄 Reset</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-label">Page Faults</span>
+        <span class="stat-value" id="faults">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Hits</span>
+        <span class="stat-value" id="hits">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Hit Ratio</span>
+        <span class="stat-value" id="hitRatio">0%</span>
+      </div>
+    </div>
+
+    <div class="main-layout">
+      <div class="memory-container">
+        <h3>📊 Page Table</h3>
+        <div id="pageTable" class="page-table"></div>
+        
+        <h3>💾 Physical Memory (Frames)</h3>
+        <div id="framesContainer" class="frames-container"></div>
+      </div>
+
+      <div class="info-container">
+        <h3>📋 TLB</h3>
+        <div id="tlb" class="tlb"></div>
+        
+        <h3>📝 Address Translation</h3>
+        <div id="translation" class="translation"></div>
+        
+        <h3>📖 Log</h3>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
