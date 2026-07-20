@@ -149,6 +149,18 @@
     }
   }
 
+  function syncAuthVisibility() {
+    const isAuth = currentSession?.authenticated;
+
+    document.querySelectorAll('[data-guest-only]').forEach((el) => {
+      el.style.display = isAuth ? 'none' : '';
+    });
+
+    document.querySelectorAll('[data-auth-required]').forEach((el) => {
+      el.style.display = isAuth ? '' : 'none';
+    });
+  }
+
   function wireLogout() {
     document.addEventListener('click', async (event) => {
       const logoutButton = event.target.closest('[data-auth-logout]');
@@ -198,6 +210,7 @@
           document.documentElement.classList.remove('auth-unverified', 'auth-loading');
           document.documentElement.classList.add('auth-verified');
           renderAuthNav();
+          syncAuthVisibility();
           updateProfileNames(currentSession.user);
           location.href = getNextDestination();
         } else {
@@ -418,6 +431,7 @@
       window.algoAuth = currentSession;
 
       renderAuthNav();
+      syncAuthVisibility();
       wireLogout();
       wireAuthForm();
       wireDeactivateAccount();
@@ -452,6 +466,7 @@
     }
 
     renderAuthNav();
+    syncAuthVisibility();
     wireLogout();
     wireGuestButton();
     wireAuthForm();

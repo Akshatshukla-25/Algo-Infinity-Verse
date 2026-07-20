@@ -1343,6 +1343,12 @@ button.auth-submit[data-loading='true'] {
   box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15);
 }
 
+.delete-account-form .password-input-wrapper input:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important;
+}
+
 .delete-account-form .password-input-wrapper input::placeholder {
   color: rgba(255, 255, 255, 0.25);
 }
@@ -2684,6 +2690,14 @@ html.light-mode .recent-item.selected {
   color: #e4e4f0;
 }
 
+/* Auth state visibility — driven by classes set by auth.js on <html> */
+html.auth-verified [data-guest-only] {
+  display: none !important;
+}
+html.auth-unverified [data-auth-required] {
+  display: none !important;
+}
+
 .dropdown-item i {
   font-size: 0.85rem;
   width: 18px;
@@ -2780,11 +2794,33 @@ html.light-mode .recent-item.selected {
   min-width: 260px !important;
 }
 
-/* Widen the hover bridge so cursor can safely travel from the gear icon to the wide dropdown */
+/* Settings dropdown: click-only — remove hover bridge, prevent CSS hover activation */
 .nav-settings-dropdown.has-dropdown::before {
-  width: 300px;
-  left: auto;
-  right: 0;
+  display: none;
+}
+
+.nav-settings-dropdown.has-dropdown:hover .settings-dropdown-menu,
+.nav-settings-dropdown.has-dropdown:focus-within .settings-dropdown-menu {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.nav-settings-dropdown.has-dropdown.open .settings-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Fix positioning: don't stretch settings parent to full navbar height */
+.nav-toolbar .nav-item.nav-settings-dropdown {
+  height: auto;
+}
+
+/* Remove the 12px hover-bridge gap since settings is click-only */
+.nav-settings-dropdown .settings-dropdown-menu {
+  top: calc(100% + 4px);
 }
 
 .settings-toggle {

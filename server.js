@@ -211,16 +211,13 @@ function authCookies(accessToken, refreshToken, req) {
   // HTTPS. Always require it in production regardless of that header (#2358).
   const secure =
     process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https';
-  // Use SameSite=None so the refresh cookie is sent on cross-site fetches
-  // (e.g. preview deployments) while remaining HttpOnly.
   const cookie = (name, value, maxAge) =>
     [
       `${name}=${encodeURIComponent(value)}`,
       'HttpOnly',
-      'SameSite=None',
+      'SameSite=Lax',
       'Path=/',
       `Max-Age=${maxAge}`,
-      // SameSite=None requires Secure in modern browsers.
       secure ? 'Secure' : '',
     ]
       .filter(Boolean)
