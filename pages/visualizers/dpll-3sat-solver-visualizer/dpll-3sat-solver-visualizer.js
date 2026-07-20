@@ -343,6 +343,11 @@ class DPLLVisualizer {
     this.markSuccessPath(node.parent);
   }
 
+  /**
+   * Recursively marks a decision tree node and all its child subtrees
+   * as backtracked when a speculative branch fails.
+   * @param {DecisionNode} node - The target decision tree node to backtrack.
+   */
   markBacktracked(node) {
     if (!node) return;
     node.isBacktracked = true;
