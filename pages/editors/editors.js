@@ -155,6 +155,14 @@ const editors = [
 
   // ── Systems & Special ──
   {
+    name: 'Zig Editor',
+    path: '/pages/editors/zig-editor/zig-editor.html',
+    category: 'Systems & Special',
+    icon: 'fa-bolt',
+    desc: 'Write Zig programming language code with syntax highlighting, starter templates, and fast simulated execution.',
+  },
+  
+  {
     name: 'D Editor',
     path: '/pages/editors/d-editor/d-editor.html',
     category: 'Systems & Special',
