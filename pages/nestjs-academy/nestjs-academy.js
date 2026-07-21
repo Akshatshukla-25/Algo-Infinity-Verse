@@ -11,6 +11,8 @@ const curriculum = [
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">What is NestJS?</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed">NestJS is a progressive Node.js framework for building efficient, reliable, and scalable server-side applications. It is built with and fully supports **TypeScript** and combines elements of OOP, FP, and FRP.</p>
                     <p class="mb-4 text-gray-700 leading-relaxed">Under the hood, NestJS uses robust HTTP server frameworks like **Express** or **Fastify**. It organizes code in a modular tree structure starting from the **AppModule**.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">The framework follows a layered architecture pattern where incoming requests flow through middleware, guards, interceptors, pipes, and finally reach the route handler. This pipeline approach makes it easy to add cross-cutting concerns like logging, authentication, or caching without modifying the core business logic.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">The <code>@Module()</code> decorator takes a metadata object that defines how the module is organized. It groups together controllers (route handlers), providers (services and helpers), and other modules that this module depends on. This modularity is what makes NestJS applications highly testable and maintainable as they grow.</p>
                     <div class="bg-rose-50 border-l-4 border-rose-500 p-4 my-6 rounded-r-lg">
                         <p class="text-rose-800 font-medium"><i class="fa-solid fa-circle-info mr-2"></i>Go to the <strong>Playground & Code</strong> tab, click "Run Code" to compile and boot the Nest application inside the terminal!</p>
                     </div>
@@ -53,6 +55,8 @@ export class AppModule {}`
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">Defining API Endpoints</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed"><strong>Controllers</strong> are responsible for handling incoming **requests** and returning **responses** to the client. A controller is created by decorating a class with <code>@Controller('prefix')</code>.</p>
                     <p class="mb-4 text-gray-700 leading-relaxed">You define route mapping using HTTP method decorators like <code>@Get()</code>, <code>@Post()</code>, <code>@Put()</code>, and <code>@Delete()</code>. Retrieve payloads and parameters using param decorators like <code>@Body()</code> or <code>@Param()</code>.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">Each route handler method maps to a specific HTTP endpoint. When a client sends a request, NestJS matches the HTTP method and URL path to the corresponding decorated method in the controller. The return value of the handler is automatically serialized to JSON and sent as the response body.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">You can also use <code>@Query()</code> to extract URL query parameters, <code>@Headers()</code> to access request headers, and <code>@HttpCode()</code> to set a custom status code. NestJS handles the response serialization and content-type negotiation for you.</p>
                 `,
                 defaultCode: `import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 
@@ -103,6 +107,8 @@ export class UsersController {
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">Decoupling Business Logic</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed">In NestJS, almost everything is a **Provider** (services, repositories, factories). Providers can be injected into other classes via constructor parameters using NestJS's **Dependency Injection (DI)** container.</p>
                     <p class="mb-4 text-gray-700 leading-relaxed">A service provider is declared using the <code>@Injectable()</code> decorator, registering it to be managed by the Nest runtime container.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">When NestJS instantiates a class, it inspects the constructor parameters and automatically resolves and injects the required dependencies. This means you never manually create instances of your services — NestJS handles the entire lifecycle, creating, caching, and disposing of providers as needed.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">The DI pattern promotes loose coupling between components. Your controller depends on an abstraction (the service interface), not a concrete implementation. This makes it straightforward to swap out a database service for a mock during testing, or replace a payment provider without touching the controller code.</p>
                 `,
                 defaultCode: `import { Injectable, Controller, Get } from '@nestjs/common';
 
@@ -145,6 +151,8 @@ export class TasksController {
                 content: `
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">Modular Application Structure</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed">Modules organize your application structure. Each application has at least one root module. Modules encapsulate providers by default; to share a service, it must be listed in the <code>exports</code> array of the module declaration.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">A well-structured NestJS application groups related functionality into feature modules. For example, a <code>UsersModule</code> contains the user controller, service, and any entities related to user management. This keeps the codebase organized as the project scales.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">The <code>imports</code> array lists other modules whose exported providers are available within this module. When Module A imports Module B, all providers that Module B exports become injectable inside Module A. This creates a clear dependency graph between your modules.</p>
                 `,
                 defaultCode: `import { Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
@@ -178,6 +186,8 @@ export class UsersModule {}`
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">Validating Request Payloads</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed"><strong>Pipes</strong> have two main use cases: **transformation** (parse strings to numbers, etc.) and **validation** (evaluate request body schemas against rule declarations).</p>
                     <p class="mb-4 text-gray-700 leading-relaxed">By coupling **DTOs** (Data Transfer Objects) with validation classes, Nest validates incoming payloads automatically before they reach controller route methods.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">NestJS ships with several built-in pipes like <code>ParseIntPipe</code>, <code>ParseBoolPipe</code>, and <code>DefaultValuePipe</code>. You can also create custom pipes by implementing the <code>PipeTransform</code> interface, which requires a single <code>transform()</code> method that receives the raw value and metadata.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">When <code>ValidationPipe</code> is enabled with the <code>whitelist: true</code> option, it automatically strips any properties that are not defined in the DTO class. This prevents clients from injecting unexpected fields into your application logic.</p>
                 `,
                 defaultCode: `import { Controller, Post, Body, UsePipes, ValidationPipe } from '@nestjs/common';
 
@@ -223,6 +233,8 @@ export class TasksController {
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">Route Authorization</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed"><strong>Guards</strong> determine whether a request will be handled by the route handler or blocked. They have access to the execution context, making them ideal for authentication checks.</p>
                     <p class="mb-4 text-gray-700 leading-relaxed">A Guard must implement the <code>CanActivate</code> interface and return a boolean indicating whether the request is authorized.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">Guards run after all middleware but before any pipe or interceptor. This means they can inspect the fully parsed request and make authorization decisions before any business logic executes. You can apply guards at the controller level, individual route level, or globally across the entire application.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">The execution context object provides access to the HTTP request, the underlying platform details, and the class and method handlers being called. This flexibility allows guards to implement role-based access control, API key validation, or JWT token verification.</p>
                 `,
                 defaultCode: `import { Injectable, CanActivate, ExecutionContext, Controller, Get, UseGuards } from '@nestjs/common';
 
@@ -266,6 +278,8 @@ export class AdminController {
                 content: `
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">Transforming Streams</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed"><strong>Interceptors</strong> allow you to bind extra logic before and after method execution. This is extremely powerful for response mapping, exception catching, cache invalidation, or computing request duration metrics.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">Interceptors leverage <strong>RxJS Observables</strong>, which means you can use operators like <code>map</code>, <code>tap</code>, <code>catchError</code>, and <code>switchMap</code> to transform or react to the response stream. The <code>next.handle()</code> call returns an Observable of the response that flows through your interceptor pipeline.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">A common use case is a logging interceptor that wraps the request in a timer, then taps into the response stream to log the duration. You can also use interceptors to transform the response shape, such as wrapping a plain object in a standard API envelope like <code>{ data: ... }</code>.</p>
                 `,
                 defaultCode: `import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
@@ -296,8 +310,64 @@ export class LoggingInterceptor implements NestInterceptor {
         ]
     },
     {
+        id: "exceptions",
+        title: "8. Exception Filters & Error Handling",
+        lessons: [
+            {
+                id: "exceptions-1",
+                title: "Exception Filters & Error Handling",
+                content: `
+                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Handling Errors Gracefully</h3>
+                    <p class="mb-4 text-gray-700 leading-relaxed">NestJS comes with a built-in **Exceptions Layer** that catches unhandled exceptions and returns appropriate HTTP responses. By default, any exception thrown in a route handler is caught and turned into a <code>500 Internal Server Error</code> response.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">You can throw standard HTTP exceptions using <code>HttpException</code> or its shorthand subclasses like <code>NotFoundException</code>, <code>BadRequestException</code>, and <code>UnauthorizedException</code>. These automatically map to the correct HTTP status code.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">For custom error handling logic, create an **Exception Filter** by implementing the <code>ExceptionFilter</code> interface. The filter receives the exception object and the execution context, letting you format the error response, log errors, or add custom headers before sending the response back to the client.</p>
+                `,
+                defaultCode: `import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Controller, Get, Param } from '@nestjs/common';
+import { Response } from 'express';
+
+@Catch(HttpException)
+export class HttpExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const status = exception.getStatus();
+    const message = exception.getResponse();
+
+    response
+      .status(status)
+      .json({
+        statusCode: status,
+        timestamp: new Date().toISOString(),
+        message: typeof message === 'string' ? message : (message as any).message,
+      });
+  }
+}
+
+@Controller('items')
+@UseFilters(HttpExceptionFilter)
+export class ItemsController {
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    if (id === '0') {
+      throw new NotFoundException('Item not found');
+    }
+    return { id, name: 'Sample Item' };
+  }
+}`
+            }
+        ],
+        quiz: [
+            {
+                id: "q-except-1",
+                question: "Which interface must a class implement to create a custom Exception Filter in NestJS?",
+                options: ["ErrorHandler", "ExceptionFilter", "CatchException", "FilterHandler"],
+                correct: 1
+            }
+        ]
+    },
+    {
         id: "database",
-        title: "8. Database Integration (ORM)",
+        title: "9. Database Integration (ORM)",
         lessons: [
             {
                 id: "db-1",
@@ -305,6 +375,8 @@ export class LoggingInterceptor implements NestInterceptor {
                 content: `
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">Interacting with SQL databases</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed">NestJS provides native wrappers for ORMs like **TypeORM** and **Prisma**. Components use repositories to retrieve, save, and update entities without raw SQL commands.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">An **Entity** class maps directly to a database table. Each property decorated with <code>@Column()</code> becomes a column in that table, and <code>@PrimaryGeneratedColumn()</code> marks the auto-incrementing primary key. TypeORM reads these decorators to generate the SQL schema automatically.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">The **Repository** pattern gives you a typed API for common database operations like <code>find</code>, <code>save</code>, <code>update</code>, and <code>delete</code>. Instead of writing SQL queries, you call methods on the repository and it generates the appropriate queries under the hood. This keeps your data access layer clean and type-safe.</p>
                 `,
                 defaultCode: `import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -344,7 +416,7 @@ export class UserService {
     },
     {
         id: "graphql",
-        title: "9. GraphQL Resolver APIs",
+        title: "10. GraphQL Resolver APIs",
         lessons: [
             {
                 id: "graphql-1",
@@ -352,6 +424,8 @@ export class UserService {
                 content: `
                     <h3 class="text-2xl font-bold mb-4 text-gray-900">GraphQL Server integration</h3>
                     <p class="mb-4 text-gray-700 leading-relaxed">In GraphQL APIs, instead of HTTP route controllers, you define **Resolvers** decorated with <code>@Resolver()</code>, using <code>@Query()</code> and <code>@Mutation()</code> decorators for mapping query definitions.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">A **Query** resolver handles read operations — fetching data without side effects. A **Mutation** resolver handles write operations — creating, updating, or deleting data. Both are defined as methods inside a resolver class, each decorated with the appropriate GraphQL decorator.</p>
+                    <p class="mb-4 text-gray-700 leading-relaxed">NestJS integrates with <strong>Apollo Server</strong> under the hood to handle the GraphQL protocol. You configure the module with <code>GraphQLModule.forRoot()</code> and specify whether to use code-first (TypeScript decorators generate the schema) or schema-first (you write the SDL manually) approach.</p>
                 `,
                 defaultCode: `import { Resolver, Query, Args, Int } from '@nestjs/graphql';
 
@@ -630,7 +704,7 @@ function renderLesson(lesson) {
         <div class="max-w-3xl mx-auto animate-fade-in">
             <h2 class="text-3xl font-bold text-gray-900 mb-6">${lesson.title}</h2>
             <div class="prose max-w-none text-gray-800 font-sans">
-                ${(window.eli5Toggle ? window.eli5Toggle.wrapContent(lesson.content, '') : lesson.content)}
+                ${(window.eli5Toggle ? window.eli5Toggle.wrapContent(lesson.content, (window.eli5NestjsData || {})[lesson.id] || '') : lesson.content)}
             </div>
             
             <div class="mt-12 pt-6 border-t border-gray-200 flex justify-end">
