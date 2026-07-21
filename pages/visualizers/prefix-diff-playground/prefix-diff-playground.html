@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prefix Sum &amp; Difference Array Playground | Algo Infinity Verse</title>
+  <meta name="description" content="Build prefix sums, answer range queries in O(1), and practice difference-array range updates." />
+  <link rel="stylesheet" href="prefix-diff-playground.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        if (t === 'light') document.documentElement.classList.add('light-mode');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="pdp-body" data-page="prefix-diff-playground">
+  <a href="#pdp-main" class="pdp-skip">Skip to main content</a>
+
+  <header class="pdp-top">
+    <div>
+      <h1>Prefix Sum &amp; <span>Difference Array</span></h1>
+      <p class="pdp-sub">Interview-critical range query / range update playground</p>
+    </div>
+    <button type="button" id="pdp-theme" class="pdp-btn ghost" aria-label="Toggle theme"><i class="fas fa-moon" aria-hidden="true"></i></button>
+  </header>
+
+  <main id="pdp-main" class="pdp-main">
+    <section class="pdp-card">
+      <div class="pdp-modes" role="tablist" aria-label="Mode">
+        <button type="button" class="pdp-mode active" data-mode="prefix" role="tab" aria-selected="true">Prefix sum</button>
+        <button type="button" class="pdp-mode" data-mode="diff" role="tab" aria-selected="false">Difference array</button>
+      </div>
+
+      <label for="pdp-input">Array (comma-separated)</label>
+      <div class="pdp-row">
+        <input id="pdp-input" type="text" value="2, 1, 3, 5, 4" />
+        <button type="button" id="pdp-apply" class="pdp-btn"><i class="fas fa-check" aria-hidden="true"></i> Apply</button>
+        <button type="button" id="pdp-random" class="pdp-btn ghost"><i class="fas fa-dice" aria-hidden="true"></i> Random</button>
+        <button type="button" id="pdp-reset" class="pdp-btn ghost"><i class="fas fa-undo" aria-hidden="true"></i> Reset</button>
+      </div>
+      <p id="pdp-error" class="pdp-error hidden" role="alert"></p>
+    </section>
+
+    <section class="pdp-card" id="pdp-prefix-panel">
+      <div class="pdp-panel-head">
+        <h2>Prefix construction</h2>
+        <div class="pdp-actions">
+          <button type="button" id="pdp-step" class="pdp-btn ghost"><i class="fas fa-step-forward" aria-hidden="true"></i> Step</button>
+          <button type="button" id="pdp-build" class="pdp-btn"><i class="fas fa-bolt" aria-hidden="true"></i> Build all</button>
+        </div>
+      </div>
+      <p class="pdp-complexity">Build: <strong>O(n)</strong> · Query [L,R]: <strong>O(1)</strong> via prefix[R+1] − prefix[L]</p>
+      <div class="pdp-arrays">
+        <div>
+          <h3>Original A</h3>
+          <div id="pdp-arr" class="pdp-cells"></div>
+        </div>
+        <div>
+          <h3>Prefix P</h3>
+          <div id="pdp-pref" class="pdp-cells"></div>
+        </div>
+      </div>
+
+      <div class="pdp-query">
+        <h3>Range sum query</h3>
+        <div class="pdp-row">
+          <label>L <input id="pdp-L" type="number" min="0" value="1" /></label>
+          <label>R <input id="pdp-R" type="number" min="0" value="3" /></label>
+          <button type="button" id="pdp-query" class="pdp-btn"><i class="fas fa-calculator" aria-hidden="true"></i> Query</button>
+        </div>
+        <p id="pdp-query-out" class="pdp-out" aria-live="polite">Enter L/R and query.</p>
+      </div>
+    </section>
+
+    <section class="pdp-card hidden" id="pdp-diff-panel">
+      <h2>Difference array updates</h2>
+      <p class="pdp-complexity">Range update [L,R,+X]: <strong>O(1)</strong> · Reconstruct: <strong>O(n)</strong> prefix of diff</p>
+      <div class="pdp-arrays">
+        <div>
+          <h3>Original</h3>
+          <div id="pdp-orig" class="pdp-cells"></div>
+        </div>
+        <div>
+          <h3>Diff D</h3>
+          <div id="pdp-diff" class="pdp-cells"></div>
+        </div>
+        <div>
+          <h3>Reconstructed</h3>
+          <div id="pdp-recon" class="pdp-cells"></div>
+        </div>
+      </div>
+      <div class="pdp-query">
+        <h3>Apply range update</h3>
+        <div class="pdp-row">
+          <label>L <input id="pdp-dL" type="number" min="0" value="1" /></label>
+          <label>R <input id="pdp-dR" type="number" min="0" value="3" /></label>
+          <label>+X <input id="pdp-dX" type="number" value="2" /></label>
+          <button type="button" id="pdp-update" class="pdp-btn"><i class="fas fa-plus" aria-hidden="true"></i> Update</button>
+        </div>
+        <p id="pdp-diff-out" class="pdp-out" aria-live="polite">Updates mutate D; reconstruct compares before/after.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="prefix-diff-playground.js"></script>
+</body>
+</html>
