@@ -148,7 +148,7 @@ function lshRecomputeAll() {
 
 /* ── Rendering: document list ── */
 function lshRenderDocList() {
-  var el = document.getElementById('lshDocList');
+  const el = document.getElementById('lshDocList');
   if (!el) return;
 
   if (!lshDocs.length) {
@@ -158,15 +158,18 @@ function lshRenderDocList() {
 
   el.innerHTML = lshDocs
     .map(function (doc) {
-      var sel = doc.id === lshSelectedDoc ? ' selected' : '';
-      var shinglePreview =
+      const sel = doc.id === lshSelectedDoc ? ' selected' : '';
+      const ariaSel = doc.id === lshSelectedDoc ? 'aria-selected="true"' : 'aria-selected="false"';
+      const shinglePreview =
         Array.from(doc.shingles).slice(0, 3).join(', ') + (doc.shingles.size > 3 ? '…' : '');
       return (
         '<div class="lsh-doc-item' +
         sel +
         '" data-id="' +
         doc.id +
-        '">' +
+        '" role="button" tabindex="0" ' +
+        ariaSel +
+        '>' +
         '<div class="lsh-doc-id">Doc ' +
         doc.id +
         ' (' +
@@ -184,10 +187,17 @@ function lshRenderDocList() {
     .join('');
 
   el.querySelectorAll('.lsh-doc-item').forEach(function (item) {
-    item.addEventListener('click', function () {
+    function selectDoc() {
       lshSelectedDoc = parseInt(item.getAttribute('data-id'), 10);
       lshRenderAll();
       lshShowResults();
+    }
+    item.addEventListener('click', selectDoc);
+    item.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectDoc();
+      }
     });
   });
 }
@@ -478,10 +488,15 @@ function lshEscape(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/* ── Helper to find valid factors of k for b ── */
+/**
+ * Finds all valid band counts for a given signature length k.
+ * A valid band count must divide k exactly.
+ * @param {number} k - The MinHash signature length.
+ * @returns {number[]} Array of valid band counts.
+ */
 function getValidBands(k) {
-  var bands = [];
-  for (var i = 2; i <= Math.floor(k / 2); i++) {
+  const bands = [];
+  for (let i = 2; i <= k; i++) {
     if (k % i === 0) {
       bands.push(i);
     }
@@ -493,30 +508,30 @@ function getValidBands(k) {
 function lshInit() {
   lshRenderAll();
 
-  var kSlider = document.getElementById('lshKSlider');
-  var bSlider = document.getElementById('lshBSlider');
-  var kVal = document.getElementById('lshKVal');
-  var bVal = document.getElementById('lshBVal');
-  var docInput = document.getElementById('lshDocInput');
-  var addBtn = document.getElementById('lshAddBtn');
-  var presetBtn = document.getElementById('lshPresetBtn');
-  var bruteBtn = document.getElementById('lshBruteBtn');
-  var resetBtn = document.getElementById('lshResetBtn');
+  const kSlider = document.getElementById('lshKSlider');
+  const bSlider = document.getElementById('lshBSlider');
+  const kVal = document.getElementById('lshKVal');
+  const bVal = document.getElementById('lshBVal');
+  const docInput = document.getElementById('lshDocInput');
+  const addBtn = document.getElementById('lshAddBtn');
+  const presetBtn = document.getElementById('lshPresetBtn');
+  const bruteBtn = document.getElementById('lshBruteBtn');
+  const resetBtn = document.getElementById('lshResetBtn');
 
   if (kSlider) {
     kSlider.addEventListener('input', function () {
       lshK = parseInt(kSlider.value, 10);
-      var valid = getValidBands(lshK);
-      var closest = valid.reduce(function (prev, curr) {
+      const valid = getValidBands(lshK);
+      const closest = valid.reduce(function (prev, curr) {
         return Math.abs(curr - lshB) < Math.abs(prev - lshB) ? curr : prev;
       });
       lshB = closest;
       if (bSlider) {
-        bSlider.max = Math.floor(lshK / 2);
+        bSlider.max = lshK;
         bSlider.value = closest;
       }
       if (kVal) kVal.textContent = lshK;
-      var rPB = Math.max(1, Math.floor(lshK / lshB));
+      const rPB = Math.max(1, Math.floor(lshK / lshB));
       if (bVal) bVal.textContent = lshB + ' bands × ' + rPB + ' rows';
       lshRecomputeAll();
       lshRenderAll();
@@ -526,14 +541,14 @@ function lshInit() {
 
   if (bSlider) {
     bSlider.addEventListener('input', function () {
-      var val = parseInt(bSlider.value, 10);
-      var valid = getValidBands(lshK);
-      var closest = valid.reduce(function (prev, curr) {
+      const val = parseInt(bSlider.value, 10);
+      const valid = getValidBands(lshK);
+      const closest = valid.reduce(function (prev, curr) {
         return Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev;
       });
       lshB = closest;
       bSlider.value = closest;
-      var rPB = Math.max(1, Math.floor(lshK / lshB));
+      const rPB = Math.max(1, Math.floor(lshK / lshB));
       if (bVal) bVal.textContent = lshB + ' bands × ' + rPB + ' rows';
       lshRenderAll();
       if (lshSelectedDoc >= 0) lshShowResults();
