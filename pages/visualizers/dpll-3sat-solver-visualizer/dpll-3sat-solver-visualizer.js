@@ -171,7 +171,7 @@ class DPLLVisualizer {
     if (conflictDetected) {
       this.updateActivePhaseIndicator('backtrack');
       this.backtrackCount++;
-      if (this.activeNode) this.activeNode.isBacktracked = true;
+      if (this.activeNode) this.markBacktracked(this.activeNode);
       this.renderFormulaBoard(true); // Highlights conflict brick visually
       yield {
         msg: 'Conflict detected (Empty Clause generated)! Backtracking call stack sequence...',
@@ -200,7 +200,14 @@ class DPLLVisualizer {
 
       // Revert assignment on backtracking path sequence
       this.assignments[unitLit.variable] = null;
+      this.markBacktracked(unitNode);
       this.activeNode = unitNode.parent;
+      this.updateTreeLayout();
+      this.renderFormulaBoard();
+      this.renderVariableBadges();
+      yield {
+        msg: `Backtracking: Undoing forced Unit Propagation for ${unitLit.variable}`,
+      };
       return false;
     }
 
@@ -224,7 +231,14 @@ class DPLLVisualizer {
       if (yield* this.dpll()) return true;
 
       this.assignments[pureLit.variable] = null;
+      this.markBacktracked(pureNode);
       this.activeNode = pureNode.parent;
+      this.updateTreeLayout();
+      this.renderFormulaBoard();
+      this.renderVariableBadges();
+      yield {
+        msg: `Backtracking: Undoing Pure Literal assignment for ${pureLit.variable}`,
+      };
       return false;
     }
 
@@ -256,7 +270,15 @@ class DPLLVisualizer {
 
     // Clean unwind unwind
     this.assignments[nextVar] = null;
+    this.markBacktracked(falseNode);
+    this.markBacktracked(trueNode);
     this.activeNode = falseNode.parent;
+    this.updateTreeLayout();
+    this.renderFormulaBoard();
+    this.renderVariableBadges();
+    yield {
+      msg: `Backtracking: Unwinding both speculative branches for ${nextVar}`,
+    };
     return false;
   }
 
@@ -319,6 +341,17 @@ class DPLLVisualizer {
     if (!node) return;
     node.isSuccess = true;
     this.markSuccessPath(node.parent);
+  }
+
+  /**
+   * Recursively marks a decision tree node and all its child subtrees
+   * as backtracked when a speculative branch fails.
+   * @param {DecisionNode} node - The target decision tree node to backtrack.
+   */
+  markBacktracked(node) {
+    if (!node) return;
+    node.isBacktracked = true;
+    node.children.forEach((c) => this.markBacktracked(c));
   }
 
   /* --- UI Render Manipulations (O(1) updates) --- */
