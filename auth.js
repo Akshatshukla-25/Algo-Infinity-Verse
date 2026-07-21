@@ -167,7 +167,9 @@
       if (!logoutButton) return;
 
       event.preventDefault();
-      if (!confirm('Are you sure you want to logout?')) return;
+
+      const { confirmed } = await showSignOutModal();
+      if (!confirmed) return;
       logoutButton.disabled = true;
 
       if (location.protocol !== 'file:') {
@@ -491,6 +493,167 @@
     wireDeleteAccount();
   });
 })();
+
+/**
+ * Shows an in-page confirmation modal for a destructive account action,
+ * replacing the native confirm()/prompt() dialogs this codebase avoids.
+ * Resolves with { confirmed, password } — password is only collected when
+ * requirePassword is true, and is null otherwise or on cancel.
+ */
+function showAccountActionModal({ title, message, confirmText, requirePassword = false }) {
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-header">
+          <h3></h3>
+          <button type="button" class="modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p></p>
+          ${
+            requirePassword
+              ? `
+            <div class="password-field">
+              <label for="accountActionPassword">Confirm your password</label>
+              <input type="password" id="accountActionPassword" placeholder="Enter your password" autocomplete="current-password" />
+              <small id="accountActionPasswordError" class="field-error"></small>
+            </div>
+          `
+              : ''
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="accountActionCancel">Cancel</button>
+          <button type="button" class="btn btn-danger" id="accountActionConfirm"></button>
+        </div>
+      </div>
+    `;
+    modal.querySelector('.modal-header h3').textContent = title;
+    modal.querySelector('.modal-body p').textContent = message;
+    modal.querySelector('#accountActionConfirm').textContent = confirmText;
+
+    document.body.appendChild(modal);
+
+    const closeBtn = modal.querySelector('.modal-close');
+    const cancelBtn = modal.querySelector('#accountActionCancel');
+    const confirmBtn = modal.querySelector('#accountActionConfirm');
+    const passwordInput = modal.querySelector('#accountActionPassword');
+    const passwordError = modal.querySelector('#accountActionPasswordError');
+
+    function settle(result) {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKeydown);
+      modal.classList.remove('active');
+      modal.remove();
+      resolve(result);
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') settle({ confirmed: false, password: null });
+    }
+
+    document.addEventListener('keydown', onKeydown);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) settle({ confirmed: false, password: null });
+    });
+    closeBtn.addEventListener('click', () => settle({ confirmed: false, password: null }));
+    cancelBtn.addEventListener('click', () => settle({ confirmed: false, password: null }));
+
+    confirmBtn.addEventListener('click', () => {
+      if (requirePassword) {
+        const password = passwordInput.value;
+        if (!password) {
+          passwordError.textContent = 'Password is required.';
+          passwordInput.focus();
+          return;
+        }
+        settle({ confirmed: true, password });
+        return;
+      }
+      settle({ confirmed: true, password: null });
+    });
+
+    setTimeout(() => (passwordInput || confirmBtn).focus(), 50);
+  });
+}
+
+/**
+ * Shows a styled sign-out confirmation modal following the Auth Gate design language.
+ * Replaces native confirm() with a polished, branded experience.
+ * Resolves with { confirmed } — true when user confirms sign-out.
+ */
+function showSignOutModal() {
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'signOutModal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `
+      <div class="modal-content signout-modal-content">
+        <button type="button" class="modal-close" id="signOutModalClose" aria-label="Close">&times;</button>
+        <div class="signout-icon">
+          <div class="signout-icon-ring">
+            <i class="fas fa-right-from-bracket"></i>
+          </div>
+        </div>
+        <h2 class="signout-title" id="signOutModalTitle">Sign Out</h2>
+        <p class="signout-subtitle">Are you sure you want to sign out?</p>
+        <div class="signout-info-box">
+          <p class="signout-info-text">
+            <i class="fas fa-check-circle"></i> Your progress and data are safely saved. Sign back in anytime to continue.
+          </p>
+        </div>
+        <div class="signout-actions">
+          <button type="button" class="signout-btn signout-btn--cancel" id="signOutCancel">Cancel</button>
+          <button type="button" class="signout-btn signout-btn--danger" id="signOutConfirm">
+            <i class="fas fa-right-from-bracket"></i> Sign Out
+          </button>
+        </div>
+        <p class="signout-dismiss">
+          <button type="button" class="signout-dismiss-btn" id="signOutDismiss">Maybe later</button>
+        </p>
+      </div>
+    `;
+
+    modal.setAttribute('aria-labelledby', 'signOutModalTitle');
+
+    document.body.appendChild(modal);
+
+    function settle(confirmed) {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKeydown);
+      modal.classList.remove('active');
+      modal.remove();
+      resolve({ confirmed });
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') settle(false);
+    }
+
+    document.addEventListener('keydown', onKeydown);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) settle(false);
+    });
+    modal.querySelector('#signOutModalClose').addEventListener('click', () => settle(false));
+    modal.querySelector('#signOutCancel').addEventListener('click', () => settle(false));
+    modal.querySelector('#signOutDismiss').addEventListener('click', () => settle(false));
+    modal.querySelector('#signOutConfirm').addEventListener('click', () => settle(true));
+
+    setTimeout(() => modal.querySelector('#signOutCancel').focus(), 50);
+  });
+}
 
 /**
  * Shows an in-page confirmation modal for a destructive account action,
