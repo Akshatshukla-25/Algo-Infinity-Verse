@@ -163,8 +163,6 @@
       for (let i = 1; i <= 5; i++) {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.setAttribute('role', 'radio');
-        btn.setAttribute('aria-checked', String((scores[dim.key] || 0) >= i));
         btn.textContent = String(i);
         btn.setAttribute('aria-label', `${dim.label} ${i}`);
         if ((scores[dim.key] || 0) >= i) btn.classList.add('active');
