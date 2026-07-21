@@ -154,6 +154,11 @@ const editors = [
 
   // ── Systems & Special ──
   {
+    name: 'Crystal Editor',
+    path: '/pages/editors/crystal-editor/crystal-editor.html',
+    category: 'Systems & Special',
+    icon: 'fa-gem',
+    desc: 'Write Crystal programming language code with syntax highlighting, starter templates, and fast simulated execution.',
     name: 'Nim Editor',
     path: '/pages/editors/nim-editor/nim-editor.html',
     category: 'Systems & Special',
