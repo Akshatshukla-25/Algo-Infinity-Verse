@@ -8,7 +8,16 @@ var lshDocs = [];
 var lshDocCounter = 0;
 var lshSelectedDoc = -1;
 
-var LSH_BAND_COLOURS = ['#7c3aed','#06b6d4','#f59e0b','#ef4444','#22c55e','#ec4899','#fb923c','#6366f1'];
+var LSH_BAND_COLOURS = [
+  '#7c3aed',
+  '#06b6d4',
+  '#f59e0b',
+  '#ef4444',
+  '#22c55e',
+  '#ec4899',
+  '#fb923c',
+  '#6366f1',
+];
 
 var LSH_PRESET_DOCS = [
   'the quick brown fox jumps over the lazy dog',
@@ -18,19 +27,25 @@ var LSH_PRESET_DOCS = [
   'javascript is a programming language for the web',
   'typescript is a typed superset of javascript for the web',
   'the cat sat on the mat and looked around',
-  'a cat was sitting on the mat looking around'
+  'a cat was sitting on the mat looking around',
 ];
 
 /* ── Shingling ── */
 function lshShingle(text, q) {
   q = q || 2;
-  var words = text.toLowerCase().replace(/[^a-z0-9 ]/g, '').split(/\s+/).filter(Boolean);
+  var words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, '')
+    .split(/\s+/)
+    .filter(Boolean);
   var shingles = new Set();
   for (var i = 0; i <= words.length - q; i++) {
     shingles.add(words.slice(i, i + q).join(' '));
   }
   if (shingles.size === 0) {
-    words.forEach(function (w) { shingles.add(w); });
+    words.forEach(function (w) {
+      shingles.add(w);
+    });
   }
   return shingles;
 }
@@ -38,7 +53,9 @@ function lshShingle(text, q) {
 /* ── Jaccard ── */
 function lshJaccard(setA, setB) {
   var intersection = 0;
-  setA.forEach(function (s) { if (setB.has(s)) intersection++; });
+  setA.forEach(function (s) {
+    if (setB.has(s)) intersection++;
+  });
   var union = setA.size + setB.size - intersection;
   if (union === 0) return 0;
   return intersection / union;
@@ -60,7 +77,7 @@ function lshMinHashSig(shingles, k) {
   var shingleArr = Array.from(shingles);
 
   for (var r = 0; r < k; r++) {
-    var minVal = 0xFFFFFFFF;
+    var minVal = 0xffffffff;
     for (var j = 0; j < shingleArr.length; j++) {
       var h = lshPolyHash(shingleArr[j], 1000003 + r * 999983);
       if (h < minVal) minVal = h;
@@ -139,17 +156,32 @@ function lshRenderDocList() {
     return;
   }
 
-  el.innerHTML = lshDocs.map(function (doc) {
-    var sel = doc.id === lshSelectedDoc ? ' selected' : '';
-    var shinglePreview = Array.from(doc.shingles).slice(0, 3).join(', ') + (doc.shingles.size > 3 ? '…' : '');
-    return (
-      '<div class="lsh-doc-item' + sel + '" data-id="' + doc.id + '">' +
-        '<div class="lsh-doc-id">Doc ' + doc.id + ' (' + doc.shingles.size + ' shingles)</div>' +
-        '<div class="lsh-doc-text">' + lshEscape(doc.text) + '</div>' +
-        '<div class="lsh-doc-shingles">' + lshEscape(shinglePreview) + '</div>' +
-      '</div>'
-    );
-  }).join('');
+  el.innerHTML = lshDocs
+    .map(function (doc) {
+      var sel = doc.id === lshSelectedDoc ? ' selected' : '';
+      var shinglePreview =
+        Array.from(doc.shingles).slice(0, 3).join(', ') + (doc.shingles.size > 3 ? '…' : '');
+      return (
+        '<div class="lsh-doc-item' +
+        sel +
+        '" data-id="' +
+        doc.id +
+        '">' +
+        '<div class="lsh-doc-id">Doc ' +
+        doc.id +
+        ' (' +
+        doc.shingles.size +
+        ' shingles)</div>' +
+        '<div class="lsh-doc-text">' +
+        lshEscape(doc.text) +
+        '</div>' +
+        '<div class="lsh-doc-shingles">' +
+        lshEscape(shinglePreview) +
+        '</div>' +
+        '</div>'
+      );
+    })
+    .join('');
 
   el.querySelectorAll('.lsh-doc-item').forEach(function (item) {
     item.addEventListener('click', function () {
@@ -166,7 +198,8 @@ function lshRenderSignatures(highlightDocId) {
   if (!el) return;
 
   if (!lshDocs.length) {
-    el.innerHTML = '<span class="lsh-empty-text">Signatures appear here after adding documents.</span>';
+    el.innerHTML =
+      '<span class="lsh-empty-text">Signatures appear here after adding documents.</span>';
     return;
   }
 
@@ -184,7 +217,9 @@ function lshRenderSignatures(highlightDocId) {
 
     doc.sig.forEach(function (val, idx) {
       var bandIdx = Math.floor(idx / rowsPerBand);
-      var bandClass = isHl ? ' lsh-cell-hi' : (' lsh-cell-band-' + (bandIdx % LSH_BAND_COLOURS.length));
+      var bandClass = isHl
+        ? ' lsh-cell-hi'
+        : ' lsh-cell-band-' + (bandIdx % LSH_BAND_COLOURS.length);
       var display = (val >>> 0).toString(16).slice(0, 4);
       html += '<td class="lsh-sig-cell' + bandClass + '">' + display + '</td>';
     });
@@ -211,7 +246,8 @@ function lshRenderBands(bands) {
   bands.forEach(function (bucket, bIdx) {
     var colour = LSH_BAND_COLOURS[bIdx % LSH_BAND_COLOURS.length];
     html += '<div class="lsh-band-block">';
-    html += '<div class="lsh-band-label" style="color:' + colour + '">Band ' + (bIdx + 1) + '</div>';
+    html +=
+      '<div class="lsh-band-label" style="color:' + colour + '">Band ' + (bIdx + 1) + '</div>';
 
     Object.entries(bucket).forEach(function (entry) {
       var key = entry[0];
@@ -239,10 +275,12 @@ function lshShowResults() {
 
   section.style.display = 'block';
 
-  var bands    = lshBuildBuckets();
+  var bands = lshBuildBuckets();
   var allPairs = lshGetCandidates(bands);
 
-  var selDoc = lshDocs.find(function (d) { return d.id === lshSelectedDoc; });
+  var selDoc = lshDocs.find(function (d) {
+    return d.id === lshSelectedDoc;
+  });
   if (!selDoc) return;
 
   var candidatePairs = allPairs.filter(function (p) {
@@ -257,23 +295,40 @@ function lshShowResults() {
   if (!candidateEl) return;
 
   if (!candidateIds.length) {
-    candidateEl.innerHTML = '<span class="lsh-empty-text">No candidate pairs found for Doc ' + lshSelectedDoc + '. Try reducing bands or adding more similar documents.</span>';
+    candidateEl.innerHTML =
+      '<span class="lsh-empty-text">No candidate pairs found for Doc ' +
+      lshSelectedDoc +
+      '. Try reducing bands or adding more similar documents.</span>';
   } else {
     var rows = candidateIds.map(function (otherId) {
-      var otherDoc = lshDocs.find(function (d) { return d.id === otherId; });
+      var otherDoc = lshDocs.find(function (d) {
+        return d.id === otherId;
+      });
       if (!otherDoc) return '';
-      var jacc     = lshJaccard(selDoc.shingles, otherDoc.shingles);
-      var pct      = Math.round(jacc * 100);
-      var jClass   = jacc >= 0.5 ? 'high' : (jacc >= 0.2 ? 'med' : 'low');
-      var rowClass  = jacc >= 0.3 ? 'high-sim' : 'low-sim';
-      var isFP     = jacc < 0.1;
+      var jacc = lshJaccard(selDoc.shingles, otherDoc.shingles);
+      var pct = Math.round(jacc * 100);
+      var jClass = jacc >= 0.5 ? 'high' : jacc >= 0.2 ? 'med' : 'low';
+      var rowClass = jacc >= 0.3 ? 'high-sim' : 'low-sim';
+      var isFP = jacc < 0.1;
 
       return (
-        '<div class="lsh-candidate-row ' + rowClass + '">' +
-          '<span class="lsh-cand-docs">D' + lshSelectedDoc + ' ↔ D' + otherId + '</span>' +
-          '<div class="lsh-cand-bar-wrap"><div class="lsh-cand-bar" style="width:' + pct + '%"></div></div>' +
-          '<span class="lsh-cand-jaccard ' + jClass + '">' + pct + '%</span>' +
-          (isFP ? '<span class="lsh-cand-fp">false+</span>' : '') +
+        '<div class="lsh-candidate-row ' +
+        rowClass +
+        '">' +
+        '<span class="lsh-cand-docs">D' +
+        lshSelectedDoc +
+        ' ↔ D' +
+        otherId +
+        '</span>' +
+        '<div class="lsh-cand-bar-wrap"><div class="lsh-cand-bar" style="width:' +
+        pct +
+        '%"></div></div>' +
+        '<span class="lsh-cand-jaccard ' +
+        jClass +
+        '">' +
+        pct +
+        '%</span>' +
+        (isFP ? '<span class="lsh-cand-fp">false+</span>' : '') +
         '</div>'
       );
     });
@@ -281,8 +336,13 @@ function lshShowResults() {
   }
 
   lshSetStatus(
-    'Doc ' + lshSelectedDoc + ': ' + candidateIds.length + ' candidate pair(s) found via LSH bucket collision. ' +
-    'Jaccard verified against true shingled sets. ' + (candidateIds.length ? 'Click brute-force to compare.' : ''),
+    'Doc ' +
+      lshSelectedDoc +
+      ': ' +
+      candidateIds.length +
+      ' candidate pair(s) found via LSH bucket collision. ' +
+      'Jaccard verified against true shingled sets. ' +
+      (candidateIds.length ? 'Click brute-force to compare.' : ''),
     candidateIds.length ? 'ok' : 'warn'
   );
 }
@@ -309,22 +369,37 @@ function lshShowBrute() {
     }
   }
 
-  pairs.sort(function (x, y) { return y.jacc - x.jacc; });
+  pairs.sort(function (x, y) {
+    return y.jacc - x.jacc;
+  });
 
-  var html = pairs.map(function (p) {
-    var pct = Math.round(p.jacc * 100);
-    var cls = p.jacc >= 0.5 ? 'high' : (p.jacc >= 0.2 ? 'med' : 'low');
-    return (
-      '<div class="lsh-brute-row">' +
-        '<span class="lsh-brute-docs">D' + p.a + ' ↔ D' + p.b + '</span>' +
-        '<span class="lsh-brute-jaccard ' + cls + '">' + pct + '%</span>' +
-      '</div>'
-    );
-  }).join('');
+  var html = pairs
+    .map(function (p) {
+      var pct = Math.round(p.jacc * 100);
+      var cls = p.jacc >= 0.5 ? 'high' : p.jacc >= 0.2 ? 'med' : 'low';
+      return (
+        '<div class="lsh-brute-row">' +
+        '<span class="lsh-brute-docs">D' +
+        p.a +
+        ' ↔ D' +
+        p.b +
+        '</span>' +
+        '<span class="lsh-brute-jaccard ' +
+        cls +
+        '">' +
+        pct +
+        '%</span>' +
+        '</div>'
+      );
+    })
+    .join('');
 
   area.innerHTML = html || '<span class="lsh-empty-text">No pairs.</span>';
 
-  lshSetStatus('Brute-force: computed all ' + pairs.length + ' pair(s) — O(n²). LSH avoids most of these.', 'info');
+  lshSetStatus(
+    'Brute-force: computed all ' + pairs.length + ' pair(s) — O(n²). LSH avoids most of these.',
+    'info'
+  );
 }
 
 /* ── Master render ── */
@@ -349,24 +424,36 @@ function lshAddDoc(text) {
 
   lshDocCounter++;
   var shingles = lshShingle(text);
-  var sig      = lshMinHashSig(shingles, lshK);
+  var sig = lshMinHashSig(shingles, lshK);
 
   lshDocs.push({ id: lshDocCounter, text: text, shingles: shingles, sig: sig });
   lshRenderAll();
-  lshSetStatus('Added Doc ' + lshDocCounter + ' with ' + shingles.size + ' shingles. Click a document to find its nearest neighbors.', 'ok');
+  lshSetStatus(
+    'Added Doc ' +
+      lshDocCounter +
+      ' with ' +
+      shingles.size +
+      ' shingles. Click a document to find its nearest neighbors.',
+    'ok'
+  );
 }
 
 /* ── Load presets ── */
 function lshLoadPreset() {
   lshReset();
-  LSH_PRESET_DOCS.forEach(function (t) { lshAddDoc(t); });
-  lshSetStatus('Loaded 8 demo documents. Click any document to run LSH nearest-neighbor search on it.', 'info');
+  LSH_PRESET_DOCS.forEach(function (t) {
+    lshAddDoc(t);
+  });
+  lshSetStatus(
+    'Loaded 8 demo documents. Click any document to run LSH nearest-neighbor search on it.',
+    'info'
+  );
 }
 
 /* ── Reset ── */
 function lshReset() {
-  lshDocs        = [];
-  lshDocCounter  = 0;
+  lshDocs = [];
+  lshDocCounter = 0;
   lshSelectedDoc = -1;
 
   lshRenderAll();
@@ -384,36 +471,50 @@ function lshSetStatus(msg, cls) {
   var el = document.getElementById('lshStatus');
   if (!el) return;
   el.textContent = msg;
-  el.className   = 'lsh-status ' + (cls || '');
+  el.className = 'lsh-status ' + (cls || '');
 }
 
 function lshEscape(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ── Helper to find valid factors of k for b ── */
+function getValidBands(k) {
+  var bands = [];
+  for (var i = 2; i <= Math.floor(k / 2); i++) {
+    if (k % i === 0) {
+      bands.push(i);
+    }
+  }
+  return bands;
 }
 
 /* ── Init ── */
 function lshInit() {
   lshRenderAll();
 
-  var kSlider   = document.getElementById('lshKSlider');
-  var bSlider   = document.getElementById('lshBSlider');
-  var kVal      = document.getElementById('lshKVal');
-  var bVal      = document.getElementById('lshBVal');
-  var docInput  = document.getElementById('lshDocInput');
-  var addBtn    = document.getElementById('lshAddBtn');
+  var kSlider = document.getElementById('lshKSlider');
+  var bSlider = document.getElementById('lshBSlider');
+  var kVal = document.getElementById('lshKVal');
+  var bVal = document.getElementById('lshBVal');
+  var docInput = document.getElementById('lshDocInput');
+  var addBtn = document.getElementById('lshAddBtn');
   var presetBtn = document.getElementById('lshPresetBtn');
-  var bruteBtn  = document.getElementById('lshBruteBtn');
-  var resetBtn  = document.getElementById('lshResetBtn');
+  var bruteBtn = document.getElementById('lshBruteBtn');
+  var resetBtn = document.getElementById('lshResetBtn');
 
   if (kSlider) {
     kSlider.addEventListener('input', function () {
       lshK = parseInt(kSlider.value, 10);
-      lshB = Math.min(lshB, Math.floor(lshK / 2));
-      if (bSlider) bSlider.max = Math.floor(lshK / 2);
-      if (bSlider && parseInt(bSlider.value, 10) > lshB) bSlider.value = lshB;
+      var valid = getValidBands(lshK);
+      var closest = valid.reduce(function (prev, curr) {
+        return Math.abs(curr - lshB) < Math.abs(prev - lshB) ? curr : prev;
+      });
+      lshB = closest;
+      if (bSlider) {
+        bSlider.max = Math.floor(lshK / 2);
+        bSlider.value = closest;
+      }
       if (kVal) kVal.textContent = lshK;
       var rPB = Math.max(1, Math.floor(lshK / lshB));
       if (bVal) bVal.textContent = lshB + ' bands × ' + rPB + ' rows';
@@ -425,7 +526,13 @@ function lshInit() {
 
   if (bSlider) {
     bSlider.addEventListener('input', function () {
-      lshB = parseInt(bSlider.value, 10);
+      var val = parseInt(bSlider.value, 10);
+      var valid = getValidBands(lshK);
+      var closest = valid.reduce(function (prev, curr) {
+        return Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev;
+      });
+      lshB = closest;
+      bSlider.value = closest;
       var rPB = Math.max(1, Math.floor(lshK / lshB));
       if (bVal) bVal.textContent = lshB + ' bands × ' + rPB + ' rows';
       lshRenderAll();
@@ -451,6 +558,6 @@ function lshInit() {
   }
 
   if (presetBtn) presetBtn.addEventListener('click', lshLoadPreset);
-  if (bruteBtn)  bruteBtn.addEventListener('click', lshShowBrute);
-  if (resetBtn)  resetBtn.addEventListener('click', lshReset);
+  if (bruteBtn) bruteBtn.addEventListener('click', lshShowBrute);
+  if (resetBtn) resetBtn.addEventListener('click', lshReset);
 }
