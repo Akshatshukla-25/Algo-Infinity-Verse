@@ -24,6 +24,13 @@ const visualizers = [
     icon: 'fa-database',
     desc: 'Interactive simulator for Command Query Responsibility Segregation and Event Sourcing.',
   },
+  {
+    name: 'Sagas Pattern Visualizer',
+    path: '/pages/visualizers/sagas-pattern-visualizer/sagas-pattern-visualizer.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Visualize Distributed Transactions and Compensating Actions using the Sagas Pattern.',
+  },
   // ── Sorting & Searching ──
   {
     name: 'Sorting Visualizer',
@@ -1009,14 +1016,14 @@ const visualizers = [
     path: '/pages/visualizers/alias-method-visualizer/alias-method-visualizer.html',
     category: 'Data Structures',
     icon: 'fa-dice',
-    desc: 'O(1) weighted random sampling via Vose\'s Alias Method — loot tables, load balancers, ML sampling.',
+    desc: "O(1) weighted random sampling via Vose's Alias Method — loot tables, load balancers, ML sampling.",
   },
   {
-  name: 'Weighted Interval Scheduling',
-  path: '/pages/visualizers/weighted-interval-scheduling/weighted-interval-scheduling.html',
-  category: 'Algorithms',
-  icon: 'fa-calendar-check',
-  desc: 'DP + binary search for maximum-profit job scheduling — sort by end time, compute p(j), fill OPT table cell-by-cell, trace back optimal jobs, and compare against greedy.',
+    name: 'Weighted Interval Scheduling',
+    path: '/pages/visualizers/weighted-interval-scheduling/weighted-interval-scheduling.html',
+    category: 'Algorithms',
+    icon: 'fa-calendar-check',
+    desc: 'DP + binary search for maximum-profit job scheduling — sort by end time, compute p(j), fill OPT table cell-by-cell, trace back optimal jobs, and compare against greedy.',
   },
   {
     name: 'Reed-Solomon Erasure Coding Visualizer',

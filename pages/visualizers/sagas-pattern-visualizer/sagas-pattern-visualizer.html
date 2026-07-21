@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sagas Pattern Visualizer | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Visualize Distributed Transactions and Compensating Actions using the Sagas Pattern."
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="sagas-pattern-visualizer.css" />
+    <script src="/theme.js"></script>
+  </head>
+  <body class="sagas-body">
+    <nav class="navbar sagas-nav">
+      <div class="nav-logo">
+        <span class="logo-text">∞</span>
+        <span class="logo-title">Algo Infinity Verse</span>
+      </div>
+      <div class="engine-badge">
+        <i class="fas fa-network-wired"></i> Distributed Sagas Coordinator
+      </div>
+    </nav>
+
+    <main class="sagas-workspace">
+      <header class="workspace-header">
+        <h1>Sagas Pattern (Choreography)</h1>
+        <p class="subtitle">
+          Simulate a distributed e-commerce transaction across independent microservices.
+        </p>
+
+        <div class="control-panel">
+          <button id="btnStartSaga" class="btn btn-primary">
+            <i class="fas fa-play"></i> Start Checkout Saga
+          </button>
+          <div class="fail-controls">
+            <span>Simulate Failure at:</span>
+            <label class="radio-label">
+              <input type="radio" name="failPoint" value="none" checked /> None (Success)
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="failPoint" value="payment" /> Payment
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="failPoint" value="inventory" /> Inventory
+            </label>
+          </div>
+        </div>
+      </header>
+
+      <div class="visualizer-content">
+        <!-- Left Side: Architecture & Flow -->
+        <section class="architecture-panel">
+          <div class="message-bus" id="messageBus">
+            <span class="bus-label">Event Bus (Kafka / RabbitMQ)</span>
+            <div class="bus-line"></div>
+          </div>
+
+          <div class="services-container">
+            <div class="service-card" id="service-order">
+              <div class="service-icon"><i class="fas fa-shopping-cart"></i></div>
+              <h3>Order Service</h3>
+              <div class="status-indicator" id="status-order">IDLE</div>
+              <ul class="action-list">
+                <li><i class="fas fa-check text-green"></i> create_order()</li>
+                <li><i class="fas fa-undo text-red"></i> cancel_order()</li>
+              </ul>
+            </div>
+
+            <div class="service-card" id="service-payment">
+              <div class="service-icon"><i class="fas fa-credit-card"></i></div>
+              <h3>Payment Service</h3>
+              <div class="status-indicator" id="status-payment">IDLE</div>
+              <ul class="action-list">
+                <li><i class="fas fa-check text-green"></i> process_payment()</li>
+                <li><i class="fas fa-undo text-red"></i> refund_payment()</li>
+              </ul>
+            </div>
+
+            <div class="service-card" id="service-inventory">
+              <div class="service-icon"><i class="fas fa-boxes"></i></div>
+              <h3>Inventory Service</h3>
+              <div class="status-indicator" id="status-inventory">IDLE</div>
+              <ul class="action-list">
+                <li><i class="fas fa-check text-green"></i> reserve_stock()</li>
+                <li><i class="fas fa-undo text-red"></i> release_stock()</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Animated Packet overlay container -->
+          <div id="packetContainer"></div>
+        </section>
+
+        <!-- Right Side: Event Log -->
+        <section class="log-panel">
+          <div class="log-header">
+            <h2><i class="fas fa-list-alt"></i> Saga Event Log</h2>
+            <span id="sagaStatus" class="saga-badge neutral">READY</span>
+          </div>
+          <div class="log-content" id="logContent">
+            <div class="log-placeholder">Waiting for saga to start...</div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="sagas-pattern-visualizer.js"></script>
+  </body>
+</html>
