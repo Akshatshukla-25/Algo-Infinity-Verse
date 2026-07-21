@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile — Algo Infinity Verse</title>
+    <title>My Profile — Algo Infinity Verse</title>
 
     <!-- Core Styles -->
     <link rel="stylesheet" href="../../styles.css">
@@ -14,7 +14,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase (Same as index.html) -->
+    <!-- Third-party libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Data dependencies -->
+    <script src="../../data/dsa-topics.js"></script>
+    <script src="../../data/practice-problems.js"></script>
+    <script src="../../data/levels.js"></script>
+
     <script type="importmap">
     {
       "imports": {
@@ -33,57 +42,31 @@
       </div>
     </div>
 
-    <!-- Navigation Bar -->
+    <!-- Navbar -->
     <div id="navbar-placeholder"></div>
 
-    <main class="profile-container">
+    <main class="profile-page">
 
-        <!-- Back button -->
-        <nav class="profile-nav">
-            <button type="button" class="back-btn" id="profileBackBtn" aria-label="Back to Dashboard">
-                <i class="fas fa-arrow-left"></i>
-                <span>Back to Dashboard</span>
-            </button>
-        </nav>
-
-        <!-- Profile header -->
+        <!-- ==========================================================
+             PROFILE HERO
+             ========================================================== -->
         <header class="profile-hero">
-
-            <!-- Avatar -->
             <div class="profile-avatar-wrapper">
                 <div class="profile-avatar-large" id="profileAvatarWrapper">
-                    <img
-                        id="profileAvatarImage"
-                        class="avatar-preview"
-                        alt="Profile avatar"
-                        style="display: none;"
-                    >
+                    <img id="profileAvatarImage" class="avatar-preview" alt="Profile avatar" style="display: none;">
                     <span class="avatar-icon" id="profileAvatarEmoji"></span>
                 </div>
-                <button
-                    type="button"
-                    class="avatar-upload-overlay"
-                    id="avatarUploadOverlay"
-                    aria-controls="avatarFileInput"
-                    title="Change avatar"
-                >
+                <button type="button" class="avatar-upload-overlay" id="avatarUploadOverlay" aria-controls="avatarFileInput" title="Change avatar">
                     <i class="fas fa-camera"></i>
                 </button>
-                <input
-                    type="file"
-                    id="avatarFileInput"
-                    class="avatar-file-input"
-                    accept="image/*"
-                    aria-label="Upload profile picture"
-                >
+                <input type="file" id="avatarFileInput" class="avatar-file-input" accept="image/*" aria-label="Upload profile picture">
             </div>
 
-            <!-- Info -->
             <div class="profile-info-group">
                 <h1 id="userName">Learner</h1>
-                <p class="profile-level-text" id="userLevel">Level 1 &mdash; Beginner</p>
+                <p class="profile-level-text" id="userLevel">Level 1 — Beginner</p>
+                <p class="profile-join-text">Joined: <span id="joinDateSection">Today</span></p>
 
-                <!-- XP progress -->
                 <div class="profile-xp-bar">
                     <div class="xp-bar-track">
                         <div class="xp-bar-fill" id="profileProgressBar"></div>
@@ -91,7 +74,6 @@
                     <span class="xp-bar-label" id="profileLevelProgress">0%</span>
                 </div>
 
-                <!-- Stats -->
                 <div class="profile-stats-row">
                     <div class="profile-stat">
                         <span class="stat-value" id="userStreak">0</span>
@@ -106,50 +88,174 @@
                         <span class="stat-label">Problems</span>
                     </div>
                     <div class="profile-stat">
+                        <span class="stat-value" id="profileFreezesSection">0</span>
+                        <span class="stat-label">Freezes</span>
+                    </div>
+                    <div class="profile-stat">
                         <span class="stat-value" id="profileBadges">0</span>
                         <span class="stat-label">Badges</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Edit -->
             <button class="profile-edit-btn" id="profilePageEditBtn" title="Edit Profile" aria-label="Edit Profile">
                 <i class="fas fa-pen"></i>
             </button>
         </header>
 
-        <!-- Languages -->
+        <!-- ==========================================================
+             BIO
+             ========================================================== -->
+        <div class="profile-bio-section">
+            <p class="profile-bio-text empty-state" id="profileBio">No bio yet. Click edit to add one!</p>
+        </div>
+
+        <!-- ==========================================================
+             LANGUAGES
+             ========================================================== -->
         <section class="profile-languages-section">
             <span class="section-label">Languages</span>
-            <button type="button" class="lang-edit-btn" id="languagesEditBtn" title="Edit Languages" aria-label="Edit Languages">
+            <div id="profileLanguages" class="languages-list"><!-- populated by profile-edit.js --></div>
+            <button type="button" class="lang-edit-btn" id="languagesEditBtn" title="Edit Languages">
                 <i class="fas fa-pen"></i> Edit
             </button>
-            <div id="profileLanguages" class="languages-list">
-                <!-- Populated by profile-edit.js -->
-            </div>
         </section>
 
-        <!-- Identity Card -->
-        <div class="profile-split">
+        <!-- ==========================================================
+             CARD GRID — All cards have uniform width & background
+             ========================================================== -->
+        <div class="pf-card-grid">
 
-            <!-- Identity Card -->
-            <section class="identity-card-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-id-card"></i> Coding Identity Card</h2>
+            <!-- Row 1: Activity Heatmap (full row width) — GitHub-style contribution graph -->
+            <section class="pf-card grid-span-3">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-calendar-alt"></i> Activity Heatmap</h3>
                 </div>
-
-                <div class="theme-selector-container">
-                    <button type="button" class="theme-btn active" data-theme="cyberpunk">Cyberpunk</button>
-                    <button type="button" class="theme-btn" data-theme="cosmic">Cosmic</button>
-                    <button type="button" class="theme-btn" data-theme="obsidian">Obsidian</button>
-                    <button type="button" class="theme-btn" data-theme="emerald">Emerald</button>
+                <div class="heatmap-container" id="activityHeatmap">
+                    <p class="pf-empty">No activity data yet. Start solving problems!</p>
                 </div>
+                <div class="heatmap-tooltip" id="heatmapTooltip"></div>
+            </section>
 
-                <div class="card-display-container">
-                    <div id="codingIdentityCard" class="coding-card theme-cyberpunk">
+            <!-- Skills Mastery -->
+            <section class="pf-card">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-brain"></i> Skills Mastery</h3>
+                </div>
+                <div class="pf-card-content">
+                    <div class="skills-mastery-grid" id="skillsMasteryGrid">
+                        <p class="pf-empty">Loading skills...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Coding Personality -->
+            <section class="pf-card" id="personalityCard">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-user-tag"></i> Coding Personality</h3>
+                </div>
+                <div class="pf-card-content" id="personalityContent">
+                    <p class="pf-empty">Take the profiler quiz to discover your coding style.</p>
+                </div>
+            </section>
+
+            <!-- Smart Review Queue -->
+            <section class="pf-card">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-clock"></i> Smart Review Queue</h3>
+                </div>
+                <div class="pf-card-content">
+                    <div class="review-queue-count" id="reviewQueueCount">--</div>
+                    <p class="review-queue-sub">Problems due for spaced repetition review.</p>
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="pf-card">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-clock"></i> Recent Activity</h3>
+                </div>
+                <div class="pf-card-content">
+                    <div class="activity-list" id="recentActivityList">
+                        <p class="pf-empty">No problems solved yet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Freeze Usage History -->
+            <section class="pf-card">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-snowflake"></i> Freeze Usage History</h3>
+                </div>
+                <div class="pf-card-content">
+                    <div class="freeze-history-list" id="freezeHistoryList">
+                        <p class="pf-empty">No freezes used yet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Personalized Recommendations -->
+            <section class="pf-card">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-lightbulb"></i> Recommendations</h3>
+                </div>
+                <div class="pf-card-content">
+                    <div class="recommendations-list" id="recommendationsContainer">
+                        <p class="pf-empty">Complete a quiz to get recommendations.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Badges / Achievements -->
+            <section class="pf-card grid-span-3">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-crown"></i> Achievements</h3>
+                    <span class="badges-count" id="badgesEarnedCount">0 / 9 earned</span>
+                </div>
+                <div class="pf-card-content">
+                    <div class="badges-wrapper" id="badgesContainer"><!-- populated by dashboard.js --></div>
+                </div>
+            </section>
+
+            <!-- Recently Viewed Problems (spans 2 cols) -->
+            <section class="pf-card grid-span-2">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-history"></i> Recently Viewed</h3>
+                </div>
+                <div class="pf-card-content">
+                    <div class="recent-problems-list" id="recentProblemsList">
+                        <p class="pf-empty">No recently viewed problems.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bookmark Collections -->
+            <section class="pf-card">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-bookmark"></i> Bookmark Collections</h3>
+                </div>
+                <div class="pf-card-content">
+                    <div class="bookmark-collections-profile" id="bookmarkCollectionsPanel">
+                        <p class="pf-empty">No collections yet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Coding Identity Card (full width) -->
+            <section class="pf-card grid-span-3">
+                <div class="pf-card-header">
+                    <h3><i class="fas fa-id-card"></i> Coding Identity Card</h3>
+                </div>
+                <div class="pf-card-content" style="display:flex;flex-direction:column;align-items:center;">
+                    <div class="theme-selector-container" style="display:flex;gap:0.3rem;margin-bottom:0.75rem;flex-wrap:wrap;justify-content:center;">
+                        <button type="button" class="theme-btn active" data-theme="cyberpunk">Cyberpunk</button>
+                        <button type="button" class="theme-btn" data-theme="cosmic">Cosmic</button>
+                        <button type="button" class="theme-btn" data-theme="obsidian">Obsidian</button>
+                        <button type="button" class="theme-btn" data-theme="emerald">Emerald</button>
+                    </div>
+                    <div id="codingIdentityCard" class="coding-card theme-cyberpunk" style="max-width:100%;">
                         <div class="card-glow"></div>
                         <div class="card-grid"></div>
-
                         <div class="card-header">
                             <div class="logo-area">
                                 <span class="logo-icon">&infin;</span>
@@ -157,7 +263,6 @@
                             </div>
                             <div class="card-type">DEVELOPER PASS</div>
                         </div>
-
                         <div class="card-body">
                             <div class="user-section">
                                 <div class="card-avatar-container">
@@ -170,7 +275,6 @@
                                     <div class="user-title" id="cardUserTitle">Beginner</div>
                                 </div>
                             </div>
-
                             <div class="stats-section">
                                 <div class="stat-item">
                                     <div class="stat-label">GLOBAL RANK</div>
@@ -185,13 +289,10 @@
                                     <div class="stat-value" id="cardStreak">0</div>
                                 </div>
                             </div>
-
                             <div class="footer-section">
                                 <div class="skills-area">
                                     <div class="section-label">TOP SKILLS</div>
-                                    <div class="skills-list" id="cardSkills">
-                                        <span class="skill-pill">General</span>
-                                    </div>
+                                    <div class="skills-list" id="cardSkills"><span class="skill-pill">General</span></div>
                                 </div>
                                 <div class="qr-area">
                                     <div id="cardQrCode" class="qr-code"></div>
@@ -200,23 +301,44 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="card-download-actions">
-                    <button type="button" id="downloadPngBtn" class="btn"><i class="fas fa-file-image"></i> Export PNG</button>
-                    <button type="button" id="downloadPdfBtn" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                    <div class="card-download-actions" style="margin-top:0.75rem;">
+                        <button type="button" id="downloadPngBtn" class="btn"><i class="fas fa-file-image"></i> Export PNG</button>
+                        <button type="button" id="downloadPdfBtn" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                    </div>
                 </div>
             </section>
 
-        </div>
+        </div><!-- /pf-card-grid -->
 
-        <!-- Solved Algorithms -->
-        <section class="solved-section">
-            <div class="section-header">
-                <h2><i class="fas fa-check-circle"></i> Solved Algorithms</h2>
-                <div class="stats-counter">
-                    <span id="solvedCount">0</span> problems
+        <!-- ==========================================================
+             ACCOUNT SETTINGS (full width, standalone)
+             ========================================================== -->
+        <section class="pf-card" style="margin-bottom:1.25rem;">
+            <div class="pf-card-header">
+                <h3><i class="fas fa-shield-halved"></i> Account Settings</h3>
+            </div>
+            <div class="pf-card-content">
+                <div class="account-actions">
+                    <button type="button" id="changePasswordBtn" class="btn">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                    <button type="button" id="deactivateAccountBtn" class="btn btn-danger">
+                        <i class="fas fa-user-slash"></i> Deactivate Account
+                    </button>
+                    <button type="button" id="deleteAccountBtn" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Account
+                    </button>
                 </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+             SOLVED ALGORITHMS
+             ========================================================== -->
+        <section class="solved-section">
+            <div class="solved-section-header">
+                <h2><i class="fas fa-check-circle"></i> Solved Algorithms</h2>
+                <div class="stats-counter"><span id="solvedCount">0</span> problems</div>
             </div>
 
             <div class="controls-bar">
@@ -234,20 +356,15 @@
                 </div>
             </div>
 
-            <!-- Grid -->
-            <div id="solvedGrid" class="solved-grid">
-                <!-- Populated by JS -->
-            </div>
+            <div id="solvedGrid" class="solved-grid"></div>
 
-            <!-- Empty state -->
             <div id="emptyState" class="empty-state hidden">
                 <i class="fas fa-ghost"></i>
                 <h3>No algorithms solved yet</h3>
                 <p>Start practicing to fill up your profile.</p>
-                <a href="../../pages/practice/problems.html" class="btn">Start Practicing</a>
+                <a href="../../pages/practice/problems.html" class="btn" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.9rem;border-radius:var(--pf-radius);font-size:0.8rem;font-weight:500;border:1px solid var(--pf-border);background:var(--pf-elevated);color:var(--pf-text-secondary);cursor:pointer;text-decoration:none;font-family:'Poppins',sans-serif;">Start Practicing</a>
             </div>
 
-            <!-- Pagination -->
             <div class="pagination-controls hidden" id="profilePagination">
                 <button type="button" class="pagination-btn" id="prevPageBtn" disabled><i class="fas fa-chevron-left"></i> Prev</button>
                 <span class="pagination-info" id="pageInfo">Page 1 of 1</span>
@@ -257,198 +374,226 @@
 
     </main>
 
-    <!-- XP Store Modal -->
-    <div id="xp-store-placeholder"></div>
-
-    <!-- Profile Edit Modal -->
+    <!-- ==========================================================
+         PROFILE EDIT MODAL
+         ========================================================== -->
     <div class="modal" id="profileEditModal">
       <div class="modal-content profile-edit-modal">
         <div class="modal-header">
           <h3>Edit Profile</h3>
-          <button type="button"
-            class="modal-close"
-            id="profileModalClose"
-            aria-label="Close edit profile modal"
-          >
-            &times;
-          </button>
+          <button type="button" class="modal-close" id="profileModalClose" aria-label="Close edit profile modal">&times;</button>
         </div>
         <div class="modal-body">
           <div class="profile-edit-form">
             <div class="name-editor">
               <label for="profileNameInput">Display Name</label>
-              <input
-                type="text"
-                id="profileNameInput"
-                placeholder="Enter your name"
-                maxlength="20"
-              />
+              <input type="text" id="profileNameInput" placeholder="Enter your name" maxlength="20">
             </div>
-            <div class="avatar-customization-section" style="margin-top: 1rem;">
-              <h4 style="margin-bottom: 0.5rem; color: var(--text-primary); font-family: 'Orbitron', sans-serif; font-size: 0.9rem;">Avatar Border</h4>
-              <div class="avatar-border-options" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <label class="border-option" data-border="none" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:1px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;">
+            <div class="bio-editor">
+              <label for="profileBioInput">Bio / Tagline</label>
+              <textarea id="profileBioInput" placeholder="Tell others a bit about yourself..." maxlength="120" rows="2"></textarea>
+            </div>
+            <div class="avatar-customization-section">
+              <h4>Avatar Border</h4>
+              <div class="avatar-border-options">
+                <label class="border-option" data-border="none">
                   <input type="radio" name="avatarBorder" value="none" checked> None
                 </label>
-                <label class="border-option" data-border="gold" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid #f59e0b;border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;">
+                <label class="border-option" data-border="gold">
                   <input type="radio" name="avatarBorder" value="gold"> Gold
                 </label>
-                <label class="border-option border-premium" data-border="premium-glow" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid #8b5cf6;border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="border-option border-premium" data-border="premium-glow">
                   <input type="radio" name="avatarBorder" value="premium-glow" disabled>
-                  <i class="fas fa-crown" style="color:#8b5cf6;font-size:0.7rem;"></i> Glow <span style="font-size:0.65rem;color:#8b5cf6;margin-left:2px;">(Premium)</span>
+                  <i class="fas fa-crown"></i> Glow <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
-                <label class="border-option border-premium" data-border="rainbow" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="border-option border-premium" data-border="rainbow">
                   <input type="radio" name="avatarBorder" value="rainbow" disabled>
-                  <span style="background:linear-gradient(90deg,#ef4444,#f59e0b,#10b981,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Rainbow</span> <span style="font-size:0.65rem;color:#8b5cf6;">(Premium)</span>
+                  <span style="font-weight:700;color:var(--pf-rose);">Rainbow</span>
+                  <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
-                <label class="border-option border-premium" data-border="neon-cyan" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="border-option border-premium" data-border="neon-cyan">
                   <input type="radio" name="avatarBorder" value="neon-cyan" disabled>
-                  <span style="color:#06b6d4;font-weight:700;">Neon Cyan</span> <span style="font-size:0.65rem;color:#8b5cf6;">(Premium)</span>
+                  <span style="color:var(--pf-blue);font-weight:700;">Neon Cyan</span> <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
-                <label class="border-option border-premium" data-border="neon-pink" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="border-option border-premium" data-border="neon-pink">
                   <input type="radio" name="avatarBorder" value="neon-pink" disabled>
-                  <span style="color:#ec4899;font-weight:700;">Neon Pink</span> <span style="font-size:0.65rem;color:#8b5cf6;">(Premium)</span>
+                  <span style="color:var(--pf-rose);font-weight:700;">Neon Pink</span> <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
               </div>
             </div>
-            <div class="avatar-theme-section" style="margin-top: 1rem;">
-              <h4 style="margin-bottom: 0.5rem; color: var(--text-primary); font-family: 'Orbitron', sans-serif; font-size: 0.9rem;">Color Theme</h4>
-              <div class="avatar-theme-options" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <label class="theme-option" data-theme="default" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;">
+            <div class="avatar-theme-section">
+              <h4>Color Theme</h4>
+              <div class="avatar-theme-options">
+                <label class="theme-option" data-theme="default">
                   <input type="radio" name="avatarTheme" value="default" checked> Default
                 </label>
-                <label class="theme-option theme-premium" data-theme="ocean" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="theme-option theme-premium" data-theme="ocean">
                   <input type="radio" name="avatarTheme" value="ocean" disabled>
-                  <span style="color:#06b6d4;font-weight:700;">Ocean</span> <span style="font-size:0.65rem;color:#8b5cf6;">(Premium)</span>
+                  <span style="color:var(--pf-blue);font-weight:700;">Ocean</span> <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
-                <label class="theme-option theme-premium" data-theme="sunset" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="theme-option theme-premium" data-theme="sunset">
                   <input type="radio" name="avatarTheme" value="sunset" disabled>
-                  <span style="color:#f97316;font-weight:700;">Sunset</span> <span style="font-size:0.65rem;color:#8b5cf6;">(Premium)</span>
+                  <span style="color:var(--pf-rose);font-weight:700;">Sunset</span> <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
-                <label class="theme-option theme-premium" data-theme="midnight" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="theme-option theme-premium" data-theme="midnight">
                   <input type="radio" name="avatarTheme" value="midnight" disabled>
-                  <span style="color:#7c3aed;font-weight:700;">Midnight</span> <span style="font-size:0.65rem;color:#8b5cf6;">(Premium)</span>
+                  <span style="font-weight:700;color:var(--pf-text-secondary);">Midnight</span> <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
-                <label class="theme-option theme-premium" data-theme="forest" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="theme-option theme-premium" data-theme="forest">
                   <input type="radio" name="avatarTheme" value="forest" disabled>
-                  <span style="color:#10b981;font-weight:700;">Forest</span> <span style="font-size:0.65rem;color:#8b5cf6;">(Premium)</span>
+                  <span style="color:var(--pf-green);font-weight:700;">Forest</span> <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
-                <label class="theme-option theme-premium" data-theme="royal" style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;padding:0.4rem 0.8rem;background:var(--dark-card);border:2px solid var(--glass-border);border-radius:8px;color:var(--text-light);font-size:0.85rem;transition:all 0.2s;opacity:0.6;">
+                <label class="theme-option theme-premium" data-theme="royal">
                   <input type="radio" name="avatarTheme" value="royal" disabled>
-                  <span style="color:#a855f7;font-weight:700;">Royal</span> <span style="font-size:0.65rem;color:#8b5cf6;">(Premium)</span>
+                  <span style="color:var(--pf-rose);font-weight:700;">Royal</span> <span style="font-size:0.65rem;">(Premium)</span>
                 </label>
               </div>
             </div>
-            <div class="languages-selector" style="margin-top: 1rem;">
-              <h4>Programming Languages</h4>
+            <div class="languages-selector">
+              <h4>Programming Languages Known</h4>
               <div class="languages-edit-options">
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="C++" /> C++
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="Java" /> Java
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="Python" /> Python
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="JavaScript" /> JavaScript
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="Rust" /> Rust
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="TypeScript" /> TypeScript
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="Go" /> Go
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="Kotlin" /> Kotlin
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="Swift" /> Swift
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="C#" /> C#
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="Ruby" /> Ruby
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="PHP" /> PHP
-                </label>
-                <label class="lang-edit-label">
-                  <input type="checkbox" class="lang-edit-checkbox" value="SQL" /> SQL
-                </label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="C++"> C++</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="Java"> Java</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="Python"> Python</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="JavaScript"> JavaScript</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="Rust"> Rust</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="TypeScript"> TypeScript</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="Go"> Go</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="Kotlin"> Kotlin</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="Swift"> Swift</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="C#"> C#</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="Ruby"> Ruby</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="PHP"> PHP</label>
+                <label class="lang-edit-label"><input type="checkbox" class="lang-edit-checkbox" value="SQL"> SQL</label>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-<button type="button" class="btn" id="profileCancelBtn">Cancel</button>
-           <button type="button" class="btn btn-primary" id="profileSaveBtn">
-             <i class="fas fa-save"></i> Save Changes
-           </button>
+          <button type="button" class="btn" id="profileCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="profileSaveBtn"><i class="fas fa-save"></i> Save Changes</button>
         </div>
       </div>
     </div>
 
-    <!-- Core Scripts -->
-    <script type="module" src="../../modules/supabase-auth-client.js"></script>
-    <script src="../../auth.js"></script>
-    <script src="../../script.js"></script>
-    <script type="module" src="/dist/legacy-bundle.mjs"></script>
-    <script src="../../theme.js"></script>
-    <script src="../../auth-gate.js"></script>
+    <!-- Change Password Modal -->
+    <div class="modal" id="changePasswordModal" role="dialog" aria-modal="true" aria-labelledby="changePasswordTitle">
+      <div class="modal-content cpw-modal-content">
+        <button type="button" class="modal-close cpw-modal-close" id="changePasswordClose" aria-label="Close change password modal">&times;</button>
+        <div class="cpw-icon">
+          <div class="cpw-icon-ring">
+            <i class="fas fa-shield-halved cpw-shield"></i>
+          </div>
+        </div>
+        <h2 class="cpw-title" id="changePasswordTitle">Change Password</h2>
+        <p class="cpw-subtitle">Set a strong, unique password to secure your account.</p>
+        <div class="cpw-guest-notice" id="cpwGuestNotice" hidden>
+          <i class="fas fa-user-astronaut"></i>
+          <span>You are browsing as a guest. <a href="/login">Sign in</a> to manage your password.</span>
+        </div>
+        <div id="changePasswordMessage" class="cpw-message" role="alert" hidden></div>
+        <div class="cpw-form" id="cpwFormBody">
+          <div class="cpw-field">
+            <label for="currentPassword">Current Password</label>
+            <div class="cpw-input-wrap">
+              <input type="password" id="currentPassword" class="cpw-input" placeholder="Enter current password" autocomplete="current-password" required>
+              <button type="button" class="cpw-toggle" data-target="currentPassword" aria-label="Toggle current password visibility">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="cpw-field">
+            <label for="newPassword">New Password</label>
+            <div class="cpw-input-wrap">
+              <input type="password" id="newPassword" class="cpw-input" placeholder="Create a strong password" autocomplete="new-password" required>
+              <button type="button" class="cpw-toggle" data-target="newPassword" aria-label="Toggle new password visibility">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <div class="cpw-strength-track">
+              <div class="cpw-strength-bar" id="passwordStrengthBar"></div>
+            </div>
+            <span class="cpw-strength-label" id="passwordStrengthText">Password strength</span>
+            <ul class="cpw-rules" id="passwordRules">
+              <li class="cpw-rule" id="ruleLength"><span class="cpw-rule-icon"><i class="fas fa-circle"></i></span> Minimum 8 characters</li>
+              <li class="cpw-rule" id="ruleUpper"><span class="cpw-rule-icon"><i class="fas fa-circle"></i></span> One uppercase letter</li>
+              <li class="cpw-rule" id="ruleLower"><span class="cpw-rule-icon"><i class="fas fa-circle"></i></span> One lowercase letter</li>
+              <li class="cpw-rule" id="ruleNumber"><span class="cpw-rule-icon"><i class="fas fa-circle"></i></span> One number</li>
+              <li class="cpw-rule" id="ruleSpecial"><span class="cpw-rule-icon"><i class="fas fa-circle"></i></span> One special character</li>
+            </ul>
+          </div>
+          <div class="cpw-field">
+            <label for="confirmNewPassword">Confirm New Password</label>
+            <div class="cpw-input-wrap">
+              <input type="password" id="confirmNewPassword" class="cpw-input" placeholder="Confirm new password" autocomplete="new-password" required>
+              <button type="button" class="cpw-toggle" data-target="confirmNewPassword" aria-label="Toggle confirm password visibility">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <small id="confirmPasswordError" class="cpw-field-error"></small>
+          </div>
+        </div>
+        <div class="cpw-footer">
+          <button type="button" class="cpw-btn cpw-btn--outline" id="cancelPasswordChange">Cancel</button>
+          <button type="button" class="cpw-btn cpw-btn--primary" id="savePasswordBtn"><i class="fas fa-key"></i><span>Change Password</span></button>
+        </div>
+      </div>
+    </div>
 
-    <!-- Export Markdown Utility -->
-    <script src="../../scripts/export-markdown.js"></script>
+    <!-- Delete Account Modal -->
+    <div class="modal" id="deleteAccountModal" role="dialog" aria-modal="true" aria-labelledby="deleteAccountTitle">
+      <div class="modal-content delete-account-modal-content">
+        <button type="button" class="modal-close" id="deleteAccountModalClose" aria-label="Close">&times;</button>
+        <div class="delete-account-icon">
+          <div class="delete-account-icon-ring">
+            <i class="fas fa-trash"></i>
+          </div>
+        </div>
+        <h2 class="delete-account-title" id="deleteAccountTitle">Delete Account</h2>
+        <p class="delete-account-message">
+          This will permanently delete your account and all associated data.
+          <strong>This action cannot be undone.</strong>
+        </p>
+        <div class="delete-account-form">
+          <div class="password-field">
+            <label for="deleteAccountPassword">Confirm your password</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="deleteAccountPassword" placeholder="Enter your password" autocomplete="current-password">
+              <button type="button" class="password-toggle" data-target="deleteAccountPassword">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <small id="deleteAccountPasswordError" class="field-error" role="alert"></small>
+          </div>
+        </div>
+        <div class="delete-account-actions">
+          <button type="button" class="delete-account-btn delete-account-btn--cancel" id="deleteAccountCancel">Cancel</button>
+          <button type="button" class="delete-account-btn delete-account-btn--danger" id="deleteAccountConfirm">Delete Account</button>
+        </div>
+      </div>
+    </div>
 
-    <!-- External Libraries for Coding Card -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-    <!-- Profile Avatars -->
-    <script src="../../data/profile-avatars.js"></script>
-
-    <!-- Profile Script -->
-    <script src="profile.js"></script>
-
+    <!-- Scripts -->
+    <script src="../../modules/userProgress.js"></script>
     <script>
-      if(typeof loadPartial === 'function') {
-          loadPartial("navbar-placeholder", "../../partials/navbar.html").then(function() {
-              if (typeof initNavbar === "function") initNavbar();
-          });
-      }
-
       document.addEventListener('DOMContentLoaded', function() {
-          document.getElementById('profilePageEditBtn')?.addEventListener('click', function() {
-              if (typeof window.openProfileModal === 'function') window.openProfileModal();
-          });
-          document.getElementById('profileSaveBtn')?.addEventListener('click', function() {
-              if (typeof window.saveProfileChanges === 'function') window.saveProfileChanges();
-          });
-          document.getElementById('profileCancelBtn')?.addEventListener('click', function() {
-              if (typeof window.closeProfileModal === 'function') window.closeProfileModal();
-          });
-          document.getElementById('profileModalClose')?.addEventListener('click', function() {
-              if (typeof window.closeProfileModal === 'function') window.closeProfileModal();
-          });
-
-          var backBtn = document.getElementById('profileBackBtn');
-          if (backBtn) {
-              backBtn.addEventListener('click', function(e) {
-                  e.preventDefault();
-                  if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
-                      window.history.back();
-                  } else {
-                      window.location.href = '/index.html#dashboard';
-                  }
-              });
-          }
+        // Clear any leftover inline overflow styles that could block scrolling
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
       });
     </script>
+    <script src="../../bootstrap-legacy.js"></script>
+    <script>
+      // Load navbar and initialize its interactive behaviors
+      if (typeof loadPartial === 'function') {
+        loadPartial('navbar-placeholder', '/partials/navbar.html').then(function () {
+          import('/modules/navbar.js').then(function (m) { m.initNavbar(); });
+        });
+      }
+    </script>
+    <script src="../../auth.js"></script>
+    <script type="module" src="../../modules/profile-edit.js"></script>
+    <script src="profile.js"></script>
+
 </body>
 </html>

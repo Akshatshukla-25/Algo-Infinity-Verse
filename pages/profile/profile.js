@@ -1,745 +1,868 @@
 // pages/profile/profile.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // We rely on userProgress and practiceProblems being globally available from script.js
-    
-    // Configuration
-    const ITEMS_PER_PAGE = 12;
-    let currentPage = 1;
-    let filteredProblems = [];
+  'use strict';
 
-    // DOM Elements
-    const grid = document.getElementById('solvedGrid');
-    const emptyState = document.getElementById('emptyState');
-    const pagination = document.getElementById('profilePagination');
-    const prevBtn = document.getElementById('prevPageBtn');
-    const nextBtn = document.getElementById('nextPageBtn');
-    const pageInfo = document.getElementById('pageInfo');
-    const searchInput = document.getElementById('searchSolved');
-    const difficultyFilter = document.getElementById('difficultyFilter');
-    
-    // Profile Header Elements
-    const userNameEl = document.getElementById('userName');
-    const userLevelEl = document.getElementById('userLevel');
-    const userStreakEl = document.getElementById('userStreak');
-    const userXPEl = document.getElementById('userXP');
-    const solvedCountEl = document.getElementById('solvedCount');
+  // ===============================================================
+  // CONFIG & STATE
+  // ===============================================================
+  const ITEMS_PER_PAGE = 12;
+  let currentPage = 1;
+  let filteredProblems = [];
 
-    // Profile Image Upload Elements
-    const avatarUploadOverlay = document.getElementById('avatarUploadOverlay');
-    const avatarFileInput = document.getElementById('avatarFileInput');
-    const profileAvatarImage = document.getElementById('profileAvatarImage');
-    const profileAvatarEmoji = document.getElementById('profileAvatarEmoji');
+  // ===============================================================
+  // DOM REFS
+  // ===============================================================
+  const $ = id => document.getElementById(id);
 
-    // Wait a brief moment to ensure script.js has loaded userProgress from localStorage
-    setTimeout(() => {
-        initProfile();
-    }, 100);
+  const grid = $('solvedGrid');
+  const emptyState = $('emptyState');
+  const pagination = $('profilePagination');
+  const prevBtn = $('prevPageBtn');
+  const nextBtn = $('nextPageBtn');
+  const pageInfo = $('pageInfo');
+  const searchInput = $('searchSolved');
+  const difficultyFilter = $('difficultyFilter');
 
-    // Bug 1: Wire up camera button to trigger file input
-    if (avatarUploadOverlay && avatarFileInput) {
-        avatarUploadOverlay.addEventListener('click', () => {
-            avatarFileInput.click();
-        });
+  const userNameEl = $('userName');
+  const userLevelEl = $('userLevel');
+  const userStreakEl = $('userStreak');
+  const userXPEl = $('userXP');
+  const solvedCountEl = $('solvedCount');
 
-        avatarFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+  const avatarUploadOverlay = $('avatarUploadOverlay');
+  const avatarFileInput = $('avatarFileInput');
+  const profileAvatarImage = $('profileAvatarImage');
+  const profileAvatarEmoji = $('profileAvatarEmoji');
 
-            if (!file.type.startsWith('image/')) {
-                if (typeof showNotification === 'function') {
-                    showNotification('Please select an image file.', 'error');
-                }
-                return;
-            }
+  const profileBioEl = $('profileBio');
+  const profileFreezesEl = $('profileFreezesSection');
+  const profileProblemsEl = $('profileProblems');
+  const profileBadgesEl = $('profileBadges');
+  const profileProgressFill = $('profileProgressBar');
+  const profileProgressLabel = $('profileLevelProgress');
+  const joinDateSectionEl = $('joinDateSection');
+  const recentActivityEl = $('recentActivityList');
+  const skillsMasteryEl = $('skillsMasteryGrid');
 
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const dataUrl = ev.target.result;
-                if (profileAvatarImage) {
-                    profileAvatarImage.src = dataUrl;
-                    profileAvatarImage.style.display = 'block';
-                }
-                if (profileAvatarEmoji) {
-                    profileAvatarEmoji.style.display = 'none';
-                }
-
-                // Save to userProgress
-                if (typeof userProgress !== 'undefined') {
-                    userProgress.avatar = dataUrl;
-                    if (typeof saveUserData === 'function') {
-                        saveUserData();
-                    } else {
-                        localStorage.setItem('algoInfinityVerse', JSON.stringify(userProgress));
-                    }
-                }
-
-                // Sync card avatar
-                const cardAvatar = document.getElementById('cardAvatar');
-                if (cardAvatar) {
-                    cardAvatar.innerHTML = '';
-                    const img = document.createElement('img');
-                    img.src = dataUrl;
-                    img.alt = 'Avatar';
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.style.objectFit = 'cover';
-                    img.style.borderRadius = '50%';
-                    cardAvatar.appendChild(img);
-                }
-
-                if (typeof showNotification === 'function') {
-                    showNotification('Avatar updated!', 'success');
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // Wire up languages edit button
-    const languagesEditBtn = document.getElementById('languagesEditBtn');
-    if (languagesEditBtn) {
-        languagesEditBtn.addEventListener('click', () => {
-            if (typeof window.openProfileModal === 'function') {
-                window.openProfileModal();
-            }
-        });
-    }
-
-    // Wire up profile page save/cancel buttons
-    const profileSaveBtn = document.getElementById('profileSaveBtn');
-    const profileCancelBtn = document.getElementById('profileCancelBtn');
-    
-    if (profileSaveBtn) {
-        profileSaveBtn.addEventListener('click', () => {
-            if (typeof window.saveProfileChanges === 'function') {
-                window.saveProfileChanges();
-            }
-        });
-    }
-    
-    if (profileCancelBtn) {
-        profileCancelBtn.addEventListener('click', () => {
-            if (typeof window.closeProfileModal === 'function') {
-                window.closeProfileModal();
-            }
-        });
-    }
-
-    function initProfile() {
-        // Check if userProgress is available
-        if (typeof userProgress === 'undefined') {
-            console.error("userProgress is not defined");
-            return;
+  // Sync saved data from localStorage into userProgress before init
+  (function syncSavedProgress() {
+    try {
+      var saved = localStorage.getItem('algoInfinityVerse');
+      if (saved) {
+        var data = JSON.parse(saved);
+        if (data && typeof data === 'object' && typeof window.userProgress === 'object') {
+          Object.assign(window.userProgress, data);
         }
-        
-        // Populate Header Data
-        userNameEl.textContent = userProgress.name || "Learner";
-        userLevelEl.textContent = `Level ${userProgress.level || 1}`;
-        userStreakEl.textContent = userProgress.streak || 0;
-        userXPEl.textContent = userProgress.xp || 0;
+      }
+    } catch(e) { /* localStorage read failed, use defaults */ }
+  })();
 
-        // Render profile avatar (image upload or initial-based circle)
-        if (userProgress.avatar && typeof userProgress.avatar === 'string' && userProgress.avatar.startsWith('data:image')) {
-            if (profileAvatarImage) {
-                profileAvatarImage.src = userProgress.avatar;
-                profileAvatarImage.style.display = 'block';
-            }
-            if (profileAvatarEmoji) {
-                profileAvatarEmoji.style.display = 'none';
-            }
-        } else if (profileAvatarEmoji && typeof window.renderProfileAvatar === 'function') {
-            if (profileAvatarImage) profileAvatarImage.style.display = 'none';
-            const av = userProgress.avatar || (typeof window.getInitialAvatar === 'function' ? window.getInitialAvatar(userProgress.name) : { initial: (userProgress.name || 'L').charAt(0).toUpperCase(), bg: '#7c3aed' });
-            profileAvatarEmoji.style.display = '';
-            profileAvatarEmoji.innerHTML = '';
-            window.renderProfileAvatar(profileAvatarEmoji, av);
+  // Load userProgress and init
+  setTimeout(function() {
+    try { initProfile(); }
+    catch (err) { console.warn('Profile init error:', err); }
+  }, 100);
+
+  // ===============================================================
+  // AVATAR UPLOAD
+  // ===============================================================
+  if (avatarUploadOverlay && avatarFileInput) {
+    avatarUploadOverlay.addEventListener('click', () => avatarFileInput.click());
+
+    avatarFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        if (typeof showNotification === 'function') showNotification('Please select an image file.', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        if (profileAvatarImage) { profileAvatarImage.src = dataUrl; profileAvatarImage.style.display = 'block'; }
+        if (profileAvatarEmoji) profileAvatarEmoji.style.display = 'none';
+        if (typeof userProgress !== 'undefined') {
+          userProgress.avatar = dataUrl;
+          if (typeof saveUserData === 'function') saveUserData();
+          else localStorage.setItem('algoInfinityVerse', JSON.stringify(userProgress));
         }
-        
-        // Map completed IDs to actual problem objects
-        const solvedIds = userProgress.completedProblems || [];
-        
-        if (typeof practiceProblems !== 'undefined') {
-            filteredProblems = solvedIds.map(id => {
-                const prob = practiceProblems.find(p => p.id === id);
-                if (prob) {
-                    return { ...prob, completedAt: "Unknown" };
-                }
-                return null;
-            }).filter(Boolean);
-        }
-        
-        solvedCountEl.textContent = filteredProblems.length;
-        
-        // Initial render
-        applyFilters();
-
-        // Initialize Coding Identity Card
-        initIdentityCard();
-
-        // Populate Leaderboard
-        populateLeaderboard();
-
-        // Show saved languages
-        if (typeof window.renderLanguageChips === 'function') {
-            window.renderLanguageChips();
-        }
-    }
-
-    // Simple save profile changes function for the profile page
-    function simpleSaveProfileChanges() {
-        if (typeof userProgress === 'undefined') return;
-        
-        // Clear any existing errors
-        const errorMsg = document.getElementById('errorMessage');
-        if (errorMsg) errorMsg.remove();
-        
-        const nameVal = userNameEl.textContent || "Learner";
-        
-        // Update userProgress
-        userProgress.name = nameVal;
-        
-        // Save to storage
-        if (typeof window.saveUserData === 'function') {
-            window.saveUserData();
-        } else {
-            localStorage.setItem('algoInfinityVerse', JSON.stringify(userProgress));
-        }
-        
-        // Update UI
-        if (typeof window.updateProfileViews === 'function') {
-            window.updateProfileViews();
-        }
-        
-        // Close modal
-        if (typeof window.closeProfileModal === 'function') {
-            window.closeProfileModal();
-        }
-        
-        // Show success notification
-        if (typeof showNotification === 'function') {
-            showNotification("Profile updated successfully!", "success");
-        }
-    }
-
-    function applyFilters() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const difficulty = difficultyFilter.value;
-
-        // Reset to full list
-        const solvedIds = userProgress.completedProblems || [];
-        let allSolved = solvedIds.map(id => practiceProblems.find(p => p.id === id)).filter(Boolean);
-
-        // Apply Search
-        if (searchTerm) {
-            allSolved = allSolved.filter(p => p.title.toLowerCase().includes(searchTerm) || (p.tags && p.tags.some(t => t.toLowerCase().includes(searchTerm))));
-        }
-
-        // Apply Difficulty Filter
-        if (difficulty !== 'all') {
-            allSolved = allSolved.filter(p => p.difficulty === difficulty);
-        }
-
-        filteredProblems = allSolved;
-        currentPage = 1; // Reset to page 1
-        
-        renderGrid();
-    }
-
-    function renderGrid() {
-        grid.innerHTML = '';
-        
-        if (filteredProblems.length === 0) {
-            grid.classList.add('hidden');
-            emptyState.classList.remove('hidden');
-            pagination.classList.add('hidden');
-            return;
-        }
-
-        grid.classList.remove('hidden');
-        emptyState.classList.add('hidden');
-
-        // Calculate pagination
-        const totalPages = Math.ceil(filteredProblems.length / ITEMS_PER_PAGE);
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        const currentBatch = filteredProblems.slice(startIndex, endIndex);
-
-        // Render cards
-        currentBatch.forEach(problem => {
-            const card = document.createElement('div');
-            card.className = 'problem-card';
-            
-            // Generate tags HTML
-            const tagsHtml = problem.tags ? problem.tags.slice(0, 3).map(tag => `<span class="tag" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.1); border-radius: 10px; margin-right: 0.5rem;">${tag}</span>`).join('') : '';
-
-            card.innerHTML = `
-                <div class="problem-header" style="display: flex; justify-content: space-between; align-items: start;">
-                    <div>
-                        <h3 class="problem-title">${problem.title}</h3>
-                        <span class="difficulty-badge ${problem.difficulty.toLowerCase()}">${problem.difficulty}</span>
-                    </div>
-                    <button class="export-md-btn" title="Export as Markdown" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; transition: color 0.2s;">
-                        <i class="fas fa-file-download"></i>
-                    </button>
-                </div>
-                <div class="problem-tags" style="margin-bottom: 1rem; margin-top: 0.5rem;">
-                    ${tagsHtml}
-                </div>
-                <div class="problem-meta">
-                    <span class="category"><i class="fas fa-folder"></i> ${problem.category || 'General'}</span>
-                    <span class="completion-date"><i class="fas fa-calendar-check"></i> Past</span>
-                </div>
-            `;
-            
-            // Add click listener to go to problem
-            card.style.cursor = 'pointer';
-            card.addEventListener('click', (e) => {
-                // Ignore clicks on the export button
-                if (e.target.closest('.export-md-btn')) {
-                    const solution = userProgress.submittedSolutions ? userProgress.submittedSolutions[problem.id] : null;
-                    if (typeof exportProblemAsMarkdown === 'function') {
-                        exportProblemAsMarkdown(problem, solution);
-                    } else {
-                        console.error("Export utility not found.");
-                    }
-                    return;
-                }
-
-                if (typeof openQuizEditor === 'function') {
-                    // We need to trigger the editor, maybe navigate to main page with a hash
-                    window.location.href = `../../pages/practice/problems.html?problem=${problem.id}`;
-                }
-            });
-
-            grid.appendChild(card);
-        });
-
-        // Update Pagination Controls
-        if (totalPages > 1) {
-            pagination.classList.remove('hidden');
-            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
-        } else {
-            pagination.classList.add('hidden');
-        }
-    }
-
-    // Event Listeners
-    searchInput.addEventListener('input', applyFilters);
-    difficultyFilter.addEventListener('change', applyFilters);
-
-    prevBtn.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            renderGrid();
-            window.scrollTo({ top: grid.offsetTop - 100, behavior: 'smooth' });
-        }
-    });
-
-    nextBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(filteredProblems.length / ITEMS_PER_PAGE);
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderGrid();
-            window.scrollTo({ top: grid.offsetTop - 100, behavior: 'smooth' });
-        }
-    });
-
-    // ============================================
-    // CODING IDENTITY CARD UTILITIES
-    // ============================================
-
-    async function initIdentityCard() {
-        if (typeof userProgress === 'undefined') return;
-
-        // Populate details
-        const cardAvatar = document.getElementById("cardAvatar");
-        const cardUserName = document.getElementById("cardUserName");
-        const cardUserLevelBadge = document.getElementById("cardUserLevelBadge");
-        const cardUserTitle = document.getElementById("cardUserTitle");
-        const cardRank = document.getElementById("cardRank");
-        const cardXP = document.getElementById("cardXP");
-        const cardStreak = document.getElementById("cardStreak");
-        const cardSkills = document.getElementById("cardSkills");
-
-        const levelNames = ["Beginner", "Novice", "Intermediate", "Advanced", "Expert", "Master", "Grandmaster", "Legend"];
-        const levelTitle = levelNames[Math.min(userProgress.level - 1, levelNames.length - 1)] || "Beginner";
-
+        const cardAvatar = $('cardAvatar');
         if (cardAvatar) {
-            cardAvatar.textContent = '';
-            cardAvatar.style.fontSize = '0';
-            const rawAv = userProgress.avatar;
-            const customization = userProgress.avatarCustomization || { border: 'none', theme: 'default' };
-            if (rawAv && typeof rawAv === 'string' && rawAv.startsWith('data:image')) {
-                const borderStyle = window.AVATAR_BORDER_STYLES?.[customization.border] || '';
-                const img = document.createElement('img');
-                img.src = rawAv;
-                img.alt = 'Avatar';
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = 'cover';
-                img.style.borderRadius = '50%';
-                cardAvatar.appendChild(img);
-                if (borderStyle) cardAvatar.style.border = borderStyle;
-            } else {
-                const av = (rawAv && typeof rawAv === 'object') ? rawAv : { initial: (userProgress.name || 'L').charAt(0).toUpperCase(), bg: '#7c3aed' };
-                const initial = av.initial || 'L';
-                const themeBg = typeof window.getAvatarThemeBg === 'function' ? window.getAvatarThemeBg(customization.theme, initial) : null;
-                const bg = themeBg || av.bg || '#7c3aed';
-                const borderStyle = window.AVATAR_BORDER_STYLES?.[customization.border] || '';
-                const span = document.createElement('span');
-                span.textContent = initial;
-                const borderCss = borderStyle ? `border:${borderStyle};` : '';
-                span.style.cssText = `display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:${bg};color:#fff;font-size:1.8rem;font-weight:600;font-family:'Poppins',sans-serif;${borderCss}`;
-                if (customization.border === 'rainbow') span.className = 'avatar-border-rainbow';
-                cardAvatar.style.fontSize = '0';
-                cardAvatar.appendChild(span);
-            }
+          cardAvatar.innerHTML = '';
+          const img = document.createElement('img');
+          img.src = dataUrl; img.alt = 'Avatar';
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+          cardAvatar.appendChild(img);
         }
-        if (cardUserName) cardUserName.textContent = userProgress.name || "Learner";
-        if (cardUserLevelBadge) cardUserLevelBadge.textContent = `Level ${userProgress.level || 1}`;
-        if (cardUserTitle) cardUserTitle.textContent = levelTitle;
-        if (cardXP) {
-            const xpVal = userProgress.xp || 0;
-            cardXP.textContent = xpVal > 0 ? xpVal.toLocaleString() : "-";
-        }
-        if (cardStreak) {
-            const streakVal = userProgress.streak || 0;
-            cardStreak.textContent = streakVal > 0 ? streakVal : "-";
-        }
+        if (typeof showNotification === 'function') showNotification('Avatar updated!', 'success');
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 
-        // Fetch Leaderboard Rank
-        if (cardRank) {
-            cardRank.textContent = "...";
-            getLeaderboardRank().then(rank => {
-                cardRank.textContent = rank;
-            });
-        }
+  // ===============================================================
+  // BUTTON WIRING
+  // ===============================================================
+  const langEditBtn = $('languagesEditBtn');
+  if (langEditBtn) {
+    langEditBtn.addEventListener('click', () => {
+      if (typeof window.openProfileModal === 'function') window.openProfileModal();
+    });
+  }
 
-        // Compute Top Skills
-        if (cardSkills) {
-            const skills = getTopSkills();
-            cardSkills.innerHTML = skills.map(skill => `<span class="skill-pill">${skill}</span>`).join("");
-        }
+  // Wire edit profile button — initProfileEdit() from profile-edit.js handles this
+  if (typeof window.initProfileEdit === 'function') window.initProfileEdit();
 
-        // Generate QR Code
-        const cardQrCode = document.getElementById("cardQrCode");
-        if (cardQrCode) {
-            cardQrCode.innerHTML = "";
-            const profileUrl = window.location.origin + window.location.pathname.replace("profile.html", "public-profile.html") + "?uid=" + getCurrentUserId();
-            try {
-                new QRCode(cardQrCode, {
-                    text: profileUrl,
-                    width: 120,
-                    height: 120,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.M
-                });
-            } catch (err) {
-                console.error("Error generating QR code:", err);
-            }
-        }
+  const profileSaveBtn = $('profileSaveBtn');
+  const profileCancelBtn = $('profileCancelBtn');
+  if (profileSaveBtn) profileSaveBtn.addEventListener('click', () => { if (typeof window.saveProfileChanges === 'function') window.saveProfileChanges(); });
+  if (profileCancelBtn) profileCancelBtn.addEventListener('click', () => { if (typeof window.closeProfileModal === 'function') window.closeProfileModal(); });
+
+  // ===============================================================
+  // LOCAL USER ID HELPER
+  // ===============================================================
+  function getCurrentUserIdLocal() {
+    return (window.algoAuth?.user?.sub || window.algoAuth?.user?.id || null);
+  }
+
+  // ===============================================================
+  // INIT PROFILE
+  // ===============================================================
+  function initProfile() {
+    const u = window.userProgress;
+    if (!u) { console.error('userProgress not defined'); return; }
+
+    userNameEl.textContent = u.name || 'Learner';
+    userLevelEl.textContent = 'Level ' + (u.level || 1);
+    userStreakEl.textContent = u.streak || 0;
+    userXPEl.textContent = u.xp || 0;
+
+    if (profileProblemsEl) profileProblemsEl.textContent = (u.completedProblems || []).length;
+    if (profileFreezesEl) profileFreezesEl.textContent = u.freezes || 0;
+    if (profileBadgesEl) {
+      const c = (u.completedProblems || []).length;
+      profileBadgesEl.textContent = [
+        c >= 1, (u.streak || 0) >= 7, (u.xp || 0) >= 5000, c >= 50, c >= 100,
+        c >= 25 && (u.xp || 0) >= 2500, (u.battlesWon || 0) >= 1, (u.battlesWon || 0) >= 5,
+        !!(u.inventory?.exclusiveBadge)
+      ].filter(Boolean).length;
     }
 
-    async function getLeaderboardRank() {
-        const hasProgress = (userProgress.xp || 0) > 0 || (userProgress.streak || 0) > 0;
-        if (!hasProgress) return "-";
-
-        try {
-            let leaders = [];
-            let currentUserId = "local-user";
-            
-            if (typeof loadLeaderboard === 'function') {
-                const res = await loadLeaderboard();
-                leaders = res.leaders || [];
-                currentUserId = res.currentUserId || currentUserId;
-            }
-            
-            const resolvedCurrentUserId = typeof getCurrentUserId === 'function' ? getCurrentUserId() : currentUserId;
-            
-            if (typeof buildLeaderboardRows === 'function') {
-                const rows = buildLeaderboardRows(leaders, resolvedCurrentUserId);
-                const userRow = rows.find(r => r.id === resolvedCurrentUserId || (resolvedCurrentUserId === "local-user" && r.id === "local-user"));
-                if (userRow && userRow.rank) {
-                    return `#${userRow.rank}`;
-                }
-            }
-        } catch (e) {
-            void 0;
-        }
-        return "-";
+    if (joinDateSectionEl) {
+      const d = u.joinDate ? new Date(u.joinDate) : new Date();
+      joinDateSectionEl.textContent = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     }
 
-    function getTopSkills() {
-        const solvedIds = userProgress.completedProblems || [];
-        if (solvedIds.length === 0 || typeof practiceProblems === 'undefined') {
-            return ["General"];
-        }
-        
-        const categoryCounts = {};
-        solvedIds.forEach(id => {
-            const problem = practiceProblems.find(p => p.id === id);
-            if (problem && problem.category) {
-                const cat = problem.category;
-                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-            }
-        });
-        
-        const sortedCategories = Object.entries(categoryCounts)
-            .sort((a, b) => b[1] - a[1])
-            .map(entry => entry[0]);
-            
-        if (sortedCategories.length === 0) {
-            return ["General"];
-        }
-        
-        const formatCategoryName = (cat) => {
-            const mapping = {
-                'arrays': 'Arrays',
-                'strings': 'Strings',
-                'linkedlist': 'Linked List',
-                'graphs': 'Graphs',
-                'dp': 'Dynamic Programming',
-                'trees': 'Trees'
-            };
-            return mapping[cat] || cat.charAt(0).toUpperCase() + cat.slice(1);
-        };
-        
-        return sortedCategories.slice(0, 3).map(formatCategoryName);
+    updateLevelProgressLocal();
+    renderBio();
+    renderRecentActivity();
+    renderSkillsMastery();
+    renderBookmarkSection();
+    renderAvatar();
+
+    // Load data for solved grid
+    if (typeof window.practiceProblems !== 'undefined') {
+      filteredProblems = (u.completedProblems || []).map(id => {
+        const p = window.practiceProblems.find(pp => pp.id === id);
+        return p ? { ...p, completedAt: 'Unknown' } : null;
+      }).filter(Boolean);
     }
+    solvedCountEl.textContent = filteredProblems.length;
+    applyFilters();
 
-    // ============================================
-    // LEADERBOARD
-    // ============================================
+    // Identity card
+    initIdentityCard();
 
-    function populateLeaderboard() {
-        const container = document.getElementById('profileLeaderboardList');
-        if (!container) return;
+    // New sections
+    renderActivityHeatmap();
+    renderPersonalityCard();
+    updateReviewQueue();
+    renderFreezeHistory();
+    renderRecommendations();
+    renderRecentlyViewed();
+    renderBadges();
 
-        const mockLeaderboard = [
-            { name: 'CodeNinja', xp: 12450, avatar: 'C' },
-            { name: 'AlgoMaster', xp: 9800, avatar: 'A' },
-            { name: 'ByteWizard', xp: 7200, avatar: 'B' },
-            { name: 'DevHero', xp: 5100, avatar: 'D' },
-            { name: 'PixelForge', xp: 3600, avatar: 'P' },
-            { name: 'QuantumCoder', xp: 2500, avatar: 'Q' },
-            { name: 'SyntaxSage', xp: 1800, avatar: 'S' },
-            { name: 'DebugDruid', xp: 1200, avatar: 'D' },
-            { name: 'LogicLynx', xp: 900, avatar: 'L' },
-            { name: 'HashHawk', xp: 650, avatar: 'H' },
-            { name: 'StackSage', xp: 400, avatar: 'S' },
-            { name: 'RecursionRaven', xp: 200, avatar: 'R' },
-        ];
+    // Languages
+    if (typeof window.renderLanguageChips === 'function') window.renderLanguageChips();
+  }
 
-        const userName = (userProgress.name || 'Learner').trim();
-        const userXp = userProgress.xp || 0;
-        const rawAv = userProgress.avatar;
-        const userAvatar = (rawAv && typeof rawAv === 'object') ? rawAv.initial : (rawAv && rawAv.startsWith('data:image') ? 'img' : (userName.charAt(0).toUpperCase()));
+  function updateLevelProgressLocal() {
+    const u = window.userProgress || {};
+    const levels = [0, 1000, 2500, 5000, 10000, 20000, 50000, 100000];
+    const cl = u.level || 1;
+    const base = levels[Math.max(0, cl - 1)];
+    const next = levels[cl] || 100000;
+    const pct = Math.min(Math.max((((u.xp || 0) - base) / (next - base)) * 100, 0), 100);
+    if (profileProgressFill) profileProgressFill.style.width = pct + '%';
+    if (profileProgressLabel) profileProgressLabel.textContent = Math.round(pct) + '%';
+  }
 
-        // Insert user into the correct rank position
-        let inserted = false;
-        const allEntries = [];
-        for (const entry of mockLeaderboard) {
-            if (!inserted && userXp >= entry.xp) {
-                allEntries.push({ name: userName, xp: userXp, avatar: userAvatar, isUser: true });
-                inserted = true;
-            }
-            allEntries.push(entry);
-        }
-        if (!inserted) {
-            allEntries.push({ name: userName, xp: userXp, avatar: userAvatar, isUser: true });
-        }
-
-        const ranked = allEntries.slice(0, 9).map((e, i) => ({ ...e, rank: i + 1 }));
-
-        function esc(text) {
-            const d = document.createElement('div');
-            d.textContent = text;
-            return d.innerHTML;
-        }
-
-        container.innerHTML = ranked.map(user => {
-            const cls = user.isUser ? 'leaderboard-item current-user' : 'leaderboard-item';
-            const displayName = user.isUser ? `${user.name} (You)` : user.name;
-            return `<div class="${cls}">
-                <span class="leader-rank">#${user.rank}</span>
-                <span class="leader-avatar" aria-hidden="true">${esc(user.avatar)}</span>
-                <span class="leader-name">${esc(displayName)}</span>
-                <span class="leader-xp">${user.xp.toLocaleString()} XP</span>
-            </div>`;
-        }).join('');
+  function renderBio() {
+    if (!profileBioEl) return;
+    if (window.userProgress?.bio) {
+      profileBioEl.textContent = window.userProgress.bio;
+      profileBioEl.classList.remove('empty-state');
+    } else {
+      profileBioEl.textContent = 'No bio yet. Click edit to add one!';
+      profileBioEl.classList.add('empty-state');
     }
+  }
 
-    // ============================================
-    // CARD INTERACTIVE ACTIONS
-    // ============================================
+  function renderAvatar() {
+    const u = window.userProgress;
+    if (!u) return;
+    if (u.avatar && typeof u.avatar === 'string' && u.avatar.startsWith('data:image')) {
+      if (profileAvatarImage) { profileAvatarImage.src = u.avatar; profileAvatarImage.style.display = 'block'; }
+      if (profileAvatarEmoji) profileAvatarEmoji.style.display = 'none';
+    } else if (profileAvatarEmoji && typeof window.renderProfileAvatar === 'function') {
+      if (profileAvatarImage) profileAvatarImage.style.display = 'none';
+      const av = u.avatar || { initial: (u.name || 'L').charAt(0).toUpperCase(), bg: '#a8c8f0' };
+      profileAvatarEmoji.style.display = '';
+      profileAvatarEmoji.innerHTML = '';
+      window.renderProfileAvatar(profileAvatarEmoji, av);
+    }
+  }
 
-    // Setup Theme Buttons
-    const themeButtons = document.querySelectorAll(".theme-btn");
-    themeButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-            themeButtons.forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            
-            const theme = btn.getAttribute("data-theme");
-            const card = document.getElementById("codingIdentityCard");
-            if (card) {
-                card.className = `coding-card theme-${theme}`;
-            }
-        });
+  // ===============================================================
+  // ACTIVITY HEATMAP
+  // ===============================================================
+  function getActivityLevel(count) {
+    if (!count || count === 0) return 0;
+    if (count === 1) return 1;
+    if (count === 2) return 2;
+    if (count <= 4) return 3;
+    return 4;
+  }
+
+  function renderActivityHeatmap() {
+    const container = $('activityHeatmap');
+    if (!container) return;
+    const u = window.userProgress || {};
+    const data = u.activityData || {};
+    const today = new Date(); today.setHours(23, 59, 59, 999);
+    const WEEKS = 26;
+    const dow = today.getDay();
+    const start = new Date(today);
+    start.setDate(start.getDate() - (WEEKS * 7 - 1) - dow);
+    start.setHours(0, 0, 0, 0);
+
+    const weeks = [];
+    let cur = [];
+    const d2 = new Date(start);
+
+    for (let i = 0; i < WEEKS * 7; i++) {
+      if (d2.getDay() === 0 && cur.length > 0) { weeks.push(cur); cur = []; }
+      cur.push(new Date(d2));
+      d2.setDate(d2.getDate() + 1);
+    }
+    if (cur.length > 0) weeks.push(cur);
+
+    // Detect month boundaries for labels
+    const monthBoundaries = [];
+    let lastMonth = -1;
+    weeks.forEach((w, wi) => {
+      const mid = w[Math.min(3, w.length - 1)];
+      const m = mid.getMonth();
+      if (m !== lastMonth) {
+        monthBoundaries.push({ weekIdx: wi, label: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m] });
+        lastMonth = m;
+      }
     });
 
-    // Expose initIdentityCard globally for legacy bundle
-    window.initIdentityCard = initIdentityCard;
+    const wdLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+    const fmt = (date) => {
+      const y = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return y + '-' + mm + '-' + dd;
+    };
 
-    // Setup 3D Tilt Effect — replaced with CSS holographic sheen
-    // (animation is now pure CSS via ::before pseudo-element)
+    // Compute total contributions in range
+    let total = 0;
+    const iter = new Date(start);
+    while (iter <= today) {
+      total += data[fmt(iter)] || 0;
+      iter.setDate(iter.getDate() + 1);
+    }
 
-    // Shared capture helper — clones the card, strips decorative overlays,
-    // and renders via html2canvas on the clean clone
-    async function captureCardImage() {
-        const original = document.getElementById('codingIdentityCard');
-        if (!original) return null;
+    let html = '<div class="heatmap-stats"><strong>' + total + '</strong> problems solved in the last 6 months</div>';
+    html += '<div class="heatmap-legend"><span>Less</span><div class="legend-swatches">';
+    for (var l = 0; l <= 4; l++) { html += '<div class="legend-swatch" data-level="' + l + '"></div>'; }
+    html += '</div><span>More</span></div>';
+    html += '<div class="heatmap-months-row">';
+    monthBoundaries.forEach(function(mb, i) {
+      var span = i < monthBoundaries.length - 1 ? monthBoundaries[i + 1].weekIdx - mb.weekIdx : weeks.length - mb.weekIdx;
+      html += '<span class="heatmap-month-label" style="flex:' + span + '">' + mb.label + '</span>';
+    });
+    html += '</div><div class="heatmap-grid"><div class="heatmap-weekday-labels">';
+    wdLabels.forEach(function(l) { html += '<span class="heatmap-weekday-label">' + l + '</span>'; });
+    html += '</div>';
 
-        const clone = original.cloneNode(true);
-        clone.removeAttribute('id');
-        clone.classList.add('exporting');
-
-        // Copy canvas contents (like QR code) since cloneNode doesn't copy canvas drawings
-        const originalCanvases = original.querySelectorAll('canvas');
-        const clonedCanvases = clone.querySelectorAll('canvas');
-        originalCanvases.forEach((origCanvas, idx) => {
-            const destCanvas = clonedCanvases[idx];
-            if (destCanvas) {
-                const ctx = destCanvas.getContext('2d');
-                if (ctx) {
-                    destCanvas.width = origCanvas.width;
-                    destCanvas.height = origCanvas.height;
-                    ctx.drawImage(origCanvas, 0, 0);
-                }
-            }
-        });
-
-
-        // Remove decorative overlays that html2canvas renders poorly
-        const glow = clone.querySelector('.card-glow');
-        if (glow) glow.remove();
-        const grid = clone.querySelector('.card-grid');
-        if (grid) grid.remove();
-
-        // Strip backdrop-filter from all elements using !important inline style
-        const allEls = clone.querySelectorAll('*');
-        allEls.forEach(el => {
-            el.setAttribute('style', (el.getAttribute('style') || '') + ';backdrop-filter: none !important;-webkit-backdrop-filter: none !important;');
-        });
-
-        // Make the card background fully opaque so html2canvas doesn't render transparency artifacts
-        const cs = getComputedStyle(original);
-        const rawBg = cs.backgroundColor;
-        const parts = rawBg.replace(/[^\d,.]/g, '').split(',').map(Number);
-        clone.style.backgroundColor = parts.length >= 3 ? `rgb(${parts[0]}, ${parts[1]}, ${parts[2]})` : '#0c0c1a';
-
-        // Convert gradient logo-icon to solid color
-        const logoIcon = clone.querySelector('.logo-icon');
-        if (logoIcon) {
-            logoIcon.style.background = 'none';
-            logoIcon.style.webkitBackgroundClip = 'unset';
-            logoIcon.style.webkitTextFillColor = 'unset';
+    weeks.forEach(function(w) {
+      html += '<div class="heatmap-week">';
+      for (var di = 0; di < 7; di++) {
+        if (di < w.length) {
+          var date = w[di];
+          var key = fmt(date);
+          var cnt = data[key] || 0;
+          var lvl = getActivityLevel(cnt);
+          var isFut = date > today;
+          html += '<div class="heatmap-day" data-level="' + (isFut ? -1 : lvl) + '" data-date="' + key + '" data-count="' + cnt + '" data-future="' + isFut + '"></div>';
+        } else {
+          html += '<div class="heatmap-day" data-future="true"></div>';
         }
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+    attachHeatmapTooltips();
+  }
 
-
-
-        // Position off-screen
-        clone.style.position = 'fixed';
-        clone.style.left = '-9999px';
-        clone.style.top = '0';
-        clone.style.zIndex = '-1';
-        clone.style.width = '480px';
-        clone.style.height = '380px';
-
-        document.body.appendChild(clone);
-
+  function attachHeatmapTooltips() {
+    const tip = $('heatmapTooltip');
+    if (!tip) return;
+    if (tip.parentElement !== document.body) document.body.appendChild(tip);
+    document.querySelectorAll('.heatmap-day:not([data-future="true"])').forEach(day => {
+      day.addEventListener('mouseenter', (e) => {
+        const cnt = parseInt(day.dataset.count) || 0;
         try {
-            const canvas = await html2canvas(clone, {
-                scale: 3,
-                useCORS: true,
-                backgroundColor: null,
-                logging: false,
-            });
-            return canvas;
-        } finally {
-            if (clone.parentNode) {
-                clone.parentNode.removeChild(clone);
-            }
+          const parts = day.dataset.date.split('-').map(Number);
+          const parsed = new Date(parts[0], parts[1] - 1, parts[2]);
+          tip.innerHTML = '<strong>' + parsed.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) + '</strong>' + cnt + ' problem' + (cnt !== 1 ? 's' : '') + ' solved';
+        } catch (_) { tip.innerHTML = '<strong>' + day.dataset.date + '</strong>' + cnt + ' problems'; }
+        tip.classList.add('visible');
+        posTip(e, tip);
+      });
+      day.addEventListener('mousemove', (e) => posTip(e, tip));
+      day.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+    });
+  }
+
+  function posTip(e, tip) {
+    const r = tip.getBoundingClientRect();
+    let l = e.clientX + 14, t = e.clientY - r.height - 12;
+    if (l + r.width + 8 > window.innerWidth) l = e.clientX - r.width - 14;
+    if (t < 8) t = e.clientY + 12;
+    if (l < 8) l = 8;
+    tip.style.left = l + 'px'; tip.style.top = t + 'px';
+  }
+
+  // ===============================================================
+  // CODING PERSONALITY
+  // ===============================================================
+  function renderPersonalityCard() {
+    const u = window.userProgress || {};
+    const cp = u.codingPersonality || { type: 'brute-force first', bruteForceCount: 1, slowAccurateCount: 0, greedyCount: 0, overOptimizerCount: 0 };
+    const total = (cp.bruteForceCount||0) + (cp.slowAccurateCount||0) + (cp.greedyCount||0) + (cp.overOptimizerCount||0) || 1;
+    const pctB = Math.round(((cp.bruteForceCount||0)/total)*100);
+    const pctO = Math.round(((cp.overOptimizerCount||0)/total)*100);
+    const pctS = Math.round(((cp.slowAccurateCount||0)/total)*100);
+    const pctG = Math.round(((cp.greedyCount||0)/total)*100);
+
+    let icon = '🔍', desc = 'Take the profiler quiz to discover your coding style.', adapt = '';
+    if (cp.type === 'brute-force first') { icon = '🔴'; desc = 'You jump straight into writing code! You get solutions quickly, but can overlook edge cases.'; adapt = 'Focus: Easy/Medium with boundary checks'; }
+    else if (cp.type === 'over-optimizer') { icon = '💜'; desc = 'You love optimal space/time tricks! You always reach for hashes and pointers.'; adapt = 'Focus: Medium/Hard, clean code'; }
+    else if (cp.type === 'slow but accurate') { icon = '💙'; desc = 'You take your time to design solutions. You have low error rates.'; adapt = 'Focus: Medium, speed practice'; }
+    else if (cp.type === 'greedy thinker') { icon = '💚'; desc = 'You look for immediate local optimizations.'; adapt = 'Focus: Greedy & DP concepts'; }
+
+    const content = $('personalityContent');
+    if (!content) return;
+    content.innerHTML =
+      '<div class="personality-header-info">' +
+        '<div class="personality-badge-icon">' + icon + '</div>' +
+        '<div class="personality-type-group"><h4>' + cp.type.replace('-', ' ') + '</h4>' + (adapt ? '<span class="adaptation-badge">' + adapt + '</span>' : '') + '</div>' +
+      '</div>' +
+      '<p class="personality-description">' + desc + '</p>' +
+      '<div class="style-progress-bars">' +
+        '<div class="style-bar-group"><span class="style-label">Brute-Force First (' + pctB + '%)</span><div class="style-bar-track"><div class="style-bar-fill" style="width:' + pctB + '%;background:var(--pf-rose);"></div></div></div>' +
+        '<div class="style-bar-group"><span class="style-label">Over-Optimizer (' + pctO + '%)</span><div class="style-bar-track"><div class="style-bar-fill" style="width:' + pctO + '%;background:var(--pf-blue);"></div></div></div>' +
+        '<div class="style-bar-group"><span class="style-label">Slow but Accurate (' + pctS + '%)</span><div class="style-bar-track"><div class="style-bar-fill" style="width:' + pctS + '%;background:var(--pf-amber);"></div></div></div>' +
+        '<div class="style-bar-group"><span class="style-label">Greedy Thinker (' + pctG + '%)</span><div class="style-bar-track"><div class="style-bar-fill" style="width:' + pctG + '%;background:var(--pf-green);"></div></div></div>' +
+      '</div>' +
+      '<div class="personality-actions"><button class="pf-btn-mini" id="personalityQuizBtn"><i class="fas fa-redo"></i> Retake Profiler Quiz</button></div>';
+
+    const quizBtn = $('personalityQuizBtn');
+    if (quizBtn) quizBtn.addEventListener('click', function() {
+      if (typeof window.openPersonalityQuiz === 'function') window.openPersonalityQuiz();
+      else if (typeof showNotification === 'function') {
+        showNotification('Personality quiz module not available on this page. Visit the dashboard to retake the quiz.', 'info');
+      }
+    });
+  }
+
+  // ===============================================================
+  // SMART REVIEW QUEUE
+  // ===============================================================
+  function updateReviewQueue() {
+    const el = $('reviewQueueCount');
+    if (!el) return;
+    try {
+      if (window.spacedRepetition && typeof window.spacedRepetition.getDueItems === 'function') {
+        el.textContent = window.spacedRepetition.getDueItems().length;
+      } else {
+        el.textContent = (window.userProgress?.completedProblems || []).length > 0 ? Math.min(5, Math.ceil((window.userProgress.completedProblems.length || 0) * 0.2)) : 0;
+      }
+    } catch (_) { el.textContent = 0; }
+  }
+
+  // ===============================================================
+  // FREEZE HISTORY
+  // ===============================================================
+  function renderFreezeHistory() {
+    const el = $('freezeHistoryList');
+    if (!el) return;
+    const history = window.userProgress?.freezeHistory || [];
+    if (history.length === 0) { el.innerHTML = '<p class="pf-empty">No freezes used yet.</p>'; return; }
+    el.innerHTML = history.slice(-5).reverse().map(h =>
+      '<div class="freeze-item"><i class="fas fa-snowflake"></i><span>' + esc(h.reason) + '</span><span class="freeze-date">' + new Date(h.date).toLocaleDateString() + '</span></div>'
+    ).join('');
+  }
+
+  // ===============================================================
+  // RECOMMENDATIONS
+  // ===============================================================
+  function renderRecommendations() {
+    const el = $('recommendationsContainer');
+    if (!el) return;
+    const u = window.userProgress || {};
+    const pp = window.practiceProblems || [];
+    const completed = new Set((u.completedProblems || []).map(String));
+    const recent = new Set((u.recentProblems || []).map(String));
+    const personalityType = u.codingPersonality?.type || 'brute-force first';
+    const diffMap = { 'brute-force first': 'Easy', 'slow but accurate': 'Medium', 'greedy thinker': 'Medium', 'over-optimizer': 'Hard' };
+    const prefDiff = diffMap[personalityType] || 'Easy';
+
+    const recs = pp.filter(p => !completed.has(String(p.id)))
+      .sort((a, b) => {
+        const aR = recent.has(String(a.id)) ? 1 : 0;
+        const bR = recent.has(String(b.id)) ? 1 : 0;
+        return (aR - bR) || (a.difficulty === prefDiff ? 0 : 1) - (b.difficulty === prefDiff ? 0 : 1) || a.id - b.id;
+      }).slice(0, 4);
+
+    if (recs.length === 0) { el.innerHTML = '<p class="pf-empty">No recommendations available. You solved everything!</p>'; return; }
+    el.innerHTML = recs.map(p =>
+      '<button type="button" class="recommendation-item" data-id="' + p.id + '"><span class="rec-title">' + esc(p.title) + '</span><span class="rec-meta">' + esc(p.difficulty) + ' &middot; ' + esc(p.category || 'practice') + '</span></button>'
+    ).join('');
+    el.querySelectorAll('.recommendation-item').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const p = pp.find(x => x.id === Number(this.dataset.id));
+        if (p && typeof window.openQuizEditor === 'function') window.openQuizEditor(p);
+      });
+    });
+  }
+
+  // ===============================================================
+  // RECENTLY VIEWED
+  // ===============================================================
+  function renderRecentlyViewed() {
+    const el = $('recentProblemsList');
+    if (!el) return;
+    const u = window.userProgress || {};
+    const pp = window.practiceProblems || [];
+    const ids = u.recentProblems || [];
+    const items = ids.map(id => pp.find(p => p.id === id)).filter(Boolean);
+    if (items.length === 0) { el.innerHTML = '<p class="pf-empty">No recently viewed problems.</p>'; return; }
+    el.innerHTML = items.slice(0, 6).map(p =>
+      '<button type="button" class="recent-problem" data-id="' + p.id + '">' + esc(p.title) + '</button>'
+    ).join('');
+    el.querySelectorAll('.recent-problem').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const p = pp.find(x => x.id === Number(this.dataset.id));
+        if (p && typeof window.openQuizEditor === 'function') window.openQuizEditor(p);
+      });
+    });
+  }
+
+  // ===============================================================
+  // BADGES
+  // ===============================================================
+  function renderBadges() {
+    const container = $('badgesContainer');
+    const el = $('badgesEarnedCount');
+    if (!container) return;
+    const u = window.userProgress || {};
+    const c = (u.completedProblems || []).length;
+    const badges = [
+      { id: 1, icon: '<i class="fas fa-star"></i>', name: 'First Steps', desc: 'Solve 1 problem', earned: c >= 1 },
+      { id: 2, icon: '<i class="fas fa-fire"></i>', name: 'On Fire', desc: '7-day streak', earned: (u.streak || 0) >= 7 },
+      { id: 3, icon: '<i class="fas fa-gem"></i>', name: 'Diamond', desc: '5,000 XP', earned: (u.xp || 0) >= 5000 },
+      { id: 4, icon: '<i class="fas fa-rocket"></i>', name: 'Rocket', desc: '50 problems', earned: c >= 50 },
+      { id: 5, icon: '<i class="fas fa-crown"></i>', name: 'Master', desc: '100 problems', earned: c >= 100 },
+      { id: 6, icon: '<i class="fas fa-bullseye"></i>', name: 'Sharpshooter', desc: '25 problems + 2,500 XP', earned: c >= 25 && (u.xp || 0) >= 2500 },
+      { id: 7, icon: '<i class="fas fa-shield-alt"></i>', name: 'Gladiator', desc: 'Win 1 battle', earned: (u.battlesWon || 0) >= 1 },
+      { id: 8, icon: '<i class="fas fa-bolt"></i>', name: 'Speed Demon', desc: 'Win 5 battles', earned: (u.battlesWon || 0) >= 5 },
+      { id: 9, icon: '<i class="fas fa-trophy"></i>', name: 'Exclusive', desc: 'XP Store badge', earned: !!(u.inventory?.exclusiveBadge) },
+    ];
+    const earned = badges.filter(b => b.earned).length;
+    if (el) el.textContent = earned + ' / ' + badges.length + ' earned';
+
+    container.innerHTML = badges.map(b =>
+      '<div class="badge-pill ' + (b.earned ? 'earned' : 'locked') + '" tabindex="0" aria-label="' + b.name + '">' +
+        '<span class="badge-tooltip"><strong>' + b.name + '</strong>' + b.desc + '</span>' +
+        b.icon +
+      '</div>'
+    ).join('');
+  }
+
+  // ===============================================================
+  // RECENT ACTIVITY
+  // ===============================================================
+  function renderRecentActivity() {
+    if (!recentActivityEl) return;
+    const u = window.userProgress || {};
+    const pp = window.practiceProblems || [];
+    const ids = u.completedProblems || [];
+    if (!ids.length) { recentActivityEl.innerHTML = '<p class="pf-empty">No problems solved yet. Start practicing!</p>'; return; }
+
+    const XP = { easy: 100, medium: 250, hard: 500 };
+    const subs = u.submittedSolutions || {};
+
+    const entries = ids.slice(-5).reverse().map(id => {
+      const p = pp.find(x => x.id === id);
+      if (!p) return null;
+      const d = subs[id]?.date ? new Date(subs[id].date) : null;
+      return { id, title: p.title, diff: (p.difficulty || 'easy').toLowerCase(), xp: XP[(p.difficulty || 'easy').toLowerCase()] || 100, date: d };
+    }).filter(Boolean);
+
+    recentActivityEl.innerHTML = entries.map(e =>
+      '<button type="button" class="recent-activity-item" data-id="' + e.id + '">' +
+        '<span class="recent-activity-title">' + esc(e.title) + '</span>' +
+        '<span class="difficulty-badge ' + e.diff + '">' + e.diff + '</span>' +
+        '<span class="recent-activity-xp">+' + e.xp + ' XP</span>' +
+      '</button>'
+    ).join('');
+    recentActivityEl.querySelectorAll('.recent-activity-item').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const p = pp.find(x => x.id === Number(this.dataset.id));
+        if (p && typeof window.openQuizEditor === 'function') window.openQuizEditor(p);
+      });
+    });
+  }
+
+  // ===============================================================
+  // SKILLS MASTERY
+  // ===============================================================
+  function renderSkillsMastery() {
+    if (!skillsMasteryEl) return;
+    const topics = window.dsaTopics || [];
+    if (!topics.length || typeof window.getTopicProgress !== 'function') {
+      skillsMasteryEl.innerHTML = '<p class="pf-empty">No topics available yet.</p>';
+      return;
+    }
+    // Clean topic names — no emojis, no purplish backgrounds
+    skillsMasteryEl.innerHTML = topics.map(function(t) {
+      var p = window.getTopicProgress(t.name);
+      if (!p || !p.total) return '';
+      return '<div class="skill-mastery-item">' +
+        '<div class="mastery-header"><span class="mastery-label">' + t.name + '</span><span class="mastery-stats">' + p.completed + '/' + p.total + '</span></div>' +
+        '<div class="mastery-bar"><div class="mastery-fill" style="width:' + p.percentage + '%"></div></div>' +
+        '<span class="mastery-percentage">' + p.percentage + '%</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ===============================================================
+  // BOOKMARK SECTION
+  // ===============================================================
+  function renderBookmarkSection() {
+    const panel = $('bookmarkCollectionsPanel');
+    if (!panel) return;
+    if (typeof window.renderBookmarkCollectionsPanel === 'function') {
+      window.renderBookmarkCollectionsPanel();
+    } else {
+      const collections = window.userProgress?.bookmarkCollections || [];
+      if (collections.length === 0) { panel.innerHTML = '<p class="pf-empty">No bookmark collections yet.</p>'; return; }
+      panel.innerHTML = collections.slice(0, 4).map(c =>
+        '<div class="pf-card-content" style="padding:0.4rem 0.6rem;font-size:0.78rem;color:var(--pf-text);border-bottom:1px solid var(--pf-border);">' + esc(c.name || 'Collection') + '</div>'
+      ).join('');
+    }
+  }
+
+  // ===============================================================
+  // SOLVED GRID
+  // ===============================================================
+  function applyFilters() {
+    const term = searchInput.value.toLowerCase();
+    const diff = difficultyFilter.value;
+    const u = window.userProgress || {};
+    const pp = window.practiceProblems || [];
+    let list = (u.completedProblems || []).map(id => pp.find(p => p.id === id)).filter(Boolean);
+    if (term) list = list.filter(p => p.title.toLowerCase().includes(term) || (p.tags && p.tags.some(t => t.toLowerCase().includes(term))));
+    if (diff !== 'all') list = list.filter(p => p.difficulty === diff);
+    filteredProblems = list;
+    currentPage = 1;
+    renderGrid();
+  }
+
+  function renderGrid() {
+    grid.innerHTML = '';
+    if (filteredProblems.length === 0) { grid.classList.add('hidden'); emptyState.classList.remove('hidden'); pagination.classList.add('hidden'); return; }
+    grid.classList.remove('hidden'); emptyState.classList.add('hidden');
+    const total = Math.ceil(filteredProblems.length / ITEMS_PER_PAGE);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const batch = filteredProblems.slice(start, start + ITEMS_PER_PAGE);
+
+    batch.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'problem-card';
+      const tags = p.tags ? p.tags.slice(0, 3).map(t => '<span class="tag">' + esc(t) + '</span>').join('') : '';
+      card.innerHTML =
+        '<div class="problem-header" style="display:flex;justify-content:space-between;align-items:start;">' +
+          '<div><h3 class="problem-title">' + esc(p.title) + '</h3><span class="difficulty-badge ' + (p.difficulty||'easy').toLowerCase() + '">' + esc(p.difficulty||'Easy') + '</span></div>' +
+          '<button class="export-md-btn" title="Export Markdown" style="background:transparent;border:none;color:var(--pf-text-muted);cursor:pointer;font-size:1rem;"><i class="fas fa-file-download"></i></button>' +
+        '</div>' +
+        '<div class="problem-tags">' + tags + '</div>' +
+        '<div class="problem-meta"><span><i class="fas fa-folder"></i> ' + esc(p.category||'General') + '</span></div>';
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.export-md-btn')) {
+          const sol = window.userProgress?.submittedSolutions?.[p.id] || null;
+          if (typeof window.exportProblemAsMarkdown === 'function') window.exportProblemAsMarkdown(p, sol);
+          else console.warn('Export utility not available on this page.');
+          return;
         }
-    }
+        window.location.href = '../../pages/practice/problems.html?problem=' + p.id;
+      });
+      grid.appendChild(card);
+    });
 
-    // Setup PNG Export
-    const downloadPngBtn = document.getElementById("downloadPngBtn");
-    if (downloadPngBtn) {
-        downloadPngBtn.addEventListener("click", async () => {
-            const prevText = downloadPngBtn.innerHTML;
-            downloadPngBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Generating...`;
-            downloadPngBtn.disabled = true;
+    if (total > 1) {
+      pagination.classList.remove('hidden');
+      pageInfo.textContent = 'Page ' + currentPage + ' of ' + total;
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === total;
+    } else { pagination.classList.add('hidden'); }
+  }
 
-            try {
-                window.getSelection().removeAllRanges();
-                document.activeElement && document.activeElement.blur();
+  // Event listeners for solved grid
+  if (searchInput) searchInput.addEventListener('input', applyFilters);
+  if (difficultyFilter) difficultyFilter.addEventListener('change', applyFilters);
+  if (prevBtn) prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderGrid(); window.scrollTo({ top: grid.offsetTop - 100, behavior: 'smooth' }); } });
+  if (nextBtn) nextBtn.addEventListener('click', () => {
+    const total = Math.ceil(filteredProblems.length / ITEMS_PER_PAGE);
+    if (currentPage < total) { currentPage++; renderGrid(); window.scrollTo({ top: grid.offsetTop - 100, behavior: 'smooth' }); }
+  });
 
-                const canvas = await captureCardImage();
-                if (!canvas) return;
+  // ===============================================================
+  // ESCAPE HTML
+  // ===============================================================
+  function esc(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+  }
 
-                const image = canvas.toDataURL("image/png");
-                const link = document.createElement("a");
-                link.download = `${(typeof userProgress !== 'undefined' ? userProgress.name : 'learner')}_coding_card.png`;
-                link.href = image;
-                link.click();
-            } catch (e) {
-                console.error("Error generating PNG:", e);
-            } finally {
-                downloadPngBtn.innerHTML = prevText;
-                downloadPngBtn.disabled = false;
+  // ===============================================================
+  // IDENTITY CARD
+  // ===============================================================
+  async function initIdentityCard() {
+    try {
+      const u = window.userProgress;
+      if (!u) return;
+
+      const cardAvatar = $('cardAvatar');
+      const cardUserName = $('cardUserName');
+      const cardUserLevelBadge = $('cardUserLevelBadge');
+      const cardUserTitle = $('cardUserTitle');
+      const cardRank = $('cardRank');
+      const cardXP = $('cardXP');
+      const cardStreak = $('cardStreak');
+      const cardSkills = $('cardSkills');
+
+      const levelNames = ['Beginner','Novice','Intermediate','Advanced','Expert','Master','Grandmaster','Legend'];
+      const levelTitle = levelNames[Math.min(u.level - 1, levelNames.length - 1)] || 'Beginner';
+
+      if (cardAvatar) {
+        cardAvatar.textContent = '';
+        cardAvatar.style.fontSize = '0';
+        const rawAv = u.avatar;
+        const cust = u.avatarCustomization || { border: 'none', theme: 'default' };
+        if (rawAv && typeof rawAv === 'string' && rawAv.startsWith('data:image')) {
+          const bs = window.AVATAR_BORDER_STYLES?.[cust.border] || '';
+          const img = document.createElement('img');
+          img.src = rawAv; img.alt = 'Avatar';
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+          cardAvatar.appendChild(img);
+          if (bs) cardAvatar.style.border = bs;
+        } else {
+          const av = (rawAv && typeof rawAv === 'object') ? rawAv : { initial: (u.name || 'L').charAt(0).toUpperCase(), bg: '#a8c8f0' };
+          const init = av.initial || 'L';
+          const themeBg = typeof window.getAvatarThemeBg === 'function' ? window.getAvatarThemeBg(cust.theme, init) : null;
+          const bg = themeBg || av.bg || '#a8c8f0';
+          const bs = window.AVATAR_BORDER_STYLES?.[cust.border] || '';
+          const span = document.createElement('span');
+          span.textContent = init;
+          span.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:' + bg + ';color:#fff;font-size:1.8rem;font-weight:600;font-family:Poppins,sans-serif;' + (bs ? 'border:' + bs + ';' : '');
+          if (cust.border === 'rainbow') span.className = 'avatar-border-rainbow';
+          cardAvatar.style.fontSize = '0';
+          cardAvatar.appendChild(span);
+        }
+      }
+      if (cardUserName) cardUserName.textContent = u.name || 'Learner';
+      if (cardUserLevelBadge) cardUserLevelBadge.textContent = 'Level ' + (u.level || 1);
+      if (cardUserTitle) cardUserTitle.textContent = levelTitle;
+      if (cardXP) cardXP.textContent = (u.xp || 0) > 0 ? (u.xp || 0).toLocaleString() : '-';
+      if (cardStreak) cardStreak.textContent = (u.streak || 0) > 0 ? u.streak : '-';
+
+      if (cardRank) {
+        cardRank.textContent = '...';
+        getLeaderboardRank().then(r => { if (cardRank) cardRank.textContent = r; });
+      }
+
+      if (cardSkills) {
+        const skills = getTopSkills();
+        cardSkills.innerHTML = skills.map(s => '<span class="skill-pill">' + esc(s) + '</span>').join('');
+      }
+
+      // QR Code
+      const qr = $('cardQrCode');
+      if (qr) {
+        qr.innerHTML = '';
+        const uid = getCurrentUserIdLocal();
+        if (uid) {
+          const url = window.location.origin + window.location.pathname.replace('profile.html', 'public-profile.html') + '?uid=' + uid;
+          try {
+            if (typeof QRCode !== 'undefined') {
+              new QRCode(qr, { text: url, width: 100, height: 100, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+            } else {
+              qr.innerHTML = '<span style="color:var(--pf-text-muted);font-size:0.7rem;">QR library not loaded.</span>';
             }
-        });
+          } catch (_) { qr.innerHTML = '<span style="color:var(--pf-text-muted);font-size:0.7rem;">QR unavailable</span>'; }
+        } else {
+          qr.innerHTML = '<span style="color:var(--pf-text-muted);font-size:0.65rem;">Sign in for shareable profile link.</span>';
+        }
+      }
+    } catch (err) {
+      console.warn('initIdentityCard error:', err);
     }
+  }
 
-    // Setup PDF Export
-    const downloadPdfBtn = document.getElementById("downloadPdfBtn");
-    if (downloadPdfBtn) {
-        downloadPdfBtn.addEventListener("click", async () => {
-            const prevText = downloadPdfBtn.innerHTML;
-            downloadPdfBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Generating...`;
-            downloadPdfBtn.disabled = true;
+  async function getLeaderboardRank() {
+    const u = window.userProgress || {};
+    const hasProgress = (u.xp || 0) > 0 || (u.streak || 0) > 0;
+    if (!hasProgress) return '-';
+    try {
+      if (typeof window.loadLeaderboard === 'function') {
+        const res = await window.loadLeaderboard();
+        const leaders = res.leaders || [];
+        const currentUserId = getCurrentUserIdLocal() || 'local-user';
+        if (typeof window.buildLeaderboardRows === 'function') {
+          const rows = window.buildLeaderboardRows(leaders, currentUserId);
+          const userRow = rows.find(r => r.id === currentUserId);
+          if (userRow?.rank) return '#' + userRow.rank;
+        }
+      }
+    } catch (_) { /* ignore */ }
+    return '-';
+  }
 
-            try {
-                window.getSelection().removeAllRanges();
-                document.activeElement && document.activeElement.blur();
+  function getTopSkills() {
+    const ids = window.userProgress?.completedProblems || [];
+    if (!ids.length || !window.practiceProblems) return ['General'];
+    const counts = {};
+    ids.forEach(id => {
+      const p = window.practiceProblems.find(x => x.id === id);
+      if (p?.category) counts[p.category] = (counts[p.category] || 0) + 1;
+    });
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+    if (!sorted.length) return ['General'];
+    const map = { arrays: 'Arrays', strings: 'Strings', linkedlist: 'Linked List', graphs: 'Graphs', dp: 'Dynamic Programming', trees: 'Trees' };
+    return sorted.slice(0, 3).map(c => map[c] || c.charAt(0).toUpperCase() + c.slice(1));
+  }
 
-                const canvas = await captureCardImage();
-                if (!canvas) return;
+  // ===============================================================
+  // THEME BUTTONS & CARD EXPORT
+  // ===============================================================
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const card = $('codingIdentityCard');
+      if (card) card.className = 'coding-card theme-' + btn.getAttribute('data-theme');
+    });
+  });
 
-                const imgData = canvas.toDataURL("image/png");
-                const { jsPDF } = window.jspdf;
+  window.initIdentityCard = initIdentityCard;
 
-                const pdf = new jsPDF("l", "mm", "a4");
-                const imgWidth = 200;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  // PNG Export
+  const downloadPngBtn = $('downloadPngBtn');
+  if (downloadPngBtn) {
+    downloadPngBtn.addEventListener('click', async () => {
+      const prev = downloadPngBtn.innerHTML;
+      downloadPngBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+      downloadPngBtn.disabled = true;
+      try {
+        window.getSelection().removeAllRanges();
+        document.activeElement && document.activeElement.blur();
+        const canvas = await captureCardImage();
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = (window.userProgress?.name || 'learner') + '_coding_card.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (e) { console.error('PNG export error:', e); }
+      finally { downloadPngBtn.innerHTML = prev; downloadPngBtn.disabled = false; }
+    });
+  }
 
-                const x = (pdf.internal.pageSize.getWidth() - imgWidth) / 2;
-                const y = (pdf.internal.pageSize.getHeight() - imgHeight) / 2;
+  // PDF Export
+  const downloadPdfBtn = $('downloadPdfBtn');
+  if (downloadPdfBtn) {
+    downloadPdfBtn.addEventListener('click', async () => {
+      const prev = downloadPdfBtn.innerHTML;
+      downloadPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+      downloadPdfBtn.disabled = true;
+      try {
+        window.getSelection().removeAllRanges();
+        document.activeElement && document.activeElement.blur();
+        const canvas = await captureCardImage();
+        if (!canvas) return;
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('l', 'mm', 'a4');
+        const iw = 200;
+        const ih = (canvas.height * iw) / canvas.width;
+        const x = (pdf.internal.pageSize.getWidth() - iw) / 2;
+        const y = (pdf.internal.pageSize.getHeight() - ih) / 2;
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, iw, ih);
+        pdf.save((window.userProgress?.name || 'learner') + '_coding_card.pdf');
+      } catch (e) { console.error('PDF export error:', e); }
+      finally { downloadPdfBtn.innerHTML = prev; downloadPdfBtn.disabled = false; }
+    });
+  }
 
-                pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
-                pdf.save(`${(typeof userProgress !== 'undefined' ? userProgress.name : 'learner')}_coding_card.pdf`);
-            } catch (e) {
-                console.error("Error generating PDF:", e);
-            } finally {
-                downloadPdfBtn.innerHTML = prevText;
-                downloadPdfBtn.disabled = false;
-            }
-        });
+  async function captureCardImage() {
+    if (typeof html2canvas === 'undefined') {
+      if (typeof showNotification === 'function') showNotification('Export library (html2canvas) not loaded.', 'error');
+      return null;
     }
+    const original = $('codingIdentityCard');
+    if (!original) return null;
+    const clone = original.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.classList.add('exporting');
+
+    // Copy canvas contents
+    original.querySelectorAll('canvas').forEach((oc, i) => {
+      const dc = clone.querySelectorAll('canvas')[i];
+      if (dc) { dc.width = oc.width; dc.height = oc.height; dc.getContext('2d').drawImage(oc, 0, 0); }
+    });
+
+    // Clean up for html2canvas
+    const glow = clone.querySelector('.card-glow');
+    if (glow) glow.remove();
+    const cgrid = clone.querySelector('.card-grid');
+    if (cgrid) cgrid.remove();
+    clone.querySelectorAll('*').forEach(el => el.setAttribute('style', (el.getAttribute('style') || '') + ';backdrop-filter:none!important;-webkit-backdrop-filter:none!important;'));
+    clone.style.backgroundColor = '#0c0b1a';
+    const logo = clone.querySelector('.logo-icon');
+    if (logo) { logo.style.background = 'none'; logo.style.webkitBackgroundClip = 'unset'; logo.style.webkitTextFillColor = 'unset'; }
+
+    clone.style.cssText += ';position:fixed;left:-9999px;top:0;z-index:-1;width:480px;height:380px;';
+    document.body.appendChild(clone);
+    try { return await html2canvas(clone, { scale: 3, useCORS: true, backgroundColor: null, logging: false }); }
+    finally { if (clone.parentNode) clone.parentNode.removeChild(clone); }
+  }
 
 });

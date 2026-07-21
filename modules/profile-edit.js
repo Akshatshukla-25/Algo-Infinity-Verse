@@ -21,6 +21,12 @@ function saveProfileChanges() {
     if (typeof showNotification === 'function') showNotification('Please enter a display name.', 'error');
     return;
   }
+  const bioInput = document.getElementById('profileBioInput');
+  const bioVal = bioInput ? bioInput.value.trim() : '';
+  if (bioVal.length > 120) {
+    if (typeof showNotification === 'function') showNotification('Bio cannot exceed 120 characters.', 'error');
+    return;
+  }
   const userLangs = [];
   document.querySelectorAll('.lang-edit-checkbox').forEach(cb => {
     if (cb.checked) userLangs.push(cb.value);
@@ -31,6 +37,7 @@ function saveProfileChanges() {
 
   const applyUpdates = (target) => {
     target.name = nameVal;
+    target.bio = bioVal;
     target.languages = userLangs;
     if (!target.avatarCustomization) target.avatarCustomization = { border: 'none', theme: 'default' };
     if (selectedBorder) target.avatarCustomization.border = selectedBorder.value;
@@ -107,8 +114,10 @@ function setupProfileListeners() {
 function openProfileModal() {
   const modal = document.getElementById('profileEditModal');
   const nameInput = document.getElementById('profileNameInput');
+  const bioInput = document.getElementById('profileBioInput');
   const progress = loadProgress();
   if (nameInput) nameInput.value = progress.name || 'Learner';
+  if (bioInput) bioInput.value = progress.bio || '';
   const userLangs = progress.languages || [];
   document.querySelectorAll('.lang-edit-checkbox').forEach(cb => {
     cb.checked = userLangs.includes(cb.value);

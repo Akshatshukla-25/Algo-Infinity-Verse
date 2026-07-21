@@ -579,272 +579,15 @@
             Your Dashboard
           </h2>
           <div class="dashboard-grid">
-            <!-- Profile Card -->
-            <div class="dashboard-card profile-card">
-              <div class="profile-header">
-                <div class="profile-avatar">
-                  <span class="avatar-icon">L</span>
-                </div>
-                <div class="profile-info">
-                  <h3 id="profileName">Learner</h3>
-                  <p class="profile-level" id="profileLevel">Level 1 - Beginner</p>
-                  <p class="profile-join">Joined: <span id="joinDate">Today</span></p>
-                </div>
-                <button
-                  class="profile-edit-btn"
-                  id="profileEditBtn"
-                  title="Edit Profile"
-                  aria-label="Edit Profile"
-                >
-                  <i class="fas fa-pen"></i>
-                </button>
-              </div>
-              <div class="profile-stats">
-                <div class="profile-stat">
-                  <span class="profile-stat-value" id="profileTotalXP">0</span>
-                  <span class="profile-stat-label">Total XP</span>
-                </div>
-                <div class="profile-stat">
-                  <span class="profile-stat-value" id="profileProblems">0</span>
-                  <span class="profile-stat-label">Problems</span>
-                </div>
-                <div class="profile-stat">
-                  <span class="profile-stat-value" id="profileStreak">0</span>
-                  <span class="profile-stat-label">Day Streak</span>
-                </div>
-                <div class="profile-stat">
-                  <span class="profile-stat-value" id="profileFreezes">0</span>
-                  <span class="profile-stat-label">Freezes</span>
-                </div>
-                <div class="profile-stat">
-                  <span class="profile-stat-value" id="profileBadges">0</span>
-                  <span class="profile-stat-label">Badges</span>
-                </div>
-              </div>
-              <div class="profile-progress" style="margin-bottom: 1rem">
-                <div class="progress-bar-container">
-                  <div class="progress-label">
-                    <span>Level Progress</span>
-                    <span id="profileLevelProgress">0%</span>
-                  </div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" id="profileProgressBar"></div>
-                  </div>
-                </div>
-              </div>
-              <a
-                href="/pages/career/resume/resume.html"
-                class="btn btn-secondary"
-                style="
-                  width: 100%;
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  gap: 0.5rem;
-                  padding: 0.6rem;
-                  font-size: 0.9rem;
-                  text-decoration: none;
-                "
-              >
-                <i class="fas fa-file-alt"></i> View Coding Resume
-              </a>
-            </div>
-            <div class="dashboard-card stats-card">
-              <h3>Progress Overview</h3>
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <span class="stat-value" id="completedProblems">0</span>
-                  <span class="stat-desc">Problems Solved</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value" id="currentStreak">0</span>
-                  <span class="stat-desc">Day Streak</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value" id="currentFreezes">0</span>
-                  <span class="stat-desc">Freezes</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value" id="totalXP">0</span>
-                  <span class="stat-desc">Total XP</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Smart Review Queue Widget -->
-            <div class="dashboard-card review-queue-card">
-              <div class="card-header-with-actions">
-                <h3><i class="fas fa-brain"></i> Smart Review Queue</h3>
-              </div>
-              <div style="text-align: center; padding: 15px">
-                <h1 id="reviewQueueCount" style="font-size: 3rem; margin: 0; color: var(--accent)">
-                  0
-                </h1>
-                <p>concepts due for review today</p>
-                <a
-                  href="#problems"
-                  class="btn primary-btn"
-                  style="margin-top: 10px; display: inline-block"
-                  >Review Now</a
-                >
-              </div>
-            </div>
-
-            <!-- UPDATED: Recent Activity Card with Activity Feed -->
-
-            <div class="dashboard-card activity-feed-card">
-              <div class="card-header-with-actions">
-                <h3><i class="fas fa-clock"></i> Recent Activity</h3>
-                <button id="clearActivityBtn" class="btn-clear-activity" title="Clear all activity">
-                  <i class="fas fa-trash-alt"></i>
-                </button>
-              </div>
-              <div class="activity-feed" id="activityFeed">
-                <!-- Activities will be rendered here -->
-
-                <div class="activity-empty">
-                  <i class="fas fa-inbox"></i>
-                  <p>No recent activity yet. Start solving problems!</p>
-                </div>
-              </div>
-              <div class="activity-feed-footer">
-                <span id="activityCount">0 activities</span>
-                <button id="viewAllActivityBtn" class="btn-view-all">View All</button>
-              </div>
-            </div>
-
-            <div class="dashboard-card heatmap-card">
-              <h3>Activity Heatmap</h3>
-              <div class="heatmap-legend">
-                <span>Less</span>
-                <div class="legend-swatches">
-                  <div class="legend-swatch" data-level="0"></div>
-                  <div class="legend-swatch" data-level="1"></div>
-                  <div class="legend-swatch" data-level="2"></div>
-                  <div class="legend-swatch" data-level="3"></div>
-                  <div class="legend-swatch" data-level="4"></div>
-                </div>
-                <span>More</span>
-              </div>
-              <div class="heatmap-container" id="activityHeatmap">
-                <p class="empty-state">No activity data yet. Start solving problems!</p>
-              </div>
-              <div class="heatmap-tooltip" id="heatmapTooltip"></div>
-            </div>
-            <div class="dashboard-card">
-              <h3>Freeze Usage History</h3>
-              <div class="freeze-history-list" id="freezeHistoryList">
-                <p class="empty-state">No freezes used yet.</p>
-              </div>
-            </div>
-            <div class="dashboard-card">
-              <h3>Personalized Recommendations</h3>
-              <div id="recommendationsContainer">
-                <p class="empty-state">Complete a quiz to get recommendations.</p>
-              </div>
-            </div>
             <div class="dashboard-card" id="revisionSchedulerCard">
               <p class="empty-state">Loading revision scheduler...</p>
             </div>
-            <div class="dashboard-card">
-              <h3>🕒 Recently Viewed Problems</h3>
-              <div id="recentProblemsList">
-                <p>No recently viewed problems</p>
-              </div>
-            </div>
-            <div class="dashboard-card">
-              <h3>Achievements</h3>
-              <div class="badges-container" id="badgesContainer"></div>
-            </div>
-
           </div>
         </div>
       </section>
 
       <!-- Did You Know? Section -->
       <div id="did-you-know-placeholder"></div>
-
-      <!-- Gamification Section -->
-      <section id="gamification" class="section gamification-section">
-        <div class="container">
-          <h2 class="section-title">
-            <span class="title-icon">🎮</span>
-            Gamification
-          </h2>
-          <div class="gamification-grid">
-            <!-- XP & Level Card -->
-            <div class="xp-card big-box">
-              <div class="xp-card-header">
-                <h3>⚡ Experience Points</h3>
-                <span class="xp-next-level" id="xpNextLevel">Next: Novice</span>
-              </div>
-              <div class="xp-bar-container">
-                <div class="xp-bar" id="xpBar"></div>
-                <span class="xp-text" id="xpText">0 / 1000 XP</span>
-              </div>
-              <div class="level-info">
-                <span
-                  class="level-badge"
-                  id="levelBadge"
-                  onclick="openGameModal()"
-                  style="cursor: pointer"
-                  title="Click to play DSA games! 🎮"
-                >
-                  🎮 Level 1 - Beginner
-                </span>
-                <span class="level-hint">Click to play DSA Games!</span>
-              </div>
-              <div class="xp-stats">
-                <div class="xp-stat-item">
-                  <span class="xp-stat-value" id="totalProblemsCount">0</span>
-                  <span class="xp-stat-label">Problems Solved</span>
-                </div>
-                <div class="xp-stat-item">
-                  <span class="xp-stat-value" id="streakCount">0🔥</span>
-                  <span class="xp-stat-label">Day Streak</span>
-                </div>
-                <div class="xp-stat-item">
-                  <span class="xp-stat-value" id="totalXPCount">0</span>
-                  <span class="xp-stat-label">Total XP</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Badges Card -->
-            <div class="badges-showcase big-box">
-              <div class="badges-header">
-                <h3>Badges</h3>
-                <span class="badges-earned-count" id="badgesEarnedCount">0 / 9 earned</span>
-                <button type="button" class="badges-preview-btn" id="badgesPreviewBtn" title="Preview all badges" onclick="previewBadges()">?</button>
-              </div>
-              <div class="badges-grid" id="badgesGrid">
-                <!-- Badges will be generated by JavaScript -->
-              </div>
-            </div>
-
-            <!-- Streak Card -->
-            <div class="streak-card big-box">
-              <h3>🔥 Daily Streak</h3>
-              <div class="streak-display">
-                <div class="streak-number" id="streakNumber">0</div>
-                <div class="streak-label">day streak</div>
-              </div>
-              <div class="streak-week" id="streakWeek">
-                <!-- Generated by JS -->
-              </div>
-              <div class="streak-best">🏅 Best Streak: <span id="bestStreak">0</span> days</div>
-            </div>
-
-            <!-- Recent Activity Card -->
-            <div class="activity-card big-box">
-              <h3>📊 Recent Activity</h3>
-              <div class="activity-list" id="activityList">
-                <p class="activity-empty">No activity yet. Start solving problems! 🚀</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- Game Modal -->
       <div id="game-modal-placeholder"></div>
@@ -858,11 +601,7 @@
       <!-- Quiz Modal (replaced by full-page topic-quiz) -->
       <!-- Topic quiz now lives at pages/topic-quiz/topic-quiz.html -->
 
-      <!-- Profile Edit Modal -->
-      <div id="profile-edit-modal-placeholder"></div>
-
-      <!-- Profile Section -->
-      <div id="profile-placeholder"></div>
+      <!-- Profile Section (migrated to pages/profile/profile.html) -->
 
       <!-- Notes Modal -->
       <div id="notes-modal-placeholder"></div>
@@ -990,8 +729,8 @@
           loadPartial('topic-modal-placeholder', '/partials/topic-modal.html'),
           loadPartial('quiz-editor-modal-placeholder', '/partials/quiz-editor-modal.html'),
           // Topic quiz moved to dedicated full page: pages/topic-quiz/topic-quiz.html
-          loadPartial('profile-edit-modal-placeholder', '/partials/profile-edit-modal.html'),
-          loadPartial('profile-placeholder', '/partials/profile.html'),
+          // Profile migrated to dedicated page at pages/profile/profile.html
+          // Profile edit modal also lives on the profile page only,
           loadPartial('notes-modal-placeholder', '/partials/notes-modal.html'),
           loadPartial('change-password-modal-placeholder', '/partials/change-password-modal.html'),
           loadPartial('delete-account-modal-placeholder', '/partials/delete-account-modal.html'),
@@ -1004,16 +743,6 @@
         document.dispatchEvent(new Event('partialsLoaded'));
       })();
     </script>
-
-    <div class="modal" id="badgesPreviewModal" role="dialog" aria-modal="true" aria-label="Badges preview">
-      <div class="badges-preview-content">
-        <div class="badges-preview-header">
-          <h3>All Badges</h3>
-          <button type="button" class="modal-close" onclick="closeBadgesPreview()">&times;</button>
-        </div>
-        <div class="badges-preview-grid" id="badgesPreviewGrid"></div>
-      </div>
-    </div>
 
     <script type="module" src="./modules/aiHintsBootstrap.js"></script>
   </body>
