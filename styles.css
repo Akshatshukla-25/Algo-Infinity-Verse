@@ -92,8 +92,13 @@ body {
 }
 
 @keyframes textPulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -185,12 +190,16 @@ body[data-footer-visible] #pwa-storage-usage {
   opacity: 0;
   pointer-events: none;
   transform: translateY(12px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 #shortcutsToggle,
 #pwa-storage-usage {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 /* ===== SCROLL TO TOP ===== */
@@ -212,11 +221,12 @@ body[data-footer-visible] #pwa-storage-usage {
   opacity: 0;
   pointer-events: none;
   transform: translateY(20px);
-  transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-              transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-              border-color 0.25s ease,
-              color 0.25s ease,
-              background 0.25s ease;
+  transition:
+    opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.25s ease,
+    color 0.25s ease,
+    background 0.25s ease;
   z-index: 1000;
 }
 
@@ -1028,21 +1038,47 @@ button.auth-submit[data-loading='true'] {
 }
 
 @keyframes authGateBounce {
-  0% { opacity: 0; transform: scale(0.3) rotate(-15deg); }
-  50% { transform: scale(1.12) rotate(3deg); }
-  70% { transform: scale(0.94) rotate(-1deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-15deg);
+  }
+  50% {
+    transform: scale(1.12) rotate(3deg);
+  }
+  70% {
+    transform: scale(0.94) rotate(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 @keyframes authGateSparkle {
-  0% { opacity: 0; transform: scale(0) translateY(0); }
-  40% { opacity: 1; transform: scale(1.2) translateY(-6px); }
-  100% { opacity: 0; transform: scale(0) translateY(-14px); }
+  0% {
+    opacity: 0;
+    transform: scale(0) translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-6px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) translateY(-14px);
+  }
 }
 
 @keyframes authGatePulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.75; transform: scale(1.08); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.08);
+  }
 }
 
 .auth-gate-title {
@@ -1203,11 +1239,22 @@ button.auth-submit[data-loading='true'] {
 
 /* Shake animation for protected elements */
 @keyframes authGateShake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  40% { transform: translateX(6px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 .auth-gate-shake {
@@ -1555,7 +1602,9 @@ button.auth-submit[data-loading='true'] {
   font-size: 0.9rem;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .delete-account-form .password-input-wrapper input:focus {
@@ -1691,7 +1740,9 @@ button.auth-submit[data-loading='true'] {
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
   line-height: 1;
   z-index: 2;
 }
@@ -1765,16 +1816,35 @@ button.auth-submit[data-loading='true'] {
 }
 
 @keyframes cpwBounce {
-  0% { opacity: 0; transform: scale(0.3) rotate(-15deg); }
-  50% { transform: scale(1.12) rotate(3deg); }
-  70% { transform: scale(0.94) rotate(-1deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-15deg);
+  }
+  50% {
+    transform: scale(1.12) rotate(3deg);
+  }
+  70% {
+    transform: scale(0.94) rotate(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 @keyframes cpwSparkle {
-  0% { opacity: 0; transform: scale(0) translateY(0); }
-  40% { opacity: 1; transform: scale(1.2) translateY(-6px); }
-  100% { opacity: 0; transform: scale(0) translateY(-14px); }
+  0% {
+    opacity: 0;
+    transform: scale(0) translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-6px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) translateY(-14px);
+  }
 }
 
 /* ── Title & subtitle ── */
@@ -1883,7 +1953,9 @@ button.auth-submit[data-loading='true'] {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: rgba(167, 139, 250, 0.8);
-  transition: color 0.3s ease, text-shadow 0.3s ease;
+  transition:
+    color 0.3s ease,
+    text-shadow 0.3s ease;
 }
 
 .cpw-field:focus-within label {
@@ -1988,7 +2060,9 @@ button.auth-submit[data-loading='true'] {
   width: 0%;
   border-radius: 999px;
   background: #ef4444;
-  transition: width 0.25s ease, background 0.25s ease;
+  transition:
+    width 0.25s ease,
+    background 0.25s ease;
 }
 
 .cpw-strength-label {
@@ -2144,7 +2218,9 @@ button.auth-submit[data-loading='true'] {
 }
 
 @keyframes cpwSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── When form body is hidden (guest notice shown) ── */
@@ -3701,7 +3777,9 @@ html.auth-unverified [data-auth-required] {
   z-index: 10000;
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
   pointer-events: none;
   max-width: 280px;
 }
@@ -3971,7 +4049,10 @@ html.auth-unverified [data-auth-required] {
   font-size: 0.95rem;
   line-height: 1.5;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.15s;
 }
 
 .flashcard-option:hover {
@@ -4033,7 +4114,9 @@ html.auth-unverified [data-auth-required] {
   border-radius: 50px;
   border: none;
   cursor: pointer;
-  transition: background 0.25s ease, transform 0.2s ease;
+  transition:
+    background 0.25s ease,
+    transform 0.2s ease;
 }
 
 #flashcardsRevealBtn:hover {
@@ -6412,12 +6495,20 @@ section[id] {
 }
 
 @keyframes xpConfirmIn {
-  from { opacity: 0; transform: scale(0.92) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .xp-confirm-card { animation: none; }
+  .xp-confirm-card {
+    animation: none;
+  }
 }
 
 .xp-confirm-icon-wrap {
@@ -6976,44 +7067,99 @@ section[id] {
 }
 
 @keyframes previewSpin {
-  0%, 100% { transform: scale(1) rotate(0); }
-  50% { transform: scale(1.08) rotate(15deg); }
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  50% {
+    transform: scale(1.08) rotate(15deg);
+  }
 }
 @keyframes previewPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
 }
 @keyframes previewFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 @keyframes previewBounce {
-  0%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-8px); }
-  60% { transform: translateY(-2px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
 }
 @keyframes previewGlow {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.06); filter: brightness(1.3); }
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.06);
+    filter: brightness(1.3);
+  }
 }
 @keyframes previewWobble {
-  0%, 100% { transform: rotate(0); }
-  25% { transform: rotate(-6deg); }
-  50% { transform: rotate(6deg); }
-  75% { transform: rotate(-3deg); }
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+  75% {
+    transform: rotate(-3deg);
+  }
 }
 @keyframes previewShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
 }
 @keyframes previewFlash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 @keyframes previewGrow {
-  0%, 100% { transform: scale(1) rotate(0); }
-  50% { transform: scale(1.12) rotate(5deg); }
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  50% {
+    transform: scale(1.12) rotate(5deg);
+  }
 }
 
 .streak-card {
@@ -7154,59 +7300,115 @@ section[id] {
 
 /* ── Badge hover animations ──────────────────────────── */
 .badge-hover-spin:hover,
-.badge-lg.badge-hover-spin:hover { transform: scale(1.08) rotate(15deg); }
+.badge-lg.badge-hover-spin:hover {
+  transform: scale(1.08) rotate(15deg);
+}
 
 .badge-hover-pulse:hover,
-.badge-lg.badge-hover-pulse:hover { animation: badgePulse 0.4s ease; }
+.badge-lg.badge-hover-pulse:hover {
+  animation: badgePulse 0.4s ease;
+}
 
 .badge-hover-float:hover,
-.badge-lg.badge-hover-float:hover { transform: scale(1.08) translateY(-5px); }
+.badge-lg.badge-hover-float:hover {
+  transform: scale(1.08) translateY(-5px);
+}
 
 .badge-hover-bounce:hover,
-.badge-lg.badge-hover-bounce:hover { animation: badgeBounce 0.5s ease; }
+.badge-lg.badge-hover-bounce:hover {
+  animation: badgeBounce 0.5s ease;
+}
 
 .badge-hover-glow:hover,
-.badge-lg.badge-hover-glow:hover { transform: scale(1.08); filter: brightness(1.25); }
+.badge-lg.badge-hover-glow:hover {
+  transform: scale(1.08);
+  filter: brightness(1.25);
+}
 
 .badge-hover-wobble:hover,
-.badge-lg.badge-hover-wobble:hover { animation: badgeWobble 0.4s ease; }
+.badge-lg.badge-hover-wobble:hover {
+  animation: badgeWobble 0.4s ease;
+}
 
 .badge-hover-shake:hover,
-.badge-lg.badge-hover-shake:hover { animation: badgeShake 0.4s ease; }
+.badge-lg.badge-hover-shake:hover {
+  animation: badgeShake 0.4s ease;
+}
 
 .badge-hover-flash:hover,
-.badge-lg.badge-hover-flash:hover { animation: badgeFlash 0.3s ease; }
+.badge-lg.badge-hover-flash:hover {
+  animation: badgeFlash 0.3s ease;
+}
 
 .badge-hover-grow:hover,
-.badge-lg.badge-hover-grow:hover { transform: scale(1.12) rotate(5deg); }
+.badge-lg.badge-hover-grow:hover {
+  transform: scale(1.12) rotate(5deg);
+}
 
 @keyframes badgePulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.18); }
-  100% { transform: scale(1.08); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1.08);
+  }
 }
 @keyframes badgeBounce {
-  0% { transform: translateY(0); }
-  40% { transform: translateY(-6px); }
-  60% { transform: translateY(-2px); }
-  100% { transform: translateY(-3px); }
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(-3px);
+  }
 }
 @keyframes badgeWobble {
-  0% { transform: rotate(0); }
-  25% { transform: rotate(-6deg); }
-  50% { transform: rotate(6deg); }
-  75% { transform: rotate(-3deg); }
-  100% { transform: rotate(0); }
+  0% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+  75% {
+    transform: rotate(-3deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
 }
 @keyframes badgeShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
 }
 @keyframes badgeFlash {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 #dailyChallengeCard {
@@ -7969,21 +8171,47 @@ body.modal-open {
 }
 
 @keyframes deactivateBounce {
-  0% { opacity: 0; transform: scale(0.3) rotate(-15deg); }
-  50% { transform: scale(1.12) rotate(3deg); }
-  70% { transform: scale(0.94) rotate(-1deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-15deg);
+  }
+  50% {
+    transform: scale(1.12) rotate(3deg);
+  }
+  70% {
+    transform: scale(0.94) rotate(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 @keyframes deactivateSparkle {
-  0% { opacity: 0; transform: scale(0) translateY(0); }
-  40% { opacity: 1; transform: scale(1.2) translateY(-6px); }
-  100% { opacity: 0; transform: scale(0) translateY(-14px); }
+  0% {
+    opacity: 0;
+    transform: scale(0) translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-6px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) translateY(-14px);
+  }
 }
 
 @keyframes deactivatePulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.65; transform: scale(1.12); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.12);
+  }
 }
 
 .deactivate-title {
@@ -8611,8 +8839,18 @@ body.modal-open {
     radial-gradient(circle at 45% 70%, rgba(167, 243, 208, 0.4) 1px, transparent 1px),
     radial-gradient(circle at 70% 85%, rgba(196, 181, 253, 0.3) 1px, transparent 1px),
     radial-gradient(circle at 30% 50%, rgba(186, 230, 253, 0.3) 1px, transparent 1px);
-  background-size: 120px 120px, 100px 100px, 140px 140px, 90px 90px, 110px 110px;
-  background-position: 0 0, 80px 60px, 30px 120px, 180px 40px, 60px 90px;
+  background-size:
+    120px 120px,
+    100px 100px,
+    140px 140px,
+    90px 90px,
+    110px 110px;
+  background-position:
+    0 0,
+    80px 60px,
+    30px 120px,
+    180px 40px,
+    60px 90px;
 }
 
 .footer-content {
@@ -8644,8 +8882,13 @@ body.modal-open {
 }
 
 @keyframes footerLogoGlow {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.1)); }
-  50% { filter: drop-shadow(0 0 14px rgba(196, 181, 253, 0.2)); }
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.1));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(196, 181, 253, 0.2));
+  }
 }
 
 .footer-logo-text {
@@ -9659,7 +9902,6 @@ body.modal-open {
 
 /* ====== FOOTER QUESTIONS ====== */
 
-
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
   .filter-buttons {
@@ -10397,8 +10639,12 @@ html {
 }
 
 @keyframes theme-ripple-fade-in {
-  from { opacity: 1; }
-  to { opacity: 1; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* New snapshot ripples outward from the click point */
@@ -10421,4 +10667,96 @@ html {
   ::view-transition-new(root) {
     animation-duration: 0.01ms !important;
   }
+}
+
+/* ── Resume-Tailored Roadmap & Recommendation Badges ────────────────── */
+.recommendation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.35);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.recommendation-badge i {
+  font-size: 0.75rem;
+}
+
+.recommended-step {
+  border: 1px solid rgba(236, 72, 153, 0.45) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(236, 72, 153, 0.05),
+    rgba(139, 92, 246, 0.05)
+  ) !important;
+  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.12) !important;
+}
+
+.tailored-roadmap-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: rgba(19, 19, 25, 0.85);
+  border: 1px solid rgba(236, 72, 153, 0.35);
+  border-left: 4px solid #ec4899;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  flex-wrap: wrap;
+}
+
+.tailored-roadmap-banner .banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tailored-roadmap-banner .banner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  font-weight: 600;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.tailored-roadmap-banner .banner-info {
+  font-size: 0.88rem;
+  color: var(--text-primary, #e2e2e8);
+}
+
+.tailored-cta-box {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.topic-chip {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  margin-right: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }

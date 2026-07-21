@@ -1,39 +1,39 @@
-import { initLoader } from "/modules/loader.js";
-import { initTheme } from "/modules/theme.js";
-import { initNavbar } from "/modules/navbar.js";
-import { initScrollTop } from "/modules/scrollTop.js";
-import { escapeHtml } from "/modules/domSanitizer.js";
+import { initLoader } from '/modules/loader.js';
+import { initTheme } from '/modules/theme.js';
+import { initNavbar } from '/modules/navbar.js';
+import { initScrollTop } from '/modules/scrollTop.js';
+import { escapeHtml } from '/modules/domSanitizer.js';
 
 // DSA Topics database for progress calculation
 const dsaTopics = [
   {
-    name: "Arrays",
-    icon: "📊",
+    name: 'Arrays',
+    icon: '📊',
     problemIds: [1, 4, 5, 9, 16, 17, 19, 20, 21],
   },
   {
-    name: "Strings",
-    icon: "🔤",
+    name: 'Strings',
+    icon: '🔤',
     problemIds: [2, 18],
   },
   {
-    name: "Linked List",
-    icon: "🔗",
+    name: 'Linked List',
+    icon: '🔗',
     problemIds: [3, 10],
   },
   {
-    name: "Trees",
-    icon: "🌳",
+    name: 'Trees',
+    icon: '🌳',
     problemIds: [11, 12],
   },
   {
-    name: "Graphs",
-    icon: "🕸️",
+    name: 'Graphs',
+    icon: '🕸️',
     problemIds: [6, 8, 13, 15],
   },
   {
-    name: "Dynamic Programming",
-    icon: "🎯",
+    name: 'Dynamic Programming',
+    icon: '🎯',
     problemIds: [7, 14, 22],
   },
 ];
@@ -43,71 +43,71 @@ const badgeTemplates = [
   {
     id: 1,
     icon: '<i class="fas fa-star"></i>',
-    name: "First Steps",
-    description: "Begin your journey",
-    criteria: "Solve 1 problem",
-    color: "#f59e0b",
-    anim: "badge-hover-spin",
+    name: 'First Steps',
+    description: 'Begin your journey',
+    criteria: 'Solve 1 problem',
+    color: '#f59e0b',
+    anim: 'badge-hover-spin',
   },
   {
     id: 2,
     icon: '<i class="fas fa-fire"></i>',
-    name: "On Fire",
-    description: "Keep the momentum going",
-    criteria: "Maintain a 7-day streak",
-    color: "#ef4444",
-    anim: "badge-hover-pulse",
+    name: 'On Fire',
+    description: 'Keep the momentum going',
+    criteria: 'Maintain a 7-day streak',
+    color: '#ef4444',
+    anim: 'badge-hover-pulse',
   },
   {
     id: 3,
     icon: '<i class="fas fa-gem"></i>',
-    name: "Diamond",
-    description: "Reach a major XP milestone",
-    criteria: "Earn 5,000 XP",
-    color: "#8b5cf6",
-    anim: "badge-hover-float",
+    name: 'Diamond',
+    description: 'Reach a major XP milestone',
+    criteria: 'Earn 5,000 XP',
+    color: '#8b5cf6',
+    anim: 'badge-hover-float',
   },
   {
     id: 4,
     icon: '<i class="fas fa-rocket"></i>',
-    name: "Rocket",
-    description: "Speed through problems",
-    criteria: "Solve 50 problems",
-    color: "#06b6d4",
-    anim: "badge-hover-bounce",
+    name: 'Rocket',
+    description: 'Speed through problems',
+    criteria: 'Solve 50 problems',
+    color: '#06b6d4',
+    anim: 'badge-hover-bounce',
   },
   {
     id: 5,
     icon: '<i class="fas fa-crown"></i>',
-    name: "Master",
-    description: "Achieve expert problem-solving",
-    criteria: "Solve 100 problems",
-    color: "#ec4899",
-    anim: "badge-hover-glow",
+    name: 'Master',
+    description: 'Achieve expert problem-solving',
+    criteria: 'Solve 100 problems',
+    color: '#ec4899',
+    anim: 'badge-hover-glow',
   },
   {
     id: 6,
     icon: '<i class="fas fa-bullseye"></i>',
-    name: "Sharpshooter",
-    description: "Hit the target with consistency",
-    criteria: "Solve 25 problems and earn 2,500 XP",
-    color: "#10b981",
-    anim: "badge-hover-wobble",
+    name: 'Sharpshooter',
+    description: 'Hit the target with consistency',
+    criteria: 'Solve 25 problems and earn 2,500 XP',
+    color: '#10b981',
+    anim: 'badge-hover-wobble',
   },
 ];
 
 // Default User State Structure
 let userProgress = {
-  name: "Learner",
-  email: "",
-  avatar: "🚀",
+  name: 'Learner',
+  email: '',
+  avatar: '🚀',
   xp: 0,
   level: 1,
   completedProblems: [],
   solved: 0,
   streak: 0,
   badges: [],
-  joinDate: "",
+  joinDate: '',
 };
 
 // Reconciled Solved Count
@@ -115,46 +115,47 @@ let solvedCount = 0;
 
 function loadUserData() {
   try {
-    const saved = localStorage.getItem("userProgress") || localStorage.getItem("algoInfinityVerse");
+    const saved = localStorage.getItem('userProgress') || localStorage.getItem('algoInfinityVerse');
     if (saved) {
       const data = JSON.parse(saved);
       userProgress = { ...userProgress, ...data };
     }
-    
+
     // Safety check completedProblems array
     if (!userProgress.completedProblems) {
       userProgress.completedProblems = [];
     }
 
     // Determine solved count based on completedProblems array length or solved property
-    solvedCount = userProgress.solved !== undefined && typeof userProgress.solved === 'number'
-      ? userProgress.solved
-      : userProgress.completedProblems.length;
+    solvedCount =
+      userProgress.solved !== undefined && typeof userProgress.solved === 'number'
+        ? userProgress.solved
+        : userProgress.completedProblems.length;
   } catch (error) {
-    console.error("Error loading user data:", error);
+    console.error('Error loading user data:', error);
   }
 }
 
 function formatDate(dateVal) {
-  if (!dateVal) return "June 2026";
+  if (!dateVal) return 'June 2026';
   try {
     const d = new Date(dateVal);
     if (isNaN(d.getTime())) return dateVal;
-    return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   } catch {
     return dateVal;
   }
 }
 
 function populateProfileInfo() {
-  const avatarEl = document.getElementById("resumeAvatar");
-  const nameEl = document.getElementById("resumeName");
-  const emailEl = document.getElementById("resumeEmail");
-  const joinDateEl = document.getElementById("resumeJoinDate");
+  const avatarEl = document.getElementById('resumeAvatar');
+  const nameEl = document.getElementById('resumeName');
+  const emailEl = document.getElementById('resumeEmail');
+  const joinDateEl = document.getElementById('resumeJoinDate');
 
-  if (avatarEl) avatarEl.textContent = userProgress.avatar || "🚀";
-  if (nameEl) nameEl.textContent = userProgress.name || "Learner";
-  
+  if (avatarEl) avatarEl.textContent = userProgress.avatar || '🚀';
+  if (nameEl) nameEl.textContent = userProgress.name || 'Learner';
+
   if (emailEl) {
     if (userProgress.email) {
       emailEl.innerHTML = `<i class="fas fa-envelope"></i> ${escapeHtml(userProgress.email)}`;
@@ -162,17 +163,17 @@ function populateProfileInfo() {
       emailEl.innerHTML = `<i class="fas fa-envelope"></i> Not Provided`;
     }
   }
-  
+
   if (joinDateEl) {
     joinDateEl.innerHTML = `<i class="fas fa-calendar-alt"></i> Joined: ${escapeHtml(formatDate(userProgress.joinDate))}`;
   }
 }
 
 function populateStats() {
-  const xpEl = document.getElementById("resumeXP");
-  const levelEl = document.getElementById("resumeLevel");
-  const solvedEl = document.getElementById("resumeSolved");
-  const streakEl = document.getElementById("resumeStreak");
+  const xpEl = document.getElementById('resumeXP');
+  const levelEl = document.getElementById('resumeLevel');
+  const solvedEl = document.getElementById('resumeSolved');
+  const streakEl = document.getElementById('resumeStreak');
 
   if (xpEl) xpEl.textContent = (userProgress.xp || 0).toLocaleString();
   if (levelEl) levelEl.textContent = userProgress.level || 1;
@@ -181,15 +182,18 @@ function populateStats() {
 }
 
 function renderDSAMastery() {
-  const container = document.getElementById("dsaProgressContainer");
+  const container = document.getElementById('dsaProgressContainer');
   if (!container) return;
 
-  container.innerHTML = dsaTopics.map(topic => {
-    const completed = topic.problemIds.filter(id => userProgress.completedProblems.includes(id)).length;
-    const total = topic.problemIds.length;
-    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  container.innerHTML = dsaTopics
+    .map((topic) => {
+      const completed = topic.problemIds.filter((id) =>
+        userProgress.completedProblems.includes(id)
+      ).length;
+      const total = topic.problemIds.length;
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    return `
+      return `
       <div class="dsa-progress-item">
         <div class="dsa-progress-label">
           <span class="dsa-topic-name">${topic.icon} ${topic.name}</span>
@@ -200,31 +204,35 @@ function renderDSAMastery() {
         </div>
       </div>
     `;
-  }).join("");
+    })
+    .join('');
 }
 
 function renderBadges() {
-  const grid = document.getElementById("badgesGrid");
+  const grid = document.getElementById('badgesGrid');
   if (!grid) return;
 
-  grid.innerHTML = badgeTemplates.map(badge => {
-    // Evaluate if badge is earned
-    let isEarned = false;
-    if (userProgress.badges && userProgress.badges.includes(badge.id)) {
-      isEarned = true;
-    } else {
-      // Dynamic fallback evaluations matching script.js requirements
-      if (badge.id === 1 && solvedCount >= 1) isEarned = true;
-      if (badge.id === 2 && userProgress.streak >= 7) isEarned = true;
-      if (badge.id === 3 && userProgress.xp >= 5000) isEarned = true;
-      if (badge.id === 4 && solvedCount >= 50) isEarned = true;
-      if (badge.id === 5 && solvedCount >= 100) isEarned = true;
-      if (badge.id === 6 && solvedCount >= 25 && userProgress.xp >= 2500) isEarned = true;
-    }
+  grid.innerHTML = badgeTemplates
+    .map((badge) => {
+      // Evaluate if badge is earned
+      let isEarned = false;
+      if (userProgress.badges && userProgress.badges.includes(badge.id)) {
+        isEarned = true;
+      } else {
+        // Dynamic fallback evaluations matching script.js requirements
+        if (badge.id === 1 && solvedCount >= 1) isEarned = true;
+        if (badge.id === 2 && userProgress.streak >= 7) isEarned = true;
+        if (badge.id === 3 && userProgress.xp >= 5000) isEarned = true;
+        if (badge.id === 4 && solvedCount >= 50) isEarned = true;
+        if (badge.id === 5 && solvedCount >= 100) isEarned = true;
+        if (badge.id === 6 && solvedCount >= 25 && userProgress.xp >= 2500) isEarned = true;
+      }
 
-    const animClass = isEarned ? badge.anim : '';
-    const inlineStyle = isEarned ? `background:${badge.color};box-shadow:0 4px 14px ${badge.color}40` : '';
-    return `
+      const animClass = isEarned ? badge.anim : '';
+      const inlineStyle = isEarned
+        ? `background:${badge.color};box-shadow:0 4px 14px ${badge.color}40`
+        : '';
+      return `
       <div class="resume-badge-card ${isEarned ? 'earned' : 'locked'} ${animClass}">
         ${!isEarned ? '<span class="resume-badge-lock"><i class="fas fa-lock"></i></span>' : ''}
         <div class="resume-badge-icon" style="${inlineStyle}">${badge.icon}</div>
@@ -232,159 +240,177 @@ function renderBadges() {
         <div class="resume-badge-desc">${badge.description}</div>
       </div>
     `;
-  }).join("");
+    })
+    .join('');
 }
 
 function initExportPdf() {
-  const btn = document.getElementById("exportPdfBtn");
+  const btn = document.getElementById('exportPdfBtn');
   if (btn) {
-    btn.addEventListener("click", () => {
+    btn.addEventListener('click', () => {
       window.print();
     });
   }
 }
-async function initResumeAnalyzer(){
+async function initResumeAnalyzer() {
+  const button = document.getElementById('analyzeResumeBtn');
+  const fileInput = document.getElementById('resumeUpload');
 
-  const button = document.getElementById("analyzeResumeBtn");
-  const fileInput = document.getElementById("resumeUpload");
+  if (!button) return;
 
-
-  if(!button) return;
-
-
-  button.addEventListener("click", async ()=>{
-
-
+  button.addEventListener('click', async () => {
     const file = fileInput.files[0];
 
-
-    if(!file){
+    if (!file) {
       void 0;
       return;
     }
 
-
     const formData = new FormData();
 
-    formData.append("resume", file);
+    formData.append('resume', file);
 
+    try {
+      button.innerHTML = 'Analyzing...';
 
-
-    try{
-
-
-      button.innerHTML = "Analyzing...";
-
-
-      const response = await fetch(
-        "/api/analyze-resume",
-        {
-          method:"POST",
-          body:formData
-        }
-      );
-
+      const response = await fetch('/api/analyze-resume', {
+        method: 'POST',
+        body: formData,
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to analyze resume");
+        throw new Error(data.error || 'Failed to analyze resume');
       }
 
+      const analysisPayload = {
+        atsScore: data.atsScore,
+        missingSkills: data.missingSkills || [],
+        targetRole: data.targetRole || 'Software Engineer',
+        recommendedTopics: data.recommendedTopics || [],
+        suggestions: data.suggestions || [],
+        timestamp: Date.now(),
+      };
+      try {
+        localStorage.setItem('resumeAnalysis', JSON.stringify(analysisPayload));
+        if (window.userProgress) {
+          window.userProgress.resumeAnalysis = analysisPayload;
+          localStorage.setItem('userProgress', JSON.stringify(window.userProgress));
+        }
+      } catch (e) {
+        console.error('Error persisting resume analysis:', e);
+      }
 
+      document.getElementById('resumeAnalysisResult').style.display = 'block';
 
-      document.getElementById("resumeAnalysisResult")
-      .style.display="block";
+      document.getElementById('atsScore').textContent = data.atsScore + '%';
 
-
-
-      document.getElementById("atsScore")
-      .textContent=data.atsScore+"%";
-
-
-
-      document.getElementById("missingSkills").innerHTML = 
+      document.getElementById('missingSkills').innerHTML =
         data.missingSkills && data.missingSkills.length > 0
-          ? data.missingSkills.map(skill => `<li>${escapeHtml(skill)}</li>`).join("")
+          ? data.missingSkills.map((skill) => `<li>${escapeHtml(skill)}</li>`).join('')
           : `<li style="border-left-color: #9ca3af; color: #9ca3af; background: rgba(156, 163, 175, 0.1);">No missing skills found!</li>`;
 
-
-
-      document.getElementById("resumeSuggestions").innerHTML = 
+      document.getElementById('resumeSuggestions').innerHTML =
         data.suggestions && data.suggestions.length > 0
-          ? data.suggestions.map(item => `<li>${escapeHtml(item)}</li>`).join("")
+          ? data.suggestions.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
           : `<li style="border-left-color: #9ca3af; color: #9ca3af; background: rgba(156, 163, 175, 0.1);">Looking great! No suggestions.</li>`;
 
+      let tailoredCtaEl = document.getElementById('tailoredRoadmapCtaSection');
+      if (!tailoredCtaEl) {
+        const detailsContainer = document.querySelector('#resumeAnalysisResult .analysis-details');
+        if (detailsContainer) {
+          tailoredCtaEl = document.createElement('div');
+          tailoredCtaEl.id = 'tailoredRoadmapCtaSection';
+          tailoredCtaEl.className = 'analysis-section tailored-cta-box';
+          detailsContainer.appendChild(tailoredCtaEl);
+        }
+      }
+      if (tailoredCtaEl) {
+        const topicsList = (data.recommendedTopics || [])
+          .map(
+            (t) =>
+              `<span class="badge topic-chip"><i class="fas fa-bullseye"></i> ${escapeHtml(t)}</span>`
+          )
+          .join(' ');
+        tailoredCtaEl.innerHTML = `
+          <h4 class="analysis-title"><i class="fas fa-map-signs"></i> Personalized Learning Path</h4>
+          <p class="target-role-text">Target Role: <strong>${escapeHtml(data.targetRole || 'Software Engineer')}</strong></p>
+          <div class="recommended-topics-chips" style="margin: 0.5rem 0 1rem 0;">${topicsList}</div>
+          <button type="button" class="btn btn-primary" onclick="window.location.href='/pages/roadmaps/roadmaps.html?tab=beginner'">
+            <i class="fas fa-route"></i> View Prioritized Roadmap
+          </button>
+        `;
+      }
 
-
-      button.innerHTML="Analyze Resume";
+      button.innerHTML = 'Analyze Resume';
 
       // Save to Audit History
       try {
-        await fetch("/api/audit/history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        await fetch('/api/audit/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            repoUrl: "Resume Upload",
+            repoUrl: 'Resume Upload',
             overallScore: data.atsScore,
             categoryScores: data.missingSkills || [],
             issuesCount: (data.missingSkills || []).length,
-            recommendations: data.suggestions || []
-          })
+            recommendations: data.suggestions || [],
+          }),
         });
         initAuditHistory();
       } catch (err) {
-        console.error("Failed to save audit history:", err);
+        console.error('Failed to save audit history:', err);
       }
-
-    }
-    catch(error){
-
+    } catch (error) {
       console.error(error);
       void 0;
 
-      button.innerHTML="Analyze Resume";
-
+      button.innerHTML = 'Analyze Resume';
     }
-
-
   });
-
-
 }
 
 function initJsonUpload() {
-  const dropZone = document.getElementById("jsonDropZone");
-  const fileInput = document.getElementById("jsonUploadInput");
-  const browseBtn = document.getElementById("browseJsonBtn");
-  const messageEl = document.getElementById("jsonUploadMessage");
+  const dropZone = document.getElementById('jsonDropZone');
+  const fileInput = document.getElementById('jsonUploadInput');
+  const browseBtn = document.getElementById('browseJsonBtn');
+  const messageEl = document.getElementById('jsonUploadMessage');
 
   if (!dropZone || !fileInput || !browseBtn) return;
 
   // Browse button click
-  browseBtn.addEventListener("click", () => {
+  browseBtn.addEventListener('click', () => {
     fileInput.click();
   });
 
   // Highlight drop zone on drag events
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.add("drag-active");
-    }, false);
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    dropZone.addEventListener(
+      eventName,
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('drag-active');
+      },
+      false
+    );
   });
 
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.remove("drag-active");
-    }, false);
+  ['dragleave', 'drop'].forEach((eventName) => {
+    dropZone.addEventListener(
+      eventName,
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('drag-active');
+      },
+      false
+    );
   });
 
   // Handle drop
-  dropZone.addEventListener("drop", (e) => {
+  dropZone.addEventListener('drop', (e) => {
     const dt = e.dataTransfer;
     const files = dt.files;
     if (files && files.length > 0) {
@@ -393,26 +419,26 @@ function initJsonUpload() {
   });
 
   // Handle file input change
-  fileInput.addEventListener("change", (e) => {
+  fileInput.addEventListener('change', (e) => {
     if (e.target.files && e.target.files.length > 0) {
       processFile(e.target.files[0]);
     }
   });
 
   function showMessage(msg, isError = false) {
-    if(!messageEl) return;
-    const iconClass = isError ? "fa-exclamation-circle" : "fa-check-circle";
+    if (!messageEl) return;
+    const iconClass = isError ? 'fa-exclamation-circle' : 'fa-check-circle';
     messageEl.innerHTML = `<i class="fas ${iconClass}"></i> ${escapeHtml(msg)}`;
-    messageEl.style.display = "block";
-    messageEl.className = "upload-message " + (isError ? "error" : "success");
+    messageEl.style.display = 'block';
+    messageEl.className = 'upload-message ' + (isError ? 'error' : 'success');
     setTimeout(() => {
-      messageEl.style.display = "none";
+      messageEl.style.display = 'none';
     }, 5000);
   }
 
   function processFile(file) {
-    if (file.type !== "application/json" && !file.name.endsWith(".json")) {
-      showMessage("Invalid file type. Please upload a JSON file.", true);
+    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+      showMessage('Invalid file type. Please upload a JSON file.', true);
       return;
     }
 
@@ -420,47 +446,48 @@ function initJsonUpload() {
     reader.onload = (e) => {
       try {
         const json = JSON.parse(e.target.result);
-        
+
         // Basic validation
         if (!json || typeof json !== 'object') {
-          throw new Error("Invalid JSON structure");
+          throw new Error('Invalid JSON structure');
         }
-        
+
         // Update userProgress
         userProgress = { ...userProgress, ...json };
-        
+
         // Safety check completedProblems array
         if (!userProgress.completedProblems) {
           userProgress.completedProblems = [];
         }
 
         // Determine solved count
-        solvedCount = userProgress.solved !== undefined && typeof userProgress.solved === 'number'
-          ? userProgress.solved
-          : userProgress.completedProblems.length;
+        solvedCount =
+          userProgress.solved !== undefined && typeof userProgress.solved === 'number'
+            ? userProgress.solved
+            : userProgress.completedProblems.length;
 
         // Save to localStorage
-        localStorage.setItem("userProgress", JSON.stringify(userProgress));
-        
+        localStorage.setItem('userProgress', JSON.stringify(userProgress));
+
         // Update UI
         populateProfileInfo();
         populateStats();
         renderDSAMastery();
         renderBadges();
-        
-        showMessage("Resume data imported successfully!");
-        
+
+        showMessage('Resume data imported successfully!');
+
         // Reset input
-        fileInput.value = "";
+        fileInput.value = '';
       } catch (err) {
-        console.error("JSON Parsing Error:", err);
-        showMessage("Failed to parse JSON file. Ensure it is correctly formatted.", true);
+        console.error('JSON Parsing Error:', err);
+        showMessage('Failed to parse JSON file. Ensure it is correctly formatted.', true);
       }
     };
     reader.onerror = () => {
-      showMessage("Error reading the file.", true);
+      showMessage('Error reading the file.', true);
     };
-    
+
     reader.readAsText(file);
   }
 }
@@ -468,34 +495,35 @@ function initJsonUpload() {
 let trendsChartInstance = null;
 
 async function initAuditHistory() {
-  const card = document.getElementById("auditHistoryCard");
-  const tbody = document.getElementById("auditHistoryTableBody");
+  const card = document.getElementById('auditHistoryCard');
+  const tbody = document.getElementById('auditHistoryTableBody');
   if (!card || !tbody) return;
 
   try {
-    const historyRes = await fetch("/api/audit/history");
+    const historyRes = await fetch('/api/audit/history');
     if (!historyRes.ok) return;
     const historyData = await historyRes.json();
-    
+
     if (!historyData || historyData.length === 0) {
-      card.style.display = "none";
+      card.style.display = 'none';
       return;
     }
 
-    card.style.display = "block";
+    card.style.display = 'block';
 
     // Populate Table
-    tbody.innerHTML = historyData.map((audit, index) => {
-      const prevAudit = historyData[index + 1];
-      let deltaStr = "-";
-      if (prevAudit) {
-        const delta = audit.overallScore - prevAudit.overallScore;
-        if (delta > 0) deltaStr = `<span style="color: #4ade80;">+${delta}</span>`;
-        else if (delta < 0) deltaStr = `<span style="color: #f87171;">${delta}</span>`;
-        else deltaStr = `<span style="color: #9ca3af;">0</span>`;
-      }
+    tbody.innerHTML = historyData
+      .map((audit, index) => {
+        const prevAudit = historyData[index + 1];
+        let deltaStr = '-';
+        if (prevAudit) {
+          const delta = audit.overallScore - prevAudit.overallScore;
+          if (delta > 0) deltaStr = `<span style="color: #4ade80;">+${delta}</span>`;
+          else if (delta < 0) deltaStr = `<span style="color: #f87171;">${delta}</span>`;
+          else deltaStr = `<span style="color: #9ca3af;">0</span>`;
+        }
 
-      return `
+        return `
         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
           <td style="padding: 10px;">${new Date(audit.timestamp).toLocaleDateString()}</td>
           <td style="padding: 10px; font-weight: bold;" class="gradient-text">${audit.overallScore}%</td>
@@ -503,54 +531,54 @@ async function initAuditHistory() {
           <td style="padding: 10px;">${deltaStr}</td>
         </tr>
       `;
-    }).join("");
+      })
+      .join('');
 
     // Render Chart
-    const trendsRes = await fetch("/api/audit/trends");
+    const trendsRes = await fetch('/api/audit/trends');
     if (!trendsRes.ok) return;
     const trendsData = await trendsRes.json();
 
-    const ctx = document.getElementById("trendsChart");
+    const ctx = document.getElementById('trendsChart');
     if (!ctx) return;
 
     if (trendsChartInstance) {
       trendsChartInstance.destroy();
     }
 
-    const labels = trendsData.map(t => new Date(t.timestamp).toLocaleDateString());
-    const data = trendsData.map(t => t.overallScore);
+    const labels = trendsData.map((t) => new Date(t.timestamp).toLocaleDateString());
+    const data = trendsData.map((t) => t.overallScore);
 
-    trendsChartInstance = new Chart(ctx, {
-      type: "line",
+    trendsChartInstance = new window.Chart(ctx, {
+      type: 'line',
       data: {
         labels,
-        datasets: [{
-          label: "ATS Score",
-          data,
-          borderColor: "#60a5fa",
-          backgroundColor: "rgba(96, 165, 250, 0.1)",
-          fill: true,
-          tension: 0.4
-        }]
+        datasets: [
+          {
+            label: 'ATS Score',
+            data,
+            borderColor: '#60a5fa',
+            backgroundColor: 'rgba(96, 165, 250, 0.1)',
+            fill: true,
+            tension: 0.4,
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, max: 100 }
-        }
-      }
+          y: { beginAtZero: true, max: 100 },
+        },
+      },
     });
-
   } catch (err) {
-    console.error("Failed to load audit history:", err);
+    console.error('Failed to load audit history:', err);
   }
 }
 
-
 // Page Initialization
-document.addEventListener("DOMContentLoaded", () => {
-  
+document.addEventListener('DOMContentLoaded', () => {
   // Page utilities setup
   initLoader();
   initTheme();
@@ -567,6 +595,4 @@ document.addEventListener("DOMContentLoaded", () => {
   renderDSAMastery();
   renderBadges();
   initExportPdf();
-  
-
 });

@@ -175,11 +175,100 @@ function initRoadmap() {
   updateStageCard('advanced', advancedProgress);
 }
 
+function getResumeAnalysisData() {
+  try {
+    const raw = localStorage.getItem('resumeAnalysis');
+    if (raw) return JSON.parse(raw);
+  } catch (_err) {
+    // ignore storage error
+  }
+  if (window.userProgress && window.userProgress.resumeAnalysis) {
+    return window.userProgress.resumeAnalysis;
+  }
+  return null;
+}
+
+function isStepRecommended(step, recommendedTopics = [], missingSkills = []) {
+  if (!step) return false;
+  const title = (step.title || '').toLowerCase();
+  const desc = (step.desc || step.description || '').toLowerCase();
+  const theory = (step.theory || '').toLowerCase();
+  const full = `${title} ${desc} ${theory}`;
+
+  const candidates = [...(recommendedTopics || []), ...(missingSkills || [])];
+  for (const item of candidates) {
+    if (!item) continue;
+    const term = String(item).toLowerCase();
+    if (full.includes(term)) return true;
+    if (term.includes('graph') && full.includes('graph')) return true;
+    if ((term.includes('dynamic') || term.includes('dp')) && full.includes('dynamic')) return true;
+    if (term.includes('tree') && full.includes('tree')) return true;
+    if (term.includes('array') && full.includes('array')) return true;
+    if (term.includes('string') && full.includes('string')) return true;
+    if (term.includes('linked list') && (full.includes('linked list') || full.includes('link')))
+      return true;
+    if (term.includes('system design') && full.includes('system design')) return true;
+  }
+  return false;
+}
+
+function renderTailoredBanner(timelineId = 'basicRoadmapTimeline') {
+  const timeline = document.getElementById(timelineId);
+  if (!timeline || !timeline.parentElement) return;
+
+  const analysis = getResumeAnalysisData();
+  let banner = document.getElementById('tailoredRoadmapBanner');
+
+  if (!analysis || !analysis.missingSkills || analysis.missingSkills.length === 0) {
+    if (banner) banner.remove();
+    return;
+  }
+
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'tailoredRoadmapBanner';
+    banner.className = 'tailored-roadmap-banner';
+    timeline.parentElement.insertBefore(banner, timeline);
+  }
+
+  const role = analysis.targetRole || 'Software Engineer';
+  const skills = (analysis.missingSkills || []).slice(0, 4).join(', ');
+
+  banner.innerHTML = `
+    <div class="banner-content">
+      <div class="banner-badge"><i class="fas fa-sparkles"></i> Tailored for Resume</div>
+      <div class="banner-info">
+        <strong>Target Role: ${role}</strong> &bull; Prioritized Topics: <em>${skills}</em> (ATS Score: ${analysis.atsScore || 0}%)
+      </div>
+    </div>
+    <button type="button" class="btn btn-outline btn-sm reset-tailored-btn" onclick="clearTailoredRoadmapView()">
+      <i class="fas fa-undo"></i> Reset View
+    </button>
+  `;
+}
+
+function clearTailoredRoadmapView() {
+  try {
+    localStorage.removeItem('resumeAnalysis');
+    if (window.userProgress) delete window.userProgress.resumeAnalysis;
+  } catch (_err) {
+    // ignore storage error
+  }
+  const banner = document.getElementById('tailoredRoadmapBanner');
+  if (banner) banner.remove();
+  renderBasicRoadmap();
+  renderAdvancedRoadmap();
+}
+window.clearTailoredRoadmapView = clearTailoredRoadmapView;
+
 function renderBasicRoadmap() {
   const roadmapSteps = window.roadmapSteps || [];
   const userProgress = window.userProgress || {};
   const timeline = document.getElementById('basicRoadmapTimeline');
   if (!timeline) return;
+
+  renderTailoredBanner('basicRoadmapTimeline');
+  const analysis = getResumeAnalysisData();
 
   const searchLower = currentRoadmapSearch.toLowerCase().trim();
   const filteredSteps = roadmapSteps.filter((step) => {
@@ -195,8 +284,19 @@ function renderBasicRoadmap() {
     return;
   }
 
+  const sortedSteps = [...filteredSteps];
+  if (analysis && (analysis.recommendedTopics || analysis.missingSkills)) {
+    sortedSteps.sort((a, b) => {
+      const aRec = isStepRecommended(a, analysis.recommendedTopics, analysis.missingSkills);
+      const bRec = isStepRecommended(b, analysis.recommendedTopics, analysis.missingSkills);
+      if (aRec && !bRec) return -1;
+      if (!aRec && bRec) return 1;
+      return 0;
+    });
+  }
+
   let html = '';
-  filteredSteps.forEach((step) => {
+  sortedSteps.forEach((step) => {
     const index = roadmapSteps.indexOf(step);
     const isCompleted = isRoadmapStepCompleted(step);
     let isUnlocked = index === 0 || isRoadmapStepCompleted(roadmapSteps[index - 1]);
@@ -228,7 +328,15 @@ function renderBasicRoadmap() {
     let stepIcon = `<i class="fa-solid ${step.icon}"></i>`;
     if (isCompleted) stepIcon = `<i class="fa-solid fa-check"></i>`;
     else if (statusClass === 'locked') stepIcon = `<i class="fa-solid fa-lock"></i>`;
-    html += `<div class="roadmap-step ${statusClass}" data-step="${step.id}"><div class="step-marker-dot">${stepIcon}</div><div class="roadmap-step-card"><div class="step-card-header"><span class="step-number">Step ${step.id}</span><span class="step-status-tag ${statusTagClass}">${statusText}</span></div><h3 class="step-title">${step.title}</h3><p class="step-desc">${step.desc}</p><div class="step-card-footer"><div class="step-progress"><div class="step-progress-label">Progress: ${progressText} (${progressPercent}%)</div><div class="step-progress-bar-container"><div class="step-progress-bar-fill" style="width: ${progressPercent}%;"></div></div></div>${isUnlocked ? `<button class="btn btn-primary btn-sm" onclick="openRoadmapStepModal(${index}, 'basic')">${isCompleted ? 'Review Step' : 'Start Step'}</button>` : `<button class="btn btn-secondary btn-sm" disabled><i class="fa-solid fa-lock"></i> Locked</button>`}</div></div></div>`;
+
+    const isRecommended = analysis
+      ? isStepRecommended(step, analysis.recommendedTopics, analysis.missingSkills)
+      : false;
+    const recBadge = isRecommended
+      ? `<span class="recommendation-badge"><i class="fas fa-sparkles"></i> Recommended</span>`
+      : '';
+
+    html += `<div class="roadmap-step ${statusClass} ${isRecommended ? 'recommended-step' : ''}" data-step="${step.id}"><div class="step-marker-dot">${stepIcon}</div><div class="roadmap-step-card"><div class="step-card-header"><span class="step-number">Step ${step.id}</span>${recBadge}<span class="step-status-tag ${statusTagClass}">${statusText}</span></div><h3 class="step-title">${step.title}</h3><p class="step-desc">${step.desc}</p><div class="step-card-footer"><div class="step-progress"><div class="step-progress-label">Progress: ${progressText} (${progressPercent}%)</div><div class="step-progress-bar-container"><div class="step-progress-bar-fill" style="width: ${progressPercent}%;"></div></div></div>${isUnlocked ? `<button class="btn btn-primary btn-sm" onclick="openRoadmapStepModal(${index}, 'basic')">${isCompleted ? 'Review Step' : 'Start Step'}</button>` : `<button class="btn btn-secondary btn-sm" disabled><i class="fa-solid fa-lock"></i> Locked</button>`}</div></div></div>`;
   });
   timeline.innerHTML = html;
 }
@@ -238,6 +346,9 @@ function renderAdvancedRoadmap() {
   const userProgress = window.userProgress || {};
   const timeline = document.getElementById('advancedRoadmapTimeline');
   if (!timeline) return;
+
+  renderTailoredBanner('advancedRoadmapTimeline');
+  const analysis = getResumeAnalysisData();
 
   const searchLower = currentRoadmapSearch.toLowerCase().trim();
   const filteredSteps = advancedRoadmapSteps.filter((step) => {
@@ -253,8 +364,19 @@ function renderAdvancedRoadmap() {
     return;
   }
 
+  const sortedSteps = [...filteredSteps];
+  if (analysis && (analysis.recommendedTopics || analysis.missingSkills)) {
+    sortedSteps.sort((a, b) => {
+      const aRec = isStepRecommended(a, analysis.recommendedTopics, analysis.missingSkills);
+      const bRec = isStepRecommended(b, analysis.recommendedTopics, analysis.missingSkills);
+      if (aRec && !bRec) return -1;
+      if (!aRec && bRec) return 1;
+      return 0;
+    });
+  }
+
   let html = '';
-  filteredSteps.forEach((step) => {
+  sortedSteps.forEach((step) => {
     const index = advancedRoadmapSteps.indexOf(step);
     const isCompleted = isRoadmapStepCompleted(step);
     let isUnlocked = index === 0 || isRoadmapStepCompleted(advancedRoadmapSteps[index - 1]);
@@ -286,7 +408,15 @@ function renderAdvancedRoadmap() {
     let stepIcon = `<i class="fa-solid ${step.icon}"></i>`;
     if (isCompleted) stepIcon = `<i class="fa-solid fa-check"></i>`;
     else if (statusClass === 'locked') stepIcon = `<i class="fa-solid fa-lock"></i>`;
-    html += `<div class="roadmap-step ${statusClass}" data-step="${step.id}"><div class="step-marker-dot">${stepIcon}</div><div class="roadmap-step-card"><div class="step-card-header"><span class="step-number">Step ${step.id}</span><span class="step-status-tag ${statusTagClass}">${statusText}</span></div><h3 class="step-title">${step.title}</h3><p class="step-desc">${step.desc}</p><div class="step-card-footer"><div class="step-progress"><div class="step-progress-label">Progress: ${progressText} (${progressPercent}%)</div><div class="step-progress-bar-container"><div class="step-progress-bar-fill" style="width: ${progressPercent}%;"></div></div></div>${isUnlocked ? `<button class="btn btn-primary btn-sm" onclick="openRoadmapStepModal(${index}, 'advanced')">${isCompleted ? 'Review Step' : 'Start Step'}</button>` : `<button class="btn btn-secondary btn-sm" disabled><i class="fa-solid fa-lock"></i> Locked</button>`}</div></div></div>`;
+
+    const isRecommended = analysis
+      ? isStepRecommended(step, analysis.recommendedTopics, analysis.missingSkills)
+      : false;
+    const recBadge = isRecommended
+      ? `<span class="recommendation-badge"><i class="fas fa-sparkles"></i> Recommended</span>`
+      : '';
+
+    html += `<div class="roadmap-step ${statusClass} ${isRecommended ? 'recommended-step' : ''}" data-step="${step.id}"><div class="step-marker-dot">${stepIcon}</div><div class="roadmap-step-card"><div class="step-card-header"><span class="step-number">Step ${step.id}</span>${recBadge}<span class="step-status-tag ${statusTagClass}">${statusText}</span></div><h3 class="step-title">${step.title}</h3><p class="step-desc">${step.desc}</p><div class="step-card-footer"><div class="step-progress"><div class="step-progress-label">Progress: ${progressText} (${progressPercent}%)</div><div class="step-progress-bar-container"><div class="step-progress-bar-fill" style="width: ${progressPercent}%;"></div></div></div>${isUnlocked ? `<button class="btn btn-primary btn-sm" onclick="openRoadmapStepModal(${index}, 'advanced')">${isCompleted ? 'Review Step' : 'Start Step'}</button>` : `<button class="btn btn-secondary btn-sm" disabled><i class="fa-solid fa-lock"></i> Locked</button>`}</div></div></div>`;
   });
   timeline.innerHTML = html;
 }

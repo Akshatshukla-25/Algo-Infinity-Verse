@@ -4,6 +4,11 @@ let currentView = 'list';
 let currentQuizAnswers = {};
 let roadmapModalOpen = false;
 
+// Helper to expose state for testing & debugging
+if (typeof window !== 'undefined') {
+  window.getRoadmapState = () => ({ activeRoadmap, currentView, roadmapModalOpen });
+}
+
 // ── Roadmap Data Fetching ──────────────────────────────────────────────────
 
 async function fetchRoadmaps() {
@@ -33,6 +38,96 @@ async function fetchRoadmaps() {
 
 // ── Render Functions ───────────────────────────────────────────────────────
 
+function getResumeAnalysisData() {
+  try {
+    const raw = localStorage.getItem('resumeAnalysis');
+    if (raw) return JSON.parse(raw);
+  } catch (_err) {
+    // ignore storage error
+  }
+  if (window.userProgress && window.userProgress.resumeAnalysis) {
+    return window.userProgress.resumeAnalysis;
+  }
+  return null;
+}
+
+function isStepRecommended(step, recommendedTopics = [], missingSkills = []) {
+  if (!step) return false;
+  const title = (step.title || '').toLowerCase();
+  const desc = (step.desc || step.description || '').toLowerCase();
+  const theory = (step.theory || '').toLowerCase();
+  const full = `${title} ${desc} ${theory}`;
+
+  const candidates = [...(recommendedTopics || []), ...(missingSkills || [])];
+  for (const item of candidates) {
+    if (!item) continue;
+    const term = String(item).toLowerCase();
+    if (full.includes(term)) return true;
+    if (term.includes('graph') && full.includes('graph')) return true;
+    if ((term.includes('dynamic') || term.includes('dp')) && full.includes('dynamic')) return true;
+    if (term.includes('tree') && full.includes('tree')) return true;
+    if (term.includes('array') && full.includes('array')) return true;
+    if (term.includes('string') && full.includes('string')) return true;
+    if (term.includes('linked list') && (full.includes('linked list') || full.includes('link')))
+      return true;
+    if (term.includes('system design') && full.includes('system design')) return true;
+  }
+  return false;
+}
+
+function renderTailoredBannerHub() {
+  const container = document.querySelector('.hub-detail');
+  if (!container) return;
+
+  const analysis = getResumeAnalysisData();
+  let banner = document.getElementById('tailoredRoadmapHubBanner');
+
+  if (!analysis || !analysis.missingSkills || analysis.missingSkills.length === 0) {
+    if (banner) banner.remove();
+    return;
+  }
+
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'tailoredRoadmapHubBanner';
+    banner.className = 'tailored-roadmap-banner';
+    const detailHeader = container.querySelector('.detail-header');
+    if (detailHeader) {
+      detailHeader.after(banner);
+    } else {
+      container.prepend(banner);
+    }
+  }
+
+  const role = analysis.targetRole || 'Software Engineer';
+  const skills = (analysis.missingSkills || []).slice(0, 4).join(', ');
+
+  banner.innerHTML = `
+    <div class="banner-content">
+      <div class="banner-badge"><i class="fas fa-sparkles"></i> Resume Tailored Path</div>
+      <div class="banner-info">
+        <strong>Target Role: ${role}</strong> &bull; Prioritized Missing Skills: <em>${skills}</em> (ATS: ${analysis.atsScore || 0}%)
+      </div>
+    </div>
+    <button type="button" class="btn btn-outline btn-sm reset-tailored-btn" onclick="clearTailoredRoadmapHubView()">
+      <i class="fas fa-undo"></i> Reset View
+    </button>
+  `;
+}
+
+function clearTailoredRoadmapHubView() {
+  try {
+    localStorage.removeItem('resumeAnalysis');
+    if (window.userProgress) delete window.userProgress.resumeAnalysis;
+  } catch (_err) {
+    // ignore storage error
+  }
+  const banner = document.getElementById('tailoredRoadmapHubBanner');
+  if (banner) banner.remove();
+  renderRoadmap();
+}
+window.clearTailoredRoadmapHubView = clearTailoredRoadmapHubView;
+
 function renderRoadmap() {
   if (!roadmapsData) return;
   const roadmap = roadmapsData[activeRoadmap];
@@ -40,8 +135,10 @@ function renderRoadmap() {
 
   document.getElementById('currentRoadmapTitle').textContent = roadmap.title;
   document.getElementById('currentRoadmapDesc').textContent = roadmap.description;
-  document.getElementById('currentRoadmapTime').textContent =
-    `Estimated: ${roadmap.estimatedTime}`;
+  document.getElementById('currentRoadmapTime').textContent = `Estimated: ${roadmap.estimatedTime}`;
+
+  renderTailoredBannerHub();
+  const analysis = getResumeAnalysisData();
 
   const searchQuery = document.getElementById('stepSearch').value.toLowerCase().trim();
   const filteredSteps = roadmap.steps.filter((step) => {
@@ -51,7 +148,18 @@ function renderRoadmap() {
     );
   });
 
-  renderListView(filteredSteps);
+  const sortedSteps = [...filteredSteps];
+  if (analysis && (analysis.recommendedTopics || analysis.missingSkills)) {
+    sortedSteps.sort((a, b) => {
+      const aRec = isStepRecommended(a, analysis.recommendedTopics, analysis.missingSkills);
+      const bRec = isStepRecommended(b, analysis.recommendedTopics, analysis.missingSkills);
+      if (aRec && !bRec) return -1;
+      if (!aRec && bRec) return 1;
+      return 0;
+    });
+  }
+
+  renderListView(sortedSteps);
   renderTreeView(roadmap.steps);
 }
 
@@ -66,15 +174,27 @@ function renderListView(steps) {
     return;
   }
 
+  const analysis = getResumeAnalysisData();
+
   timelineContainer.innerHTML = steps
-    .map(
-      (step, idx) => `
-    <div class="timeline-item">
+    .map((step, idx) => {
+      const isRecommended = analysis
+        ? isStepRecommended(step, analysis.recommendedTopics, analysis.missingSkills)
+        : false;
+      const recBadge = isRecommended
+        ? `<span class="recommendation-badge"><i class="fas fa-sparkles"></i> Recommended</span>`
+        : '';
+
+      return `
+    <div class="timeline-item ${isRecommended ? 'recommended-step' : ''}">
       <div class="timeline-icon-box">
         <i class="fas ${step.icon || 'fa-code'}"></i>
       </div>
       <div class="timeline-content">
-        <h3>${idx + 1}. ${step.title}</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.4rem;">
+          <h3>${idx + 1}. ${step.title}</h3>
+          ${recBadge}
+        </div>
         <p>${step.desc}</p>
         <div class="timeline-footer">
           <span class="badge badge-${step.difficulty.toLowerCase()}">${step.difficulty}</span>
@@ -85,8 +205,8 @@ function renderListView(steps) {
         </div>
       </div>
     </div>
-  `
-    )
+  `;
+    })
     .join('');
 }
 
@@ -238,7 +358,7 @@ function hubSelectQuizOption(qIndex, oIndex, element) {
   currentQuizAnswers[qIndex] = oIndex;
 }
 
-function submitQuiz(step, roadmapKey) {
+function submitQuiz(step, _roadmapKey) {
   const container = document.getElementById('roadmapStepQuizContent');
   if (!container) return;
 

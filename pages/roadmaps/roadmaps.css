@@ -632,3 +632,74 @@ body {
     transform: none;
   }
 }
+
+/* ── Resume-Tailored Roadmap & Recommendation Badges ────────────────── */
+.recommendation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.35);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.recommendation-badge i {
+  font-size: 0.75rem;
+}
+
+.recommended-step {
+  border: 1px solid rgba(236, 72, 153, 0.45) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(236, 72, 153, 0.05),
+    rgba(139, 92, 246, 0.05)
+  ) !important;
+  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.12) !important;
+}
+
+.tailored-roadmap-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: rgba(19, 19, 25, 0.85);
+  border: 1px solid rgba(236, 72, 153, 0.35);
+  border-left: 4px solid #ec4899;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  flex-wrap: wrap;
+}
+
+.tailored-roadmap-banner .banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tailored-roadmap-banner .banner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  font-weight: 600;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.tailored-roadmap-banner .banner-info {
+  font-size: 0.88rem;
+  color: var(--rm-text-primary, #e2e2e8);
+}

@@ -54,8 +54,12 @@ describe('Auth Helper Functions', () => {
 
     // Evaluate auth.js in the global scope
     // This will attach the global functions like passwordStrength
+    const preparedAuthCode = authCode.replace(
+      'let _cpwWired = false;',
+      'var _cpwWired = false; global._resetCpwWired = () => { _cpwWired = false; };'
+    );
     eval(
-      authCode +
+      preparedAuthCode +
         `
       if (typeof passwordStrength === 'function') global.passwordStrength = passwordStrength;
       if (typeof wireChangePassword === 'function') global.wireChangePassword = wireChangePassword;
@@ -109,6 +113,7 @@ describe('Auth Helper Functions', () => {
       });
 
       if (typeof global.wireChangePassword === 'function') {
+        if (typeof global._resetCpwWired === 'function') global._resetCpwWired();
         global.wireChangePassword();
         expect(global.document.addEventListener).toHaveBeenCalledWith(
           'click',

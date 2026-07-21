@@ -14,7 +14,11 @@ import { validateEnv } from './utils/envValidator.js';
 import multer from 'multer';
 import { extractResumeText } from './backend/resume-analyzer/parser.js';
 import { calculateATS } from './backend/resume-analyzer/atsScore.js';
-import { findMissingSkills } from './backend/resume-analyzer/skills.js';
+import {
+  findMissingSkills,
+  detectTargetRole,
+  mapSkillsToRoadmapTopics,
+} from './backend/resume-analyzer/skills.js';
 import { getSuggestions } from './backend/resume-analyzer/suggestions.js';
 import { analyzeWorkflow } from './backend/repository-analyzer/cicdValidator.js';
 import { VCSFactory } from './backend/vcs/VCSFactory.js';
@@ -855,11 +859,15 @@ async function handleApi(req, res, pathname) {
       const text = await extractResumeText(req.file);
       const atsScore = calculateATS(text);
       const missingSkills = findMissingSkills(text);
+      const targetRole = req.body?.targetRole || detectTargetRole(text);
+      const recommendedTopics = mapSkillsToRoadmapTopics(missingSkills, targetRole);
       const suggestions = getSuggestions(atsScore);
 
       return sendJson(res, 200, {
         atsScore,
         missingSkills,
+        targetRole,
+        recommendedTopics,
         suggestions,
       });
     } catch (error) {

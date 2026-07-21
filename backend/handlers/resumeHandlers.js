@@ -2,7 +2,11 @@ import multer from 'multer';
 import { sendJson, getSession } from '../utils/helpers.js';
 import { extractResumeText } from '../resume-analyzer/parser.js';
 import { calculateATS } from '../resume-analyzer/atsScore.js';
-import { findMissingSkills } from '../resume-analyzer/skills.js';
+import {
+  findMissingSkills,
+  detectTargetRole,
+  mapSkillsToRoadmapTopics,
+} from '../resume-analyzer/skills.js';
 import { getSuggestions } from '../resume-analyzer/suggestions.js';
 import {
   RESUME_FILE_FILTER_MESSAGE_SUBSTRINGS,
@@ -53,11 +57,15 @@ export async function handleAnalyzeResume(req, res) {
 
     const atsScore = calculateATS(text);
     const missingSkills = findMissingSkills(text);
+    const targetRole = req.body?.targetRole || detectTargetRole(text);
+    const recommendedTopics = mapSkillsToRoadmapTopics(missingSkills, targetRole);
     const suggestions = getSuggestions(atsScore);
 
     return sendJson(res, 200, {
       atsScore,
       missingSkills,
+      targetRole,
+      recommendedTopics,
       suggestions,
     });
   } catch (error) {
