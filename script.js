@@ -5341,6 +5341,42 @@ document.addEventListener('keydown', function (e) {
     window.location.href = '#dashboard';
   }
 
+  // Alt+S: Settings dropdown
+  if (e.altKey && e.key === 's') {
+    e.preventDefault();
+    const settingsParent = document.querySelector('.nav-settings-dropdown');
+    if (settingsParent) {
+      document.querySelectorAll('.has-dropdown.open').forEach(function (el) {
+        if (el !== settingsParent) {
+          el.classList.remove('open');
+          const btn = el.querySelector('.dropdown-toggle');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      var isOpen = settingsParent.classList.toggle('open');
+      var toggle = settingsParent.querySelector('.dropdown-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded', isOpen);
+    }
+  }
+
+  // Alt+L: Learn dropdown
+  if (e.altKey && e.key === 'l') {
+    e.preventDefault();
+    const learnParent = document.querySelector('.nav-learn-dropdown');
+    if (learnParent) {
+      document.querySelectorAll('.has-dropdown.open').forEach(function (el) {
+        if (el !== learnParent) {
+          el.classList.remove('open');
+          const btn = el.querySelector('.dropdown-toggle');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      var isOpen = learnParent.classList.toggle('open');
+      var toggle = learnParent.querySelector('.dropdown-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded', isOpen);
+    }
+  }
+
   // Escape: Close modal
   if (e.key === 'Escape') {
     closeShortcutModal();

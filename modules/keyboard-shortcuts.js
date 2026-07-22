@@ -40,6 +40,14 @@ export function initKeyboardShortcuts() {
       e.preventDefault();
       window.location.href = '#dashboard';
     }
+    if (e.altKey && e.key === 's') {
+      e.preventDefault();
+      toggleDropdown('.nav-settings-dropdown');
+    }
+    if (e.altKey && e.key === 'l') {
+      e.preventDefault();
+      toggleDropdown('.nav-learn-dropdown');
+    }
     if (
       e.key === '/' &&
       !isEditing &&
@@ -71,6 +79,19 @@ export function initKeyboardShortcuts() {
       toggleShortcutModal();
     }
   });
+}
+
+function toggleDropdown(selector) {
+  const parent = document.querySelector(selector);
+  if (!parent) return;
+  document.querySelectorAll('.has-dropdown.open').forEach(el => {
+    if (el !== parent) {
+      el.classList.remove('open');
+      el.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded', 'false');
+    }
+  });
+  const isOpen = parent.classList.toggle('open');
+  parent.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded', isOpen);
 }
 
 function toggleShortcutModal() {
