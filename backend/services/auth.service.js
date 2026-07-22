@@ -245,6 +245,20 @@ export function verifyToken(token, expectedType) {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
   const [header, payload, signature] = parts;
+
+  // Validate JWT header before proceeding to signature verification.
+  // This ensures only tokens with the expected algorithm (HS256) and
+  // type (JWT) are processed, rejecting malformed or unsupported headers
+  // early and avoiding unnecessary cryptographic operations.
+  try {
+    const decodedHeader = JSON.parse(fromBase64Url(header));
+    if (decodedHeader.alg !== 'HS256' || decodedHeader.typ !== 'JWT') {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+
   const body = `${header}.${payload}`;
   const expected = sign(body);
   const signatureBuffer = Buffer.from(signature);
