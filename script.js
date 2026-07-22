@@ -2453,21 +2453,37 @@ function initTopicOfTheDay() {
   const totdIcon = document.getElementById('totdIcon');
   if (!totdIcon) return;
 
-  totdIcon.textContent = topic.icon;
-  document.getElementById('totdTitle').textContent = topic.name;
-  document.getElementById('totdDesc').textContent = topic.description;
+  const topicIcons = {
+    'Arrays': 'fa-layer-group',
+    'Strings': 'fa-font',
+    'Linked List': 'fa-link',
+    'Trees': 'fa-tree',
+    'Graphs': 'fa-project-diagram',
+    'Dynamic Programming': 'fa-puzzle-piece',
+    'Heaps': 'fa-chart-bar',
+  };
+  totdIcon.textContent = '';
+  const icon = document.createElement('i');
+  icon.className = `fas ${topicIcons[topic.name] || 'fa-book'}`;
+  icon.style.fontSize = '2.5rem';
+  totdIcon.appendChild(icon);
+  const totdTitle = document.getElementById('totdTitle');
+  if (totdTitle) totdTitle.textContent = topic.name;
+  const totdDesc = document.getElementById('totdDesc');
+  if (totdDesc) totdDesc.textContent = topic.description;
 
   const diffEl = document.getElementById('totdDifficulty');
-  diffEl.textContent = topic.difficulty;
-  diffEl.className = `totd-difficulty difficulty-badge ${getDifficultyClass(topic.difficulty)}`;
+  if (diffEl) {
+    diffEl.textContent = topic.difficulty;
+    diffEl.className = `totd-difficulty difficulty-badge ${getDifficultyClass(topic.difficulty)}`;
+  }
 
   const progress = getTopicProgress(topic.name);
-  document.getElementById('totdProblems').textContent =
-    `${progress.completed}/${progress.total} solved`;
+  const totdProblems = document.getElementById('totdProblems');
+  if (totdProblems) totdProblems.textContent = `${progress.completed}/${progress.total} solved`;
 
-  document.getElementById('totdBtn').addEventListener('click', () => {
-    openTopicModal(topic);
-  });
+  const totdBtn = document.getElementById('totdBtn');
+  if (totdBtn) totdBtn.addEventListener('click', () => openTopicModal(topic));
 }
 
 function initTopicsSection() {
