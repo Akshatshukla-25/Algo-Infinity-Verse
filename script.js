@@ -3830,15 +3830,36 @@ function updateGamification() {
 }
 
 function showNotification(message, type = 'info') {
+  // Use ToastService if available (provides icon, close button, glassmorphism)
+  if (window.Toast && typeof window.Toast.show === 'function') {
+    window.Toast.show(message, type);
+    return;
+  }
+  // Fallback: dismiss any existing toasts first, then create a new one
+  document.querySelectorAll('.toast-notification').forEach(function(el) {
+    el.classList.remove('toast-visible');
+    if (el.parentNode) el.parentNode.removeChild(el);
+  });
+
   const notification = document.createElement('div');
-  notification.style.cssText = `position:fixed; top:100px; right:20px; padding:1rem 1.5rem; background:${type === 'success' ? 'var(--gradient-4)' : type === 'error' ? '#ef4444' : 'var(--primary)'}; color:${type === 'success' ? 'var(--dark-bg)' : 'white'}; border-radius:10px; box-shadow:var(--glass-shadow); z-index:10000; animation:slideIn 0.3s ease; font-weight:600; max-width:350px;`;
-  notification.textContent = message;
+  notification.className = `toast-notification toast-${type}`;
+
+  const iconEl = document.createElement('div');
+  iconEl.className = 'toast-icon';
+  const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle' };
+  iconEl.innerHTML = `<i class="fas ${iconMap[type] || 'fa-info-circle'}"></i>`;
+  notification.appendChild(iconEl);
+
+  const msgEl = document.createElement('div');
+  msgEl.className = 'toast-message';
+  msgEl.textContent = message;
+  notification.appendChild(msgEl);
+
   document.body.appendChild(notification);
+  requestAnimationFrame(() => notification.classList.add('toast-visible'));
   setTimeout(() => {
-    notification.style.opacity = '0';
-    notification.style.transform = 'translateX(100%)';
-    notification.style.transition = 'all 0.3s ease';
-    setTimeout(() => notification.remove(), 300);
+    notification.classList.remove('toast-visible');
+    setTimeout(() => { if (notification.parentNode) notification.remove(); }, 300);
   }, 3000);
 }
 
