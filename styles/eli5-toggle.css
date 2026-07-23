@@ -101,8 +101,8 @@
 
 /* ═══ Simple content styling ═══ */
 .eli5-simple-content {
-  background: rgba(251, 191, 36, 0.12);
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: #292524;
+  border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   margin: 1rem 0;
@@ -112,7 +112,7 @@
 }
 
 .light-mode .eli5-simple-content {
-  background: #fef3c7;
+  background: #fffbeb;
   border-color: #fde68a;
   color: #78350f;
 }
@@ -125,11 +125,34 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #fbbf24;
+  color: #fcd34d;
   margin-bottom: 0.5rem;
 }
 
 .light-mode .eli5-simple-content .eli5-label-badge {
+  color: #92400e;
+}
+
+/* ═══ Simple content list/spacing refinements ═══ */
+.eli5-simple-content ol,
+.eli5-simple-content ul {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+
+.eli5-simple-content li {
+  margin-bottom: 0.25rem;
+}
+
+.eli5-simple-content code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.light-mode .eli5-simple-content code {
+  background: rgba(120, 53, 15, 0.08);
   color: #92400e;
 }
 
