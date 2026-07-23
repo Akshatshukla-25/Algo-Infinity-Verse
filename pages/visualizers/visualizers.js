@@ -1053,6 +1053,13 @@ const visualizers = [
   icon: 'fa-chart-line',
   desc: 'GPS and robotics state estimation — watch predict/update steps, Kalman gain, Gaussian belief narrowing, and sensor noise vs estimation accuracy live.',
   },
+  {
+    name: "Mo's Algorithm Visualizer",
+    path: '/pages/visualizers/mos-algorithm-visualizer/mos-algorithm-visualizer.html',
+    category: 'Graph Algorithms',
+    icon: 'fa-arrows-left-right',
+    desc: 'Answer thousands of offline range queries via sqrt-decomposition block sort and a two-pointer sweep.',
+  },
 
   // ── Special & Creative ──
   {
