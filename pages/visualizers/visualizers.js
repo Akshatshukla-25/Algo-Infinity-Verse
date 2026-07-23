@@ -1060,6 +1060,13 @@ const visualizers = [
     icon: 'fa-arrows-left-right',
     desc: 'Answer thousands of offline range queries via sqrt-decomposition block sort and a two-pointer sweep.',
   },
+  {
+    name: 'DSU on Tree Visualizer',
+    path: '/pages/visualizers/dsu-on-tree-visualizer/dsu-on-tree-visualizer.html',
+    category: 'Data Structures',
+    icon: 'fa-code-merge',
+    desc: 'Small-to-large merging — keep the heavy child, merge only light subtrees, O(n log n) subtree queries.',
+  },
 
   // ── Special & Creative ──
   {
