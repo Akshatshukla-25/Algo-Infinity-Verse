@@ -39,11 +39,20 @@ const visualizers = [
     desc: 'Visualize Distributed Transactions and Compensating Actions using the Sagas Pattern.',
   },
   {
+    name: 'TCP Congestion Control Arena',
+    path: '/pages/visualizers/tcp-congestion-arena/tcp-congestion-arena.html',
+    category: 'Networking',
+    icon: 'fa-network-wired',
+    desc: 'Simulate how CUBIC (loss-based) and BBR (bandwidth-based) handle network congestion and packet loss.',
+    },
+    {
     name: 'Transactional Outbox Pattern',
     path: '/pages/visualizers/outbox-pattern/outbox-pattern.html',
     category: 'Distributed Systems',
     icon: 'fa-database',
     desc: 'Visualize the Transactional Outbox Pattern to solve the dual-write problem in microservices.',
+    },
+    {
     name: 'TLS 1.3 Handshake Simulator',
     path: '/pages/visualizers/tls13-simulator/tls13-simulator.html',
     category: 'Security & Crypto',
