@@ -44,15 +44,15 @@ const visualizers = [
     category: 'Networking',
     icon: 'fa-network-wired',
     desc: 'Simulate how CUBIC (loss-based) and BBR (bandwidth-based) handle network congestion and packet loss.',
-    },
-    {
+  },
+  {
     name: 'Transactional Outbox Pattern',
     path: '/pages/visualizers/outbox-pattern/outbox-pattern.html',
     category: 'Distributed Systems',
     icon: 'fa-database',
     desc: 'Visualize the Transactional Outbox Pattern to solve the dual-write problem in microservices.',
-    },
-    {
+  },
+  {
     name: 'TLS 1.3 Handshake Simulator',
     path: '/pages/visualizers/tls13-simulator/tls13-simulator.html',
     category: 'Security & Crypto',
@@ -392,6 +392,13 @@ const visualizers = [
     category: 'System Design',
     icon: 'fa-circle-nodes',
     desc: 'Dynamo-style N/W/R tunable consistency — animated write/read quorums, staleness demo, read repair, and strong consistency guarantee.',
+  },
+  {
+    name: 'RabbitMQ Messaging Visualizer',
+    path: '/pages/visualizers/rabbitmq-visualizer/rabbitmq-visualizer.html',
+    category: 'System Design',
+    icon: 'fa-envelope-open-text',
+    desc: 'Interactive RabbitMQ simulator demonstrating Direct, Topic (*,#), Fanout, and Headers exchanges, Dead Letter Queues (DLQ), retry backoff, and acknowledgements.',
   },
 
   // ── Dynamic Programming ──
