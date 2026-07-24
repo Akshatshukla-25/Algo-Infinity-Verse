@@ -811,6 +811,59 @@
       </aside>
     </main>
 
+    <!-- Interactive Matcher Modal -->
+    <div class="modal-overlay hidden" id="patternMatcherModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="fas fa-microscope"></i> AMQP Routing Pattern Inspector</h3>
+          <button type="button" class="btn-close-modal" id="btnCloseMatcherModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="inspector-workbench">
+            <div class="workbench-row">
+              <div class="input-group">
+                <label for="inspectorExchangeType"
+                  ><i class="fas fa-random"></i> Exchange Type</label
+                >
+                <select id="inspectorExchangeType">
+                  <option value="amq.topic">Topic Exchange (Wildcards '*' and '#')</option>
+                  <option value="amq.direct">Direct Exchange (Exact Key Match)</option>
+                  <option value="amq.headers">Headers Exchange (x-match All / Any)</option>
+                </select>
+              </div>
+              <div class="input-group" id="inspectorKeyGroup">
+                <label for="inspectorRoutingKey"><i class="fas fa-key"></i> Published Key</label>
+                <input
+                  type="text"
+                  id="inspectorRoutingKey"
+                  value="logs.europe.error"
+                  placeholder="e.g. logs.europe.error"
+                />
+              </div>
+              <div class="input-group" id="inspectorPatternGroup">
+                <label for="inspectorBindingPattern"
+                  ><i class="fas fa-filter"></i> Binding Pattern</label
+                >
+                <input
+                  type="text"
+                  id="inspectorBindingPattern"
+                  value="logs.*.error"
+                  placeholder="e.g. logs.*.error or logs.#"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn btn-primary"
+                id="btnTestPatternMatch"
+                style="align-self: flex-end; height: 38px"
+              >
+                <i class="fas fa-flask"></i> Test Match
+              </button>
+            </div>
+          </div>
+
+          <div class="matcher-result-container" id="matcherBreakdownOutput">
+            <!-- Tokenization breakdown & matrix populated dynamically -->
     <!-- Queue Configuration Modal -->
     <div class="modal-overlay hidden" id="queueConfigModal">
       <div class="modal-card">

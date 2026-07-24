@@ -126,6 +126,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const flowSvgLayer = document.getElementById('flowSvgLayer');
 
+  // ── AMQP Routing Debugger State ──
+  const exchangeBreakpoints = new Set();
+  let debugFrames = [];
+  let currentFrameIdx = -1;
+  let isDebugPaused = false;
+
+  // Debugger Toolbar Elements
+  const debugStatusBadge = document.getElementById('debugStatusBadge');
+  const frameCounter = document.getElementById('frameCounter');
+  const btnStepBack = document.getElementById('btnStepBack');
+  const btnStepForward = document.getElementById('btnStepForward');
+  const btnOpenMatcherModal = document.getElementById('btnOpenMatcherModal');
+  const debuggerInfo = document.getElementById('debuggerInfo');
+
+  // Modal Elements
+  const patternMatcherModal = document.getElementById('patternMatcherModal');
+  const btnCloseMatcherModal = document.getElementById('btnCloseMatcherModal');
+  const inspectorExchangeType = document.getElementById('inspectorExchangeType');
+  const inspectorRoutingKey = document.getElementById('inspectorRoutingKey');
+  const inspectorBindingPattern = document.getElementById('inspectorBindingPattern');
+  const inspectorKeyGroup = document.getElementById('inspectorKeyGroup');
+  const btnTestPatternMatch = document.getElementById('btnTestPatternMatch');
+  const matcherBreakdownOutput = document.getElementById('matcherBreakdownOutput');
+
+  function matchTopicWithBreakdown(pattern, key) {
+    const keyTokens = key ? key.split('.') : [];
+    const patternTokens = pattern ? pattern.split('.') : [];
+    const steps = [];
+
+    if (pattern === '#') {
+      steps.push({
+        step: 1,
+        keyToken: key || '(empty)',
+        patternToken: '#',
+        rule: 'multi_wildcard',
+        matched: true,
+        explanation: 'Wildcard "#" matches entire key',
+      });
+      return { matched: true, keyTokens, patternTokens, steps };
+    }
   // ── Shovel & Federation State ──
   let isShovelActive = false;
   let wanLatency = 200;
@@ -600,46 +640,167 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pattern === '#') return true;
     if (!pattern || !key) return pattern === key;
 
-    const patternTokens = pattern.split('.');
-    const keyTokens = key.split('.');
+    if (!pattern || !key) {
+      const isMatch = pattern === key;
+      steps.push({
+        step: 1,
+        keyToken: key || '(empty)',
+        patternToken: pattern || '(empty)',
+        rule: isMatch ? 'exact' : 'mismatch',
+        matched: isMatch,
+        explanation: isMatch ? 'Exact empty string match' : 'Pattern or key missing',
+      });
+      return { matched: isMatch, keyTokens, patternTokens, steps };
+    }
 
+    let stepNum = 0;
     function matchHelper(pi, ki) {
-      if (pi === patternTokens.length && ki === keyTokens.length) return true;
-      if (pi === patternTokens.length) return false;
+      stepNum++;
+      const currentStep = stepNum;
+      const pToken = pi < patternTokens.length ? patternTokens[pi] : null;
+      const kToken = ki < keyTokens.length ? keyTokens[ki] : null;
 
-      const pToken = patternTokens[pi];
+      if (pi === patternTokens.length && ki === keyTokens.length) {
+        steps.push({
+          step: currentStep,
+          keyToken: '(end)',
+          patternToken: '(end)',
+          rule: 'exact',
+          matched: true,
+          explanation: 'End of pattern and key reached successfully',
+        });
+        return true;
+      }
 
-      if (pToken === '#') {
-        // '#' matches 0 or more words
-        if (matchHelper(pi + 1, ki)) return true;
-        if (ki < keyTokens.length && matchHelper(pi, ki + 1)) return true;
+      if (pi === patternTokens.length) {
+        steps.push({
+          step: currentStep,
+          keyToken: kToken,
+          patternToken: '(end)',
+          rule: 'length_mismatch',
+          matched: false,
+          explanation: `Key has remaining token "${kToken}" but pattern ended`,
+        });
         return false;
       }
 
-      if (ki === keyTokens.length) return false;
-
-      if (pToken === '*' || pToken === keyTokens[ki]) {
-        return matchHelper(pi + 1, ki + 1);
+      if (pToken === '#') {
+        if (matchHelper(pi + 1, ki)) {
+          steps.push({
+            step: currentStep,
+            keyToken: kToken || '(none)',
+            patternToken: '#',
+            rule: 'multi_wildcard',
+            matched: true,
+            explanation: `Wildcard "#" matched 0 words (skipped "#")`,
+          });
+          return true;
+        }
+        if (ki < keyTokens.length && matchHelper(pi, ki + 1)) {
+          steps.push({
+            step: currentStep,
+            keyToken: kToken,
+            patternToken: '#',
+            rule: 'multi_wildcard',
+            matched: true,
+            explanation: `Wildcard "#" consumed token "${kToken}"`,
+          });
+          return true;
+        }
+        steps.push({
+          step: currentStep,
+          keyToken: kToken || '(none)',
+          patternToken: '#',
+          rule: 'multi_wildcard',
+          matched: false,
+          explanation: `Wildcard "#" failed to match remaining sequence`,
+        });
+        return false;
       }
 
+      if (ki === keyTokens.length) {
+        steps.push({
+          step: currentStep,
+          keyToken: '(end)',
+          patternToken: pToken,
+          rule: 'length_mismatch',
+          matched: false,
+          explanation: `Pattern token "${pToken}" remaining but key ended`,
+        });
+        return false;
+      }
+
+      if (pToken === '*' || pToken === kToken) {
+        const isStar = pToken === '*';
+        const res = matchHelper(pi + 1, ki + 1);
+        steps.push({
+          step: currentStep,
+          keyToken: kToken,
+          patternToken: pToken,
+          rule: isStar ? 'single_wildcard' : 'exact',
+          matched: res,
+          explanation: isStar
+            ? `Wildcard "*" matched token "${kToken}"`
+            : `Exact token match "${kToken}" === "${pToken}"`,
+        });
+        return res;
+      }
+
+      steps.push({
+        step: currentStep,
+        keyToken: kToken,
+        patternToken: pToken,
+        rule: 'mismatch',
+        matched: false,
+        explanation: `Token mismatch: "${kToken}" !== "${pToken}"`,
+      });
       return false;
     }
 
-    return matchHelper(0, 0);
+    const isMatched = matchHelper(0, 0);
+    steps.sort((a, b) => a.step - b.step);
+    const uniqueSteps = [];
+    const seen = new Set();
+    for (const s of steps) {
+      const id = `${s.step}-${s.keyToken}-${s.patternToken}-${s.matched}`;
+      if (!seen.has(id)) {
+        seen.add(id);
+        uniqueSteps.push(s);
+      }
+    }
+
+    return { matched: isMatched, keyTokens, patternTokens, steps: uniqueSteps };
   }
 
-  // ── Headers Matching Logic ──
-  function matchHeaders(msgHeaders, bindingHeaders, xMatch) {
-    if (!msgHeaders || !bindingHeaders) return false;
-    const keys = Object.keys(bindingHeaders);
-    if (keys.length === 0) return false;
+  // ── Headers Matching Logic & Breakdown ──
 
-    if (xMatch === 'any') {
-      return keys.some((k) => msgHeaders[k] === bindingHeaders[k]);
-    } else {
-      // default: all
-      return keys.every((k) => msgHeaders[k] === bindingHeaders[k]);
-    }
+  function matchHeadersWithBreakdown(bindingHeaders, xMatch) {
+    bindingHeaders = bindingHeaders || {};
+    const keys = Object.keys(bindingHeaders);
+    const comparisons = keys.map((k) => {
+      const expected = bindingHeaders[k];
+      return { key: k, expected, matched };
+    });
+
+    const isAny = xMatch === 'any';
+    const matched =
+      keys.length > 0 &&
+      (isAny ? comparisons.some((c) => c.matched) : comparisons.every((c) => c.matched));
+
+    return { matched, xMatch: isAny ? 'any' : 'all', comparisons };
+  }
+
+  // ── Direct Matching Logic & Breakdown ──
+  function matchDirectWithBreakdown(msgKey, bindingKey) {
+    const matched = msgKey === bindingKey;
+    return {
+      matched,
+      msgKey,
+      bindingKey,
+      explanation: matched
+        ? `Exact key match "${msgKey}" === "${bindingKey}"`
+        : `Key mismatch "${msgKey}" !== "${bindingKey}"`,
+    };
   }
 
   // ── Logging Helper ──
@@ -655,6 +816,262 @@ document.addEventListener('DOMContentLoaded', () => {
     while (logConsole.children.length > 100) {
       logConsole.removeChild(logConsole.firstChild);
     }
+  }
+
+  // ── Debugger Stepper Renderer & Controllers ──
+  function renderDebugFrame(idx) {
+    if (idx < 0 || idx >= debugFrames.length) {
+      updateDebuggerUIState();
+      return;
+    }
+
+    currentFrameIdx = idx;
+    const frame = debugFrames[idx];
+
+    // Highlight target exchange node
+    document.querySelectorAll('.exchange-node').forEach((node) => {
+      node.classList.remove('debug-evaluating');
+    });
+    const exNode = document.querySelector(`.exchange-node[data-exchange="${frame.exchange}"]`);
+    if (exNode) exNode.classList.add('debug-evaluating');
+
+    // Update Debugger UI Info
+    debuggerInfo.innerHTML = `Frame ${idx + 1}/${debugFrames.length}: <strong>${frame.exchange}</strong> ➔ <strong>${frame.queue}</strong> (${frame.binding.routingKey || 'all'}) &nbsp; <span class="${frame.matched ? 'text-success' : 'text-danger'}">${frame.matched ? 'MATCH ✓' : 'MISMATCH ✗'}</span>`;
+
+    updateDebuggerUIState();
+  }
+
+  function updateDebuggerUIState() {
+    if (debugFrames.length === 0) {
+      frameCounter.textContent = 'Frame 0 / 0';
+      if (btnStepBack) btnStepBack.disabled = true;
+      if (btnStepForward) btnStepForward.disabled = true;
+      if (debugStatusBadge) {
+        debugStatusBadge.className = 'debug-badge';
+        debugStatusBadge.innerHTML = '<i class="fas fa-bug"></i> Debugger Idle';
+      }
+      return;
+    }
+
+    frameCounter.textContent = `Frame ${currentFrameIdx + 1} / ${debugFrames.length}`;
+    if (btnStepBack) btnStepBack.disabled = currentFrameIdx <= 0;
+    if (btnStepForward) btnStepForward.disabled = currentFrameIdx >= debugFrames.length - 1;
+
+    if (debugStatusBadge) {
+      if (isDebugPaused) {
+        debugStatusBadge.className = 'debug-badge paused';
+        debugStatusBadge.innerHTML = '<i class="fas fa-pause-circle"></i> Debugger Paused';
+      } else {
+        debugStatusBadge.className = 'debug-badge active';
+        debugStatusBadge.innerHTML = '<i class="fas fa-circle-play"></i> Debugger Active';
+      }
+    }
+  }
+
+  function stepForwardFrame() {
+    if (currentFrameIdx < debugFrames.length - 1) {
+      renderDebugFrame(currentFrameIdx + 1);
+    }
+  }
+
+  function stepBackwardFrame() {
+    if (currentFrameIdx > 0) {
+      renderDebugFrame(currentFrameIdx - 1);
+    }
+  }
+
+  function setupBreakpointHandlers() {
+    document.querySelectorAll('.btn-breakpoint').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const ex = btn.getAttribute('data-ex');
+        if (exchangeBreakpoints.has(ex)) {
+          exchangeBreakpoints.delete(ex);
+          btn.classList.remove('has-breakpoint');
+          btn.innerHTML = '<i class="fas fa-circle-dot"></i>';
+          logEvent('sys', `Removed breakpoint from <strong>${ex}</strong>`);
+        } else {
+          exchangeBreakpoints.add(ex);
+          btn.classList.add('has-breakpoint');
+          btn.innerHTML = '<i class="fas fa-pause-circle"></i>';
+          logEvent('nack', `Set breakpoint on exchange <strong>${ex}</strong>`);
+        }
+      });
+    });
+  }
+
+  // ── Pattern Inspector Modal Controller ──
+  function openMatcherModal(frameData) {
+    if (!patternMatcherModal) return;
+    patternMatcherModal.classList.remove('hidden');
+
+    if (frameData) {
+      if (inspectorExchangeType) inspectorExchangeType.value = frameData.exchange || 'amq.topic';
+      if (frameData.msg && inspectorRoutingKey) {
+        inspectorRoutingKey.value = frameData.msg.routingKey || '';
+      }
+      if (frameData.binding && inspectorBindingPattern) {
+        inspectorBindingPattern.value = frameData.binding.routingKey || '';
+      }
+    } else if (currentFrameIdx >= 0 && currentFrameIdx < debugFrames.length) {
+      const f = debugFrames[currentFrameIdx];
+      if (inspectorExchangeType) inspectorExchangeType.value = f.exchange || 'amq.topic';
+      if (f.msg && inspectorRoutingKey) inspectorRoutingKey.value = f.msg.routingKey || '';
+      if (f.binding && inspectorBindingPattern)
+        inspectorBindingPattern.value = f.binding.routingKey || '';
+    }
+
+    runInspectorEvaluation();
+  }
+
+  function closeMatcherModal() {
+    if (patternMatcherModal) patternMatcherModal.classList.add('hidden');
+  }
+
+  function runInspectorEvaluation() {
+    if (!matcherBreakdownOutput) return;
+    const exType = inspectorExchangeType ? inspectorExchangeType.value : 'amq.topic';
+    const key = inspectorRoutingKey ? inspectorRoutingKey.value.trim() : '';
+    const pattern = inspectorBindingPattern ? inspectorBindingPattern.value.trim() : '';
+
+    if (exType === 'amq.headers') {
+      if (inspectorKeyGroup) inspectorKeyGroup.classList.add('hidden');
+      const msgHeaders = { format: 'pdf', type: 'invoice' };
+      const bindingHeaders = { format: 'pdf', type: 'invoice' };
+      const res = matchHeadersWithBreakdown(msgHeaders, bindingHeaders, 'all');
+      renderHeaderBreakdownOutput(res);
+      return;
+    } else {
+      if (inspectorKeyGroup) inspectorKeyGroup.classList.remove('hidden');
+    }
+
+    if (exType === 'amq.direct') {
+      const res = matchDirectWithBreakdown(key, pattern);
+      renderDirectBreakdownOutput(res);
+    } else {
+      // amq.topic
+      const res = matchTopicWithBreakdown(pattern, key);
+      renderTopicBreakdownOutput(res, key, pattern);
+    }
+  }
+
+  function renderTopicBreakdownOutput(res, key, pattern) {
+    const keyPills =
+      res.keyTokens.length > 0
+        ? res.keyTokens
+            .map((t) => `<span class="token-pill token-key"><i class="fas fa-tag"></i> ${t}</span>`)
+            .join('<span class="token-separator">.</span>')
+        : '<span class="text-muted">(empty)</span>';
+
+    const patternPills =
+      res.patternTokens.length > 0
+        ? res.patternTokens
+            .map((t) => {
+              const isWildcard = t === '*' || t === '#';
+              return `<span class="token-pill ${isWildcard ? 'token-wildcard' : 'token-pattern'}"><i class="fas ${isWildcard ? 'fa-asterisk' : 'fa-filter'}"></i> ${t}</span>`;
+            })
+            .join('<span class="token-separator">.</span>')
+        : '<span class="text-muted">(empty)</span>';
+
+    const stepsRows = res.steps
+      .map(
+        (s) => `
+      <tr>
+        <td>Step #${s.step}</td>
+        <td><span class="token-pill token-key">${s.keyToken}</span></td>
+        <td><span class="token-pill ${s.patternToken === '*' || s.patternToken === '#' ? 'token-wildcard' : 'token-pattern'}">${s.patternToken}</span></td>
+        <td><code>${s.rule}</code></td>
+        <td><span class="${s.matched ? 'badge-pass' : 'badge-fail'}">${s.matched ? 'PASS ✓' : 'FAIL ✗'}</span></td>
+        <td style="font-size: 0.72rem; color: var(--text-secondary);">${s.explanation}</td>
+      </tr>
+    `
+      )
+      .join('');
+
+    matcherBreakdownOutput.innerHTML = `
+      <div class="token-section-box">
+        <div class="token-section-title"><i class="fas fa-font"></i> Published Key Tokenization [${res.keyTokens.length} tokens]</div>
+        <div class="token-pills-row">${keyPills}</div>
+      </div>
+      <div class="token-section-box">
+        <div class="token-section-title"><i class="fas fa-sitemap"></i> Binding Pattern Tokenization [${res.patternTokens.length} tokens]</div>
+        <div class="token-pills-row">${patternPills}</div>
+      </div>
+      <div class="token-section-box">
+        <div class="token-section-title"><i class="fas fa-list-ol"></i> Step-by-Step Wildcard Token Match Matrix</div>
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Key Token</th>
+              <th>Pattern Token</th>
+              <th>Rule</th>
+              <th>Status</th>
+              <th>Evaluation Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${stepsRows}
+          </tbody>
+        </table>
+      </div>
+      <div class="match-summary-banner ${res.matched ? 'success' : 'failed'}">
+        <i class="fas ${res.matched ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+        <span>${res.matched ? `ROUTING SUCCESS: Key "${key}" matches pattern "${pattern}"` : `ROUTING FAILED: Key "${key}" does NOT match pattern "${pattern}"`}</span>
+      </div>
+    `;
+  }
+
+  function renderDirectBreakdownOutput(res) {
+    matcherBreakdownOutput.innerHTML = `
+      <div class="token-section-box">
+        <div class="token-section-title"><i class="fas fa-equals"></i> Direct Exact Key Comparison</div>
+        <div style="font-family: 'Fira Code', monospace; font-size: 0.85rem; padding: 0.5rem 0;">
+          <div>Published Key: <strong style="color: var(--rmq-cyan);">'${res.msgKey}'</strong></div>
+          <div>Binding Key: &nbsp;&nbsp;<strong style="color: var(--rmq-purple);">'${res.bindingKey}'</strong></div>
+        </div>
+      </div>
+      <div class="match-summary-banner ${res.matched ? 'success' : 'failed'}">
+        <i class="fas ${res.matched ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+        <span>${res.explanation}</span>
+      </div>
+    `;
+  }
+
+  function renderHeaderBreakdownOutput(res) {
+    const rows = res.comparisons
+      .map(
+        (c) => `
+      <tr>
+        <td><code>${c.key}</code></td>
+        <td><code>${c.expected}</code></td>
+        <td><code>${c.actual || '(none)'}</code></td>
+        <td><span class="${c.matched ? 'badge-pass' : 'badge-fail'}">${c.matched ? 'PASS ✓' : 'FAIL ✗'}</span></td>
+      </tr>
+    `
+      )
+      .join('');
+
+    matcherBreakdownOutput.innerHTML = `
+      <div class="token-section-box">
+        <div class="token-section-title"><i class="fas fa-tags"></i> Header Attributes Comparison (x-match: ${res.xMatch})</div>
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Header Key</th>
+              <th>Expected Value</th>
+              <th>Actual Value</th>
+              <th>Match Status</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="match-summary-banner ${res.matched ? 'success' : 'failed'}">
+        <i class="fas ${res.matched ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+        <span>${res.matched ? 'HEADERS MATCH SUCCESS' : 'HEADERS MATCH FAILED'}</span>
+      </div>
+    `;
   }
 
   // ── UI Form Handlers ──
@@ -793,29 +1210,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function routeMessage(msg) {
     const ex = msg.exchange;
+    const frames = [];
     const targetQueues = new Set();
 
-    bindings.forEach((b) => {
+    bindings.forEach((b, idx) => {
       if (b.exchange !== ex) return;
 
+      let breakdown;
+      let isMatch = false;
+
       if (ex === 'amq.direct') {
-        if (b.routingKey === msg.routingKey) {
-          targetQueues.add(b.queue);
-        }
+        breakdown = matchDirectWithBreakdown(msg.routingKey, b.routingKey);
+        isMatch = breakdown.matched;
       } else if (ex === 'amq.topic') {
-        if (matchTopic(b.routingKey, msg.routingKey)) {
-          targetQueues.add(b.queue);
-        }
+        breakdown = matchTopicWithBreakdown(b.routingKey, msg.routingKey);
+        isMatch = breakdown.matched;
       } else if (ex === 'amq.fanout') {
-        targetQueues.add(b.queue);
+        isMatch = true;
+        breakdown = { matched: true, explanation: 'Fanout broadcasts to all bound queues' };
       } else if (ex === 'amq.headers') {
-        if (matchHeaders(msg.headers, b.headers, b.xMatch)) {
-          targetQueues.add(b.queue);
-        }
+        breakdown = matchHeadersWithBreakdown(msg.headers, b.headers, b.xMatch);
+        isMatch = breakdown.matched;
       } else if (ex === 'amq.dlx') {
+        isMatch = true;
+        breakdown = { matched: true, explanation: 'Dead Letter Exchange routes to DLQ' };
+      }
+
+      if (isMatch) {
         targetQueues.add(b.queue);
       }
+
+      frames.push({
+        frameIdx: frames.length,
+        msg,
+        exchange: ex,
+        binding: b,
+        queue: b.queue,
+        matched: isMatch,
+        matchType: ex,
+        breakdown,
+        description: `Evaluating binding #${idx + 1}: ${ex} ➔ ${b.queue} (${b.routingKey || 'all'}) -> ${isMatch ? 'MATCH' : 'NO MATCH'}`,
+      });
     });
+
+    debugFrames = frames;
+    const hasBreakpoint = exchangeBreakpoints.has(ex);
+
+    if (hasBreakpoint && frames.length > 0) {
+      isDebugPaused = true;
+      currentFrameIdx = 0;
+      renderDebugFrame(currentFrameIdx);
+      logEvent(
+        'nack',
+        `<strong>DEBUGGER PAUSED</strong>: Breakpoint hit on exchange <em>${ex}</em>. Stepping frame 1/${frames.length}`
+      );
+    } else {
+      currentFrameIdx = frames.length > 0 ? frames.length - 1 : -1;
+      updateDebuggerUIState();
+    }
 
     const exNode = document.querySelector(`.exchange-node[data-exchange="${ex}"]`);
     if (exNode) {
@@ -1372,6 +1824,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnAddConsumer.addEventListener('click', () => spawnConsumer());
 
+  // ── Debugger Event Listeners ──
+  if (btnStepForward) btnStepForward.addEventListener('click', () => stepForwardFrame());
+  if (btnStepBack) btnStepBack.addEventListener('click', () => stepBackwardFrame());
+  if (btnOpenMatcherModal) btnOpenMatcherModal.addEventListener('click', () => openMatcherModal());
+  if (btnCloseMatcherModal)
+    btnCloseMatcherModal.addEventListener('click', () => closeMatcherModal());
+  if (btnTestPatternMatch)
+    btnTestPatternMatch.addEventListener('click', () => runInspectorEvaluation());
+  if (inspectorExchangeType)
+    inspectorExchangeType.addEventListener('change', () => runInspectorEvaluation());
   if (brokerPressureSlider) {
     brokerPressureSlider.addEventListener('input', () => {
       updateWatermarkPressure(brokerPressureSlider.value);
@@ -1395,6 +1857,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBindingsList();
   renderConsumers();
   renderAllQueues();
+  setupBreakpointHandlers();
   setupShovelHandlers();
   renderClusterNodesUI();
   renderQueueHATags();
@@ -1405,3 +1868,192 @@ document.addEventListener('DOMContentLoaded', () => {
 
   logEvent('sys', 'RabbitMQ Messaging Engine Ready.');
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    matchTopic: function (pattern, key) {
+      if (pattern === '#') return true;
+      if (!pattern || !key) return pattern === key;
+      const p = pattern.split('.');
+      const k = key.split('.');
+      function mh(pi, ki) {
+        if (pi === p.length && ki === k.length) return true;
+        if (pi === p.length) return false;
+        if (p[pi] === '#') {
+          if (mh(pi + 1, ki)) return true;
+          if (ki < k.length && mh(pi, ki + 1)) return true;
+          return false;
+        }
+        if (ki === k.length) return false;
+        if (p[pi] === '*' || p[pi] === k[ki]) return mh(pi + 1, ki + 1);
+        return false;
+      }
+      return mh(0, 0);
+    },
+    matchTopicWithBreakdown: function (pattern, key) {
+      const keyTokens = key ? key.split('.') : [];
+      const patternTokens = pattern ? pattern.split('.') : [];
+      const steps = [];
+      if (pattern === '#') {
+        steps.push({
+          step: 1,
+          keyToken: key || '(empty)',
+          patternToken: '#',
+          rule: 'multi_wildcard',
+          matched: true,
+          explanation: 'Wildcard "#" matches entire key',
+        });
+        return { matched: true, keyTokens, patternTokens, steps };
+      }
+      if (!pattern || !key) {
+        const isMatch = pattern === key;
+        steps.push({
+          step: 1,
+          keyToken: key || '(empty)',
+          patternToken: pattern || '(empty)',
+          rule: isMatch ? 'exact' : 'mismatch',
+          matched: isMatch,
+          explanation: isMatch ? 'Exact empty string match' : 'Pattern or key missing',
+        });
+        return { matched: isMatch, keyTokens, patternTokens, steps };
+      }
+      let stepNum = 0;
+      function mh(pi, ki) {
+        stepNum++;
+        const currentStep = stepNum;
+        const pToken = pi < patternTokens.length ? patternTokens[pi] : null;
+        const kToken = ki < keyTokens.length ? keyTokens[ki] : null;
+
+        if (pi === patternTokens.length && ki === keyTokens.length) {
+          steps.push({
+            step: currentStep,
+            keyToken: '(end)',
+            patternToken: '(end)',
+            rule: 'exact',
+            matched: true,
+            explanation: 'End of pattern and key reached successfully',
+          });
+          return true;
+        }
+        if (pi === patternTokens.length) {
+          steps.push({
+            step: currentStep,
+            keyToken: kToken,
+            patternToken: '(end)',
+            rule: 'length_mismatch',
+            matched: false,
+            explanation: `Key has remaining token "${kToken}" but pattern ended`,
+          });
+          return false;
+        }
+        if (pToken === '#') {
+          if (mh(pi + 1, ki)) {
+            steps.push({
+              step: currentStep,
+              keyToken: kToken || '(none)',
+              patternToken: '#',
+              rule: 'multi_wildcard',
+              matched: true,
+              explanation: `Wildcard "#" matched 0 words (skipped "#")`,
+            });
+            return true;
+          }
+          if (ki < keyTokens.length && mh(pi, ki + 1)) {
+            steps.push({
+              step: currentStep,
+              keyToken: kToken,
+              patternToken: '#',
+              rule: 'multi_wildcard',
+              matched: true,
+              explanation: `Wildcard "#" consumed token "${kToken}"`,
+            });
+            return true;
+          }
+          steps.push({
+            step: currentStep,
+            keyToken: kToken || '(none)',
+            patternToken: '#',
+            rule: 'multi_wildcard',
+            matched: false,
+            explanation: `Wildcard "#" failed to match remaining sequence`,
+          });
+          return false;
+        }
+        if (ki === keyTokens.length) {
+          steps.push({
+            step: currentStep,
+            keyToken: '(end)',
+            patternToken: pToken,
+            rule: 'length_mismatch',
+            matched: false,
+            explanation: `Pattern token "${pToken}" remaining but key ended`,
+          });
+          return false;
+        }
+        if (pToken === '*' || pToken === kToken) {
+          const isStar = pToken === '*';
+          const res = mh(pi + 1, ki + 1);
+          steps.push({
+            step: currentStep,
+            keyToken: kToken,
+            patternToken: pToken,
+            rule: isStar ? 'single_wildcard' : 'exact',
+            matched: res,
+            explanation: isStar
+              ? `Wildcard "*" matched token "${kToken}"`
+              : `Exact token match "${kToken}" === "${pToken}"`,
+          });
+          return res;
+        }
+        steps.push({
+          step: currentStep,
+          keyToken: kToken,
+          patternToken: pToken,
+          rule: 'mismatch',
+          matched: false,
+          explanation: `Token mismatch: "${kToken}" !== "${pToken}"`,
+        });
+        return false;
+      }
+      const isMatched = mh(0, 0);
+      steps.sort((a, b) => a.step - b.step);
+      const uniqueSteps = [];
+      const seen = new Set();
+      for (const s of steps) {
+        const id = `${s.step}-${s.keyToken}-${s.patternToken}-${s.matched}`;
+        if (!seen.has(id)) {
+          seen.add(id);
+          uniqueSteps.push(s);
+        }
+      }
+      return { matched: isMatched, keyTokens, patternTokens, steps: uniqueSteps };
+    },
+    matchHeadersWithBreakdown: function (msgHeaders, bindingHeaders, xMatch) {
+      msgHeaders = msgHeaders || {};
+      bindingHeaders = bindingHeaders || {};
+      const keys = Object.keys(bindingHeaders);
+      const comparisons = keys.map((k) => {
+        const expected = bindingHeaders[k];
+        const actual = msgHeaders[k];
+        const matched = msgHeaders[k] === bindingHeaders[k];
+        return { key: k, expected, actual, matched };
+      });
+      const isAny = xMatch === 'any';
+      const matched =
+        keys.length > 0 &&
+        (isAny ? comparisons.some((c) => c.matched) : comparisons.every((c) => c.matched));
+      return { matched, xMatch: isAny ? 'any' : 'all', comparisons };
+    },
+    matchDirectWithBreakdown: function (msgKey, bindingKey) {
+      const matched = msgKey === bindingKey;
+      return {
+        matched,
+        msgKey,
+        bindingKey,
+        explanation: matched
+          ? `Exact key match "${msgKey}" === "${bindingKey}"`
+          : `Key mismatch "${msgKey}" !== "${bindingKey}"`,
+      };
+    },
+  };
+}
