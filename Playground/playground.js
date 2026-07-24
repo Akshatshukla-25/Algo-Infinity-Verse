@@ -23,10 +23,11 @@ const templates = {
     java: `// Java Playground\n\npublic class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello Learner");\n  }\n}\n`,
     cpp: `// C++ Playground\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n  cout << "Hello Learner" << endl;\n  return 0;\n}\n`,
     lisp: `;; Common Lisp Playground\n\n(defun greet (name)\n  (format nil "Hello ~a" name))\n\n(write-line (greet "Learner"))\n`,
-    groovy: `// Groovy Playground\n\ndef greet(name) {\n    return "Hello \${name}"\n}\n\nprintln greet("Learner")\n`
-    vbnet: `' Visual Basic .NET Playground\nImports System\n\nModule Program\n    Sub Main()\n        Console.WriteLine("Hello Learner from VB.NET!")\n    End Sub\nEnd Module\n`
-    fsharp: `// F# Playground\n\nlet greet name =\n    sprintf "Hello %s" name\n\n[<EntryPoint>]\nlet main argv =\n    printfn "%s" (greet "Learner")\n    0\n`
-    prolog: `% Prolog Playground\n\nparent(john, bob).\nparent(bob, charlie).\n\nancestor(X, Y) :- parent(X, Y).\nancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).\n\n% Run query: ancestor(john, charlie).\n`
+    groovy: `// Groovy Playground\n\ndef greet(name) {\n    return "Hello \${name}"\n}\n\nprintln greet("Learner")\n`,
+    vbnet: `' Visual Basic .NET Playground\nImports System\n\nModule Program\n    Sub Main()\n        Console.WriteLine("Hello Learner from VB.NET!")\n    End Sub\nEnd Module\n`,
+    fsharp: `// F# Playground\n\nlet greet name =\n    sprintf "Hello %s" name\n\n[<EntryPoint>]\nlet main argv =\n    printfn "%s" (greet "Learner")\n    0\n`,
+    prolog: `% Prolog Playground\n\nparent(john, bob).\nparent(bob, charlie).\n\nancestor(X, Y) :- parent(X, Y).\nancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).\n\n% Run query: ancestor(john, charlie).\n`,
+    elixir: `# Elixir Playground\n\ndefmodule Math do\n  def greet(name), do: "Hello, " <> name\nend\n\nIO.puts(Math.greet("Learner"))\n`
 };
 
 // Theme configurations for Ace
@@ -44,10 +45,11 @@ const codeStorage = {
     java: templates.java,
     cpp: templates.cpp,
     lisp: templates.lisp,
-    groovy: templates.groovy
-    vbnet: templates.vbnet
-    fsharp: templates.fsharp
-    prolog: templates.prolog
+    groovy: templates.groovy,
+    vbnet: templates.vbnet,
+    fsharp: templates.fsharp,
+    prolog: templates.prolog,
+    elixir: templates.elixir
 };
 
 // --- INITIALIZATION ---
@@ -232,10 +234,11 @@ function setupEventListeners() {
             java: 'ace/mode/java',
             cpp: 'ace/mode/c_cpp',
             lisp: 'ace/mode/lisp',
-            groovy: 'ace/mode/groovy'
-            vbnet: 'ace/mode/vbscript'
-            fsharp: 'ace/mode/fsharp'
-            prolog: 'ace/mode/prolog'
+            groovy: 'ace/mode/groovy',
+            vbnet: 'ace/mode/vbscript',
+            fsharp: 'ace/mode/fsharp',
+            prolog: 'ace/mode/prolog',
+            elixir: 'ace/mode/elixir'
         };
         editor.session.setMode(modes[selectedLang] || 'ace/mode/javascript');
         
@@ -302,10 +305,11 @@ function updateLanguageBadge(language) {
             java: 'Java',
             cpp: 'C++',
             lisp: 'Common Lisp',
-            groovy: 'Groovy'
-            vbnet: 'VB.NET'
-            fsharp: 'F#'
-            prolog: 'Prolog'
+            groovy: 'Groovy',
+            vbnet: 'VB.NET',
+            fsharp: 'F#',
+            prolog: 'Prolog',
+            elixir: 'Elixir'
         };
         badge.textContent = names[language] || language;
     }
@@ -327,10 +331,11 @@ const runners = {
     java: runJava,
     cpp: runCpp,
     lisp: runLisp,
-    groovy: runGroovy
-    vbnet: runVbNet
-    fsharp: runFSharp
-    prolog: runProlog
+    groovy: runGroovy,
+    vbnet: runVbNet,
+    fsharp: runFSharp,
+    prolog: runProlog,
+    elixir: runElixir
 };
 
 function runCode() {
@@ -573,19 +578,7 @@ async function runLisp(code) {
     }
 }
 
-async function runGroovy(code) {
-    clearOutput();
-    output.textContent = "⏳ Running Groovy via Piston...";
-async function runVbNet(code) {
-    clearOutput();
-    output.textContent = "⏳ Running VB.NET via Piston...";
-async function runFSharp(code) {
-    clearOutput();
-    output.textContent = "⏳ Running F# via Piston...";
-async function runProlog(code) {
-    clearOutput();
-    output.textContent = "⏳ Running Prolog via Piston...";
-
+async function runPistonLanguage(language, code) {
     try {
         const response = await fetch(
             "https://emkc.org/api/v2/piston/execute",
@@ -595,10 +588,7 @@ async function runProlog(code) {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    language: "groovy",
-                    language: "vb.net",
-                    language: "fsharp",
-                    language: "prolog",
+                    language: language,
                     version: "*",
                     files: [{ content: code }]
                 })
@@ -616,6 +606,36 @@ async function runProlog(code) {
     } catch (err) {
         output.textContent = `❌ Network Error: ${err.message}`;
     }
+}
+
+async function runGroovy(code) {
+    clearOutput();
+    output.textContent = "⏳ Running Groovy via Piston...";
+    await runPistonLanguage("groovy", code);
+}
+
+async function runVbNet(code) {
+    clearOutput();
+    output.textContent = "⏳ Running VB.NET via Piston...";
+    await runPistonLanguage("vb.net", code);
+}
+
+async function runFSharp(code) {
+    clearOutput();
+    output.textContent = "⏳ Running F# via Piston...";
+    await runPistonLanguage("fsharp", code);
+}
+
+async function runProlog(code) {
+    clearOutput();
+    output.textContent = "⏳ Running Prolog via Piston...";
+    await runPistonLanguage("prolog", code);
+}
+
+async function runElixir(code) {
+    clearOutput();
+    output.textContent = "⏳ Running Elixir via Piston...";
+    await runPistonLanguage("elixir", code);
 }
 
 // --- PROFILER FUNCTIONS ---
