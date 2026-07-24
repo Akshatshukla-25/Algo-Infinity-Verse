@@ -1088,6 +1088,13 @@ const visualizers = [
     icon: 'fa-code-merge',
     desc: 'Small-to-large merging — keep the heavy child, merge only light subtrees, O(n log n) subtree queries.',
   },
+  {
+    name: 'Convex Hull Trick / Li Chao Tree Visualizer',
+    path: '/pages/visualizers/convex-hull-trick-visualizer/convex-hull-trick-visualizer.html',
+    category: 'Dynamic Programming',
+    icon: 'fa-chart-line',
+    desc: 'Turn O(N) per-query line evaluation into O(log N) — dominated-line envelope, Li Chao Tree, and a real DP optimization demo.',
+  },
 
   // ── Special & Creative ──
   {
