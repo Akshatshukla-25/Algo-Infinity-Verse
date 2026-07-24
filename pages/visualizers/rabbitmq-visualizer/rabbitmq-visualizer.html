@@ -154,7 +154,6 @@
                 </select>
               </div>
             </div>
-
             <!-- Action Grid -->
             <div class="action-grid mt-2">
               <button type="button" class="btn btn-primary" id="btnPublishMsg">
@@ -163,6 +162,32 @@
               <button type="button" class="btn btn-accent" id="btnBurstStream">
                 <i class="fas fa-bolt"></i> Burst Stream (5)
               </button>
+            </div>
+
+            <!-- Broker Resource Pressure & Backpressure Control -->
+            <div class="resource-pressure-box mt-3">
+              <div class="box-title">
+                <span><i class="fas fa-gauge-high"></i> Broker Memory/Disk Watermark</span>
+                <span class="watermark-status-badge normal" id="watermarkStatusBadge"
+                  >Normal (20%)</span
+                >
+              </div>
+              <div class="input-group">
+                <input type="range" id="brokerPressureSlider" min="0" max="100" value="20" />
+                <div class="slider-labels">
+                  <span>0%</span>
+                  <span style="color: var(--rmq-amber)">80% (Alarm Threshold)</span>
+                  <span>100%</span>
+                </div>
+              </div>
+              <div class="buffer-status-row mt-2" id="outboundBufferRow">
+                <span class="buffer-count-tag" id="outboundBufferTag"
+                  ><i class="fas fa-box-archive"></i> Outbound Buffer: 0</span
+                >
+                <span class="confirm-status-tag" id="confirmStatusTag"
+                  ><i class="fas fa-shield-check"></i> basic.ack (Confirms)</span
+                >
+              </div>
             </div>
           </div>
 
@@ -239,9 +264,9 @@
               type="button"
               class="btn btn-sm btn-outline"
               id="btnStepSim"
-              title="Single Step Routing"
+              title="Single Step Consumer"
             >
-              <i class="fas fa-step-forward"></i> Step
+              <i class="fas fa-step-forward"></i> Consumer Step
             </button>
             <button
               type="button"
@@ -275,8 +300,62 @@
           </div>
         </div>
 
+        <!-- AMQP Routing Playback Debugger Bar -->
+        <div class="debugger-toolbar" id="debuggerToolbar">
+          <div class="debugger-status">
+            <span class="debug-badge" id="debugStatusBadge"
+              ><i class="fas fa-bug"></i> Debugger Idle</span
+            >
+            <span class="frame-counter" id="frameCounter">Frame 0 / 0</span>
+          </div>
+          <div class="debugger-controls">
+            <button
+              type="button"
+              class="btn btn-sm btn-accent"
+              id="btnStepBack"
+              title="Step Backward Frame"
+              disabled
+            >
+              <i class="fas fa-step-backward"></i> Step Backward
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-accent"
+              id="btnStepForward"
+              title="Step Forward Frame"
+              disabled
+            >
+              <i class="fas fa-step-forward"></i> Step Forward
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline"
+              id="btnOpenMatcherModal"
+              title="Open Pattern Inspector Modal"
+            >
+              <i class="fas fa-microscope"></i> Pattern Inspector
+            </button>
+          </div>
+          <div class="debugger-info" id="debuggerInfo">
+            <span
+              >No active evaluation frame. Publish a message or toggle an exchange breakpoint to
+              step frame-by-frame.</span
+            >
+          </div>
+        </div>
+
         <!-- Interactive Stage Grid -->
         <div class="topology-stage" id="topologyStage">
+          <!-- Flow Control Waves / Backpressure Barrier Layer -->
+          <div class="flow-barrier-overlay hidden" id="flowBarrierOverlay">
+            <div class="flow-wave-line"></div>
+            <div class="flow-wave-line"></div>
+            <div class="flow-wave-line"></div>
+            <div class="flow-barrier-badge">
+              <i class="fas fa-hand"></i> CONNECTION BLOCKED (HIGH WATERMARK ALARM)
+            </div>
+          </div>
+
           <!-- Producer Column -->
           <div class="stage-column col-producers">
             <div class="column-header"><i class="fas fa-broadcast-tower"></i> Producers</div>
@@ -284,6 +363,7 @@
               <div class="node-icon"><i class="fas fa-paper-plane"></i></div>
               <div class="node-title">Publisher</div>
               <div class="node-badge" id="producerPulse">Ready</div>
+              <div class="producer-confirm-badge" id="producerConfirmBadge">basic.ack</div>
             </div>
           </div>
 

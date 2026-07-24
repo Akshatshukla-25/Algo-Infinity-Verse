@@ -126,6 +126,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const flowSvgLayer = document.getElementById('flowSvgLayer');
 
+  // ── Broker Resource Pressure & Flow Control State ──
+  let resourcePressure = 20;
+  let isConnectionBlocked = false;
+  const outboundBuffer = [];
+
+  const brokerPressureSlider = document.getElementById('brokerPressureSlider');
+  const watermarkStatusBadge = document.getElementById('watermarkStatusBadge');
+  const outboundBufferTag = document.getElementById('outboundBufferTag');
+  const flowBarrierOverlay = document.getElementById('flowBarrierOverlay');
+  const producerConfirmBadge = document.getElementById('producerConfirmBadge');
+
+  function updateWatermarkPressure(val) {
+    resourcePressure = parseInt(val) || 0;
+
+    if (resourcePressure > 80) {
+      const wasNormal = !isConnectionBlocked;
+      isConnectionBlocked = true;
+      if (watermarkStatusBadge) {
+        watermarkStatusBadge.className = 'watermark-status-badge alarm';
+        watermarkStatusBadge.innerHTML = `<i class="fas fa-triangle-exclamation"></i> ALARM (${resourcePressure}%)`;
+      }
+      if (flowBarrierOverlay) flowBarrierOverlay.classList.remove('hidden');
+
+      if (wasNormal) {
+        logEvent(
+          'dlq',
+          `<strong>HIGH WATERMARK ALARM</strong>: Broker memory/disk usage reached <strong>${resourcePressure}%</strong> (>80%). Connection <strong>BLOCKED</strong> (Backpressure active).`
+        );
+      }
+    } else {
+      const wasBlocked = isConnectionBlocked;
+      isConnectionBlocked = false;
+      if (watermarkStatusBadge) {
+        watermarkStatusBadge.className = 'watermark-status-badge normal';
+        watermarkStatusBadge.innerHTML = `Normal (${resourcePressure}%)`;
+      }
+      if (flowBarrierOverlay) flowBarrierOverlay.classList.add('hidden');
+
+      if (wasBlocked) {
+        logEvent(
+          'sys',
+          `<strong>FLOW CONTROL RESOLVED</strong>: Watermark alarm cleared (${resourcePressure}%). Connection <strong>UNBLOCKED</strong>! Flushing outbound buffer...`
+        );
+        flushOutboundBuffer();
+      }
+    }
+  }
+
+  function flushOutboundBuffer() {
+    while (outboundBuffer.length > 0) {
+      const msg = outboundBuffer.shift();
+      updateOutboundBufferUI();
+      stats.published++;
+      stats.recentCount++;
+      updateStatsUI();
+
+      logEvent(
+        'pub',
+        `Flushed buffered msg <strong>[${msg.id}]</strong> to <em>${msg.exchange}</em>`
+      );
+      emitPublisherConfirm(msg, 'basic.ack');
+      routeMessage(msg);
+    }
+  }
+
+  function emitPublisherConfirm(msg, type) {
+    if (producerConfirmBadge) {
+      producerConfirmBadge.textContent = type;
+      producerConfirmBadge.classList.add('show-ack');
+      setTimeout(() => producerConfirmBadge.classList.remove('show-ack'), 800);
+    }
+    logEvent(
+      'ack',
+      `Publisher received <strong>${type}</strong> (Confirm) for message <strong>[${msg.id}]</strong>`
+    );
+  }
+
+  function updateOutboundBufferUI() {
+    if (outboundBufferTag) {
+      outboundBufferTag.innerHTML = `<i class="fas fa-box-archive"></i> Outbound Buffer: ${outboundBuffer.length} msgs`;
   const pubPriority = document.getElementById('pubPriority');
 
   // ── Queue Policies State & Priority Heap Engine ──
@@ -443,6 +523,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const msg = createMessage(exchange, key, payload, headers, ttl);
+
+    if (isConnectionBlocked) {
+      outboundBuffer.push(msg);
+      updateOutboundBufferUI();
+      logEvent(
+        'nack',
+        `<strong>[FLOW CONTROL]</strong> Connection blocked! Message <strong>[${msg.id}]</strong> queued in client outbound buffer.`
+      );
+      animateProducerPulse();
+      return;
+    }
+
     stats.published++;
     stats.recentCount++;
     updateStatsUI();
@@ -452,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `Published <strong>[${msg.id}]</strong> to <em>${exchange}</em> (Key: '${key}', Priority: ${msg.priority})`
     );
     animateProducerPulse();
+    emitPublisherConfirm(msg, 'basic.ack');
 
     // Evaluate Routing
     routeMessage(msg);
@@ -1037,6 +1130,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnAddConsumer.addEventListener('click', () => spawnConsumer());
+
+  if (brokerPressureSlider) {
+    brokerPressureSlider.addEventListener('input', () => {
+      updateWatermarkPressure(brokerPressureSlider.value);
+    });
+  }
 
   // Main Engine Tick Loop (re-reads simSpeed each tick)
   function scheduleTick() {
