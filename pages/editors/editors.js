@@ -88,6 +88,13 @@ const editors = [
   },
 
   {
+    name: 'Bash Shell Playground',
+    path: '/pages/editors/bash-playground/bash-playground.html',
+    category: 'Scripting Languages',
+    icon: 'fa-terminal',
+    desc: 'Write real Bash scripts across multiple files, set environment variables, and run them in a sandboxed terminal via Judge0 — sign-in required.',
+  },
+  {
     name: 'R Editor',
     path: '/pages/editors/r-editor/r-editor.html',
     category: 'Scripting Languages',
