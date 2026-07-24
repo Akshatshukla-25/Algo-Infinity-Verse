@@ -1,84 +1,196 @@
-import { initTheme } from "../../modules/theme.js";
-import { initNavbar } from "../../modules/navbar.js";
-import { initLoader } from "../../modules/loader.js";
+(function () {
+  'use strict';
 
-document.addEventListener("DOMContentLoaded", () => {
-  initTheme();
-  initNavbar();
-  initLoader();
+  /* ---- DOM Cache ---- */
+  var dom = {
+    analyzeBtn: document.getElementById('analyzeBtn'),
+    repoUrlInput: document.getElementById('repoUrlInput'),
+    errorBanner: document.getElementById('errorBanner'),
+    errorText: document.getElementById('errorText'),
+    errorDismiss: document.getElementById('errorDismiss'),
+    loadingIndicator: document.getElementById('loadingIndicator'),
+    resultsContainer: document.getElementById('resultsContainer'),
+    scoreDisplay: document.getElementById('scoreDisplay'),
+    depsIcon: document.getElementById('depsIcon'),
+    depsText: document.getElementById('depsText'),
+    testsIcon: document.getElementById('testsIcon'),
+    testsText: document.getElementById('testsText'),
+    recommendationsList: document.getElementById('recommendationsList'),
+  };
 
-  const analyzeBtn = document.getElementById("analyzeBtn");
-  const repoUrlInput = document.getElementById("repoUrlInput");
-  const loadingIndicator = document.getElementById("loadingIndicator");
-  const resultsContainer = document.getElementById("resultsContainer");
+  /* ---- Validation ---- */
 
-  const scoreDisplay = document.getElementById("scoreDisplay");
-  const depsIcon = document.getElementById("depsIcon");
-  const depsText = document.getElementById("depsText");
-  const testsIcon = document.getElementById("testsIcon");
-  const testsText = document.getElementById("testsText");
-  const recommendationsList = document.getElementById("recommendationsList");
+  function validateUrl(raw) {
+    if (!raw || raw.trim().length === 0) {
+      return 'Enter a repository URL to analyze.';
+    }
+    try {
+      var parsed = new URL(raw.trim());
+      var host = parsed.hostname.toLowerCase();
+      if (
+        !host.includes('github.com') &&
+        !host.includes('gitlab.com') &&
+        !host.includes('bitbucket.org')
+      ) {
+        return 'URL must point to a GitHub, GitLab, or Bitbucket repository.';
+      }
+      return null;
+    } catch (_) {
+      return 'Enter a valid URL (e.g. https://github.com/user/repo).';
+    }
+  }
 
-  analyzeBtn.addEventListener("click", async () => {
-    const repoUrl = repoUrlInput.value.trim();
-    if (!repoUrl) {
-      void 0;
+  function sanitizeUrl(raw) {
+    return raw.trim();
+  }
+
+  /* ---- Escape HTML (XSS prevention) ---- */
+
+  function escapeHtml(text) {
+    var el = document.createElement('div');
+    el.appendChild(document.createTextNode(text));
+    return el.innerHTML;
+  }
+
+  /* ---- Error Banner ---- */
+
+  function showError(message) {
+    dom.errorText.textContent = message;
+    dom.errorBanner.classList.add('visible');
+  }
+
+  function hideError() {
+    dom.errorBanner.classList.remove('visible');
+    dom.errorText.textContent = '';
+  }
+
+  /* ---- Loading State ---- */
+
+  function setLoading(loading) {
+    if (loading) {
+      dom.loadingIndicator.classList.add('visible');
+      dom.resultsContainer.classList.remove('visible');
+      dom.analyzeBtn.disabled = true;
+    } else {
+      dom.loadingIndicator.classList.remove('visible');
+      dom.analyzeBtn.disabled = false;
+    }
+  }
+
+  /* ---- Score Animation ---- */
+
+  function animateScore(target) {
+    var current = 0;
+    var frame = 0;
+    var totalFrames = 30;
+    var step = target / totalFrames;
+
+    dom.scoreDisplay.textContent = '0';
+
+    function tick() {
+      frame++;
+      if (frame >= totalFrames) {
+        dom.scoreDisplay.textContent = target;
+        return;
+      }
+      current = Math.round(step * frame);
+      dom.scoreDisplay.textContent = current;
+      requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  /* ---- Main Analysis ---- */
+
+  function handleAnalysis() {
+    hideError();
+
+    var rawUrl = dom.repoUrlInput.value;
+    var error = validateUrl(rawUrl);
+
+    if (error) {
+      showError(error);
       return;
     }
 
-    loadingIndicator.style.display = "block";
-    resultsContainer.style.display = "none";
-    analyzeBtn.disabled = true;
+    var repoUrl = sanitizeUrl(rawUrl);
+    setLoading(true);
 
-    try {
-      const response = await fetch("/api/analyze-repository", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ repoUrl }),
+    fetch('/api/analyze-repository', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoUrl: repoUrl }),
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().then(function (data) {
+            throw new Error(data.error || 'Failed to analyze repository.');
+          });
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        animateScore(data.score);
+
+        /* Dependencies */
+        if (data.details && data.details.hasDependencies) {
+          dom.depsIcon.innerHTML =
+            '<i class="fas fa-check-circle icon-success"></i>';
+          dom.depsText.textContent = 'Configured';
+        } else {
+          dom.depsIcon.innerHTML =
+            '<i class="fas fa-times-circle icon-error"></i>';
+          dom.depsText.textContent = 'Missing';
+        }
+
+        /* Tests */
+        if (data.details && data.details.hasTests) {
+          dom.testsIcon.innerHTML =
+            '<i class="fas fa-check-circle icon-success"></i>';
+          dom.testsText.textContent = 'Configured';
+        } else {
+          dom.testsIcon.innerHTML =
+            '<i class="fas fa-times-circle icon-error"></i>';
+          dom.testsText.textContent = 'Missing';
+        }
+
+        /* Recommendations */
+        if (data.recommendations && data.recommendations.length > 0) {
+          dom.recommendationsList.innerHTML = data.recommendations
+            .map(function (rec) {
+              return (
+                '<li><i class="fas fa-arrow-right"></i> ' +
+                escapeHtml(rec) +
+                '</li>'
+              );
+            })
+            .join('');
+        } else {
+          dom.recommendationsList.innerHTML =
+            '<li><i class="fas fa-check-circle" style="color: var(--ra-emerald)"></i> No recommendations needed — your repository looks solid.</li>';
+        }
+
+        dom.resultsContainer.classList.add('visible');
+      })
+      .catch(function (err) {
+        console.error('Analysis error:', err);
+        showError(err.message || 'An unexpected error occurred.');
+      })
+      .finally(function () {
+        setLoading(false);
       });
+  }
 
-      const data = await response.json();
+  /* ---- Event Wiring ---- */
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to analyze repository");
-      }
+  dom.analyzeBtn.addEventListener('click', handleAnalysis);
 
-      // Update UI with results
-      scoreDisplay.textContent = data.score;
-      
-      // Update Dependencies Status
-      if (data.details.hasDependencies) {
-        depsIcon.innerHTML = '<i class="fas fa-check-circle icon-success"></i>';
-        depsText.textContent = "Configured";
-      } else {
-        depsIcon.innerHTML = '<i class="fas fa-times-circle icon-error"></i>';
-        depsText.textContent = "Missing";
-      }
-
-      // Update Tests Status
-      if (data.details.hasTests) {
-        testsIcon.innerHTML = '<i class="fas fa-check-circle icon-success"></i>';
-        testsText.textContent = "Configured";
-      } else {
-        testsIcon.innerHTML = '<i class="fas fa-times-circle icon-error"></i>';
-        testsText.textContent = "Missing";
-      }
-
-      // Update Recommendations
-      recommendationsList.innerHTML = data.recommendations.map(rec => 
-        `<li><i class="fas fa-arrow-right mr-2"></i> ${rec}</li>`
-      ).join('');
-
-      resultsContainer.style.display = "block";
-
-    } catch (error) {
-      console.error(error);
-      void 0;
-    } finally {
-      loadingIndicator.style.display = "none";
-      analyzeBtn.disabled = false;
+  dom.repoUrlInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      dom.analyzeBtn.click();
     }
   });
-});
+
+  dom.errorDismiss.addEventListener('click', hideError);
+})();
