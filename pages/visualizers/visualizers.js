@@ -970,6 +970,13 @@ const visualizers = [
     desc: 'Square-root decomposition for range query optimization.',
   },
   {
+    name: 'Euler Tour + Sparse Table LCA',
+    path: '/pages/visualizers/euler-tour-lca/euler-tour-lca.html',
+    category: 'Data Structures',
+    icon: 'fa-project-diagram',
+    desc: 'Answering "Common Ancestor" queries in O(1) using Euler tour and sparse table.',
+  },
+  {
     name: 'Quadtree Collision Visualizer',
     path: '/pages/visualizers/quadtree-collision/quadtree-collision.html',
     category: 'Data Structures',
