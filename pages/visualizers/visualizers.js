@@ -217,6 +217,13 @@ const visualizers = [
     desc: 'Explore persistent data structures with versioned segment trees.',
   },
   {
+    name: 'Persistent Segment Tree Visualizer',
+    path: '/pages/visualizers/persistent-segment-tree-visualizer/persistent-segment-tree-visualizer.html',
+    category: 'Trees & BSTs',
+    icon: 'fa-code-branch',
+    desc: 'Interactive versioned segment tree with K-th smallest queries.',
+  },
+  {
     name: 'Heap Percolation Visualizer',
     path: '/pages/visualizers/heap-percolation-visualizer/heap-percolation-visualizer.html',
     category: 'Trees & BSTs',
