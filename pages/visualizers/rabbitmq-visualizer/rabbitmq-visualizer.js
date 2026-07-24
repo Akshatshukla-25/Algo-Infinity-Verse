@@ -126,6 +126,110 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const flowSvgLayer = document.getElementById('flowSvgLayer');
 
+  // ── Shovel & Federation State ──
+  let isShovelActive = false;
+  let wanLatency = 200;
+  let wanDropRate = 0.05;
+  const shovelStats = { shoveled: 0, dropped: 0 };
+  let topologyMode = 'single';
+
+  const selTopologyMode = document.getElementById('selTopologyMode');
+  const chkEnableShovel = document.getElementById('chkEnableShovel');
+  const wanLatencySlider = document.getElementById('wanLatencySlider');
+  const wanLatencyVal = document.getElementById('wanLatencyVal');
+  const wanDropRateSlider = document.getElementById('wanDropRateSlider');
+  const wanDropVal = document.getElementById('wanDropVal');
+  const tagShoveledMsgs = document.getElementById('tagShoveledMsgs');
+  const tagWanDropped = document.getElementById('tagWanDropped');
+
+  function updateShovelUI() {
+    if (tagShoveledMsgs) {
+      tagShoveledMsgs.innerHTML = `<i class="fas fa-truck-ramp-box"></i> Shoveled: ${shovelStats.shoveled}`;
+    }
+    if (tagWanDropped) {
+      tagWanDropped.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Dropped: ${shovelStats.dropped}`;
+    }
+  }
+
+  function runShovelCycle() {
+    if (!isShovelActive) return;
+
+    // Source queue: orders_queue (US-East) -> Destination queue: logs_queue (EU-West)
+    const srcQueue = queues['orders_queue'];
+    if (!srcQueue || srcQueue.length === 0) return;
+
+    const msg = srcQueue.shift();
+    renderQueueMessages('orders_queue');
+
+    // Simulate WAN packet drop
+    const isDropped = Math.random() < wanDropRate;
+    if (isDropped) {
+      shovelStats.dropped++;
+      updateShovelUI();
+      logEvent(
+        'dlq',
+        `<strong>[SHOVEL WAN LOSS]</strong> Packet <strong>[${msg.id}]</strong> lost over WAN link (${wanLatency}ms latency, ${(wanDropRate * 100).toFixed(0)}% loss rate).`
+      );
+    } else {
+      shovelStats.shoveled++;
+      updateShovelUI();
+      logEvent(
+        'sys',
+        `<strong>[SHOVEL TRANSFER]</strong> Dequeued <strong>[${msg.id}]</strong> from US-East. Transferring over WAN pipe (${wanLatency}ms)...`
+      );
+
+      setTimeout(() => {
+        const destMsg = JSON.parse(JSON.stringify(msg));
+        destMsg.history.push('Shoveled over WAN to EU-West');
+        queues['logs_queue'].push(destMsg);
+        renderQueueMessages('logs_queue');
+        logEvent(
+          'ack',
+          `<strong>[SHOVEL DELIVERED]</strong> Message <strong>[${msg.id}]</strong> successfully shoveled to EU-West Datacenter!`
+        );
+      }, wanLatency);
+    }
+  }
+
+  function setupShovelHandlers() {
+    if (chkEnableShovel) {
+      chkEnableShovel.addEventListener('change', () => {
+        isShovelActive = chkEnableShovel.checked;
+        logEvent(
+          'sys',
+          `RabbitMQ Shovel Plugin <strong>${isShovelActive ? 'ENABLED' : 'DISABLED'}</strong>.`
+        );
+      });
+    }
+
+    if (wanLatencySlider) {
+      wanLatencySlider.addEventListener('input', () => {
+        wanLatency = parseInt(wanLatencySlider.value) || 200;
+        if (wanLatencyVal) wanLatencyVal.textContent = `${wanLatency}ms`;
+      });
+    }
+
+    if (wanDropRateSlider) {
+      wanDropRateSlider.addEventListener('input', () => {
+        const val = parseInt(wanDropRateSlider.value) || 0;
+        wanDropRate = val / 100;
+        if (wanDropVal) wanDropVal.textContent = `${val}%`;
+      });
+    }
+
+    if (selTopologyMode) {
+      selTopologyMode.addEventListener('change', () => {
+        topologyMode = selTopologyMode.value;
+        logEvent(
+          'sys',
+          `Switched canvas layout to <strong>${topologyMode === 'multi-region' ? 'Multi-Region WAN Mode (US-East ➔ EU-West)' : 'Single Cluster Mode'}</strong>.`
+        );
+        setTimeout(drawConnectionLines, 200);
+      });
+    }
+
+    // Run Shovel Engine worker every 2.5 seconds
+    setInterval(runShovelCycle, 2500);
   // ── Multi-Node HA Cluster State ──
   const clusterNodes = {
     'node-a': { id: 'node-a', name: 'Node-A', status: 'online' },
@@ -1291,6 +1395,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBindingsList();
   renderConsumers();
   renderAllQueues();
+  setupShovelHandlers();
   renderClusterNodesUI();
   renderQueueHATags();
   setupClusterNodeHandlers();

@@ -1000,6 +1000,8 @@ input:checked + .slider::before {
   }
 }
 
+/* ── Shovel & Federation Control Box ── */
+.shovel-config-box {
 /* ── Multi-Node HA Cluster & Failover ── */
 .cluster-nodes-bar {
   display: flex;
@@ -1213,6 +1215,19 @@ input:checked + .slider::before {
   padding: 0.8rem;
 }
 
+.sm-toggle {
+  transform: scale(0.85);
+}
+
+.slider-val {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
+  color: var(--rmq-cyan);
+  float: right;
+  margin-top: -0.2rem;
+}
+
+.shovel-telemetry {
 .watermark-status-badge {
   font-family: 'Fira Code', monospace;
   font-size: 0.72rem;
@@ -1265,6 +1280,12 @@ input:checked + .slider::before {
   gap: 0.5rem;
 }
 
+.shovel-tag {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  color: var(--rmq-cyan);
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.3);
 .buffer-count-tag {
   font-family: 'Fira Code', monospace;
   font-size: 0.72rem;
@@ -1275,6 +1296,50 @@ input:checked + .slider::before {
   border-radius: 4px;
 }
 
+.shovel-tag.tag-drop {
+  color: var(--rmq-rose);
+  background: rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+/* Multi-Region Canvas Mode */
+.multi-region-container {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.datacenter-region {
+  flex: 1;
+  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 0.6rem;
+  position: relative;
+}
+
+.region-header {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.region-us-header {
+  color: var(--rmq-cyan);
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.region-eu-header {
+  color: var(--rmq-purple);
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.25);
 .confirm-status-tag {
   font-family: 'Fira Code', monospace;
   font-size: 0.72rem;

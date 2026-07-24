@@ -244,6 +244,46 @@
               <!-- Active bindings populated dynamically -->
             </div>
           </div>
+
+          <!-- Shovel & Federation Plugin Control Box -->
+          <div class="shovel-config-box mt-3">
+            <div class="section-title">
+              <h4><i class="fas fa-route"></i> Shovel & Federation</h4>
+              <label class="toggle-switch sm-toggle">
+                <input type="checkbox" id="chkEnableShovel" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="shovel-body mt-2">
+              <div class="input-group-row">
+                <div class="input-group">
+                  <label for="wanLatencySlider"><i class="fas fa-clock"></i> WAN Latency</label>
+                  <input
+                    type="range"
+                    id="wanLatencySlider"
+                    min="50"
+                    max="1000"
+                    value="200"
+                    step="50"
+                  />
+                  <span class="slider-val" id="wanLatencyVal">200ms</span>
+                </div>
+                <div class="input-group">
+                  <label for="wanDropRateSlider"><i class="fas fa-dumpster"></i> WAN Loss</label>
+                  <input type="range" id="wanDropRateSlider" min="0" max="30" value="5" step="1" />
+                  <span class="slider-val" id="wanDropVal">5%</span>
+                </div>
+              </div>
+              <div class="shovel-telemetry mt-2">
+                <span class="shovel-tag" id="tagShoveledMsgs"
+                  ><i class="fas fa-truck-ramp-box"></i> Shoveled: 0</span
+                >
+                <span class="shovel-tag tag-drop" id="tagWanDropped"
+                  ><i class="fas fa-triangle-exclamation"></i> Dropped: 0</span
+                >
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -337,6 +377,23 @@
 
           <div class="toolbar-center">
             <div class="speed-control">
+              <label for="selTopologyMode"><i class="fas fa-globe"></i> Mode:</label>
+              <select
+                id="selTopologyMode"
+                style="
+                  background: #091120;
+                  color: #fff;
+                  border: 1px solid var(--glass-border);
+                  border-radius: 4px;
+                  padding: 0.2rem 0.4rem;
+                  font-size: 0.75rem;
+                "
+              >
+                <option value="single">Single Cluster</option>
+                <option value="multi-region">Multi-Region WAN (US-East ➔ EU-West)</option>
+              </select>
+            </div>
+            <div class="speed-control ms-2">
               <label for="simSpeed"><i class="fas fa-tachometer-alt"></i> Speed:</label>
               <input type="range" id="simSpeed" min="1" max="5" value="3" />
               <span id="speedVal">1.0x</span>
