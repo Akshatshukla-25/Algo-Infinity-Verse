@@ -126,6 +126,154 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const flowSvgLayer = document.getElementById('flowSvgLayer');
 
+  const pubPriority = document.getElementById('pubPriority');
+
+  // ── Queue Policies State & Priority Heap Engine ──
+  const queuePolicies = {
+    orders_queue: {
+      queueType: 'classic',
+      xMaxPriority: 10,
+      xMaxLength: 10,
+      overflowPolicy: 'drop-head',
+    },
+    retry_queue: {
+      queueType: 'classic',
+      xMaxPriority: 0,
+      xMaxLength: 10,
+      overflowPolicy: 'drop-head',
+    },
+    logs_queue: {
+      queueType: 'stream',
+      xMaxPriority: 0,
+      xMaxLength: 20,
+      overflowPolicy: 'drop-head',
+    },
+    notifications_queue: {
+      queueType: 'quorum',
+      xMaxPriority: 5,
+      xMaxLength: 10,
+      overflowPolicy: 'drop-head',
+    },
+    dlq_queue: {
+      queueType: 'classic',
+      xMaxPriority: 0,
+      xMaxLength: 20,
+      overflowPolicy: 'drop-head',
+    },
+  };
+
+  let activeConfigQueue = 'orders_queue';
+
+  const queueConfigModal = document.getElementById('queueConfigModal');
+  const btnCloseQueueConfigModal = document.getElementById('btnCloseQueueConfigModal');
+  const configQueueNameTitle = document.getElementById('configQueueNameTitle');
+  const cfgQueueType = document.getElementById('cfgQueueType');
+  const cfgMaxPriority = document.getElementById('cfgMaxPriority');
+  const cfgMaxLength = document.getElementById('cfgMaxLength');
+  const cfgOverflowPolicy = document.getElementById('cfgOverflowPolicy');
+  const btnSaveQueueConfig = document.getElementById('btnSaveQueueConfig');
+
+  function sortQueueByPriority(qName) {
+    const policy = queuePolicies[qName];
+    if (!policy || policy.xMaxPriority <= 0 || !queues[qName]) return;
+
+    queues[qName].sort((a, b) => {
+      const prioA = Math.min(a.priority || 0, policy.xMaxPriority);
+      const prioB = Math.min(b.priority || 0, policy.xMaxPriority);
+      if (prioA !== prioB) return prioB - prioA;
+      return 0;
+    });
+  }
+
+  function renderQueuePolicyTags() {
+    Object.keys(queuePolicies).forEach((qName) => {
+      const tagContainerId = `policy-tags-${qName.replace('_queue', '')}`;
+      const container = document.getElementById(tagContainerId);
+      if (!container) return;
+
+      const p = queuePolicies[qName];
+      let html = '';
+
+      if (p.queueType === 'quorum') {
+        html += `<span class="tag-policy tag-quorum" title="Quorum Queue (Raft Replicated)">QUORUM</span>`;
+      } else if (p.queueType === 'stream') {
+        html += `<span class="tag-policy tag-stream" title="Stream Queue (Append-Only Log)">STREAM</span>`;
+      }
+
+      if (p.xMaxPriority > 0) {
+        html += `<span class="tag-policy tag-priority" title="Max Priority Level">x-max-p:${p.xMaxPriority}</span>`;
+      }
+
+      if (p.xMaxLength > 0) {
+        html += `<span class="tag-policy tag-max-len" title="Max Queue Length">len:${p.xMaxLength}</span>`;
+      }
+
+      container.innerHTML = html;
+    });
+  }
+
+  function openQueueConfigModal(qName) {
+    activeConfigQueue = qName;
+    const p = queuePolicies[qName] || {
+      queueType: 'classic',
+      xMaxPriority: 0,
+      xMaxLength: 0,
+      overflowPolicy: 'drop-head',
+    };
+
+    if (configQueueNameTitle) configQueueNameTitle.textContent = `Target Queue: ${qName}`;
+    if (cfgQueueType) cfgQueueType.value = p.queueType;
+    if (cfgMaxPriority) cfgMaxPriority.value = p.xMaxPriority;
+    if (cfgMaxLength) cfgMaxLength.value = p.xMaxLength;
+    if (cfgOverflowPolicy) cfgOverflowPolicy.value = p.overflowPolicy;
+
+    if (queueConfigModal) queueConfigModal.classList.remove('hidden');
+  }
+
+  function closeQueueConfigModal() {
+    if (queueConfigModal) queueConfigModal.classList.add('hidden');
+  }
+
+  function saveQueueConfig() {
+    if (!activeConfigQueue) return;
+    const policy = queuePolicies[activeConfigQueue] || {};
+
+    policy.queueType = cfgQueueType.value;
+    policy.xMaxPriority = parseInt(cfgMaxPriority.value) || 0;
+    policy.xMaxLength = parseInt(cfgMaxLength.value) || 0;
+    policy.overflowPolicy = cfgOverflowPolicy.value;
+
+    queuePolicies[activeConfigQueue] = policy;
+
+    sortQueueByPriority(activeConfigQueue);
+    renderAllQueues();
+    renderQueuePolicyTags();
+
+    logEvent(
+      'sys',
+      `Updated policies for <strong>${activeConfigQueue}</strong>: Type=${policy.queueType.toUpperCase()}, MaxPriority=${policy.xMaxPriority}, MaxLen=${policy.xMaxLength}, Overflow=${policy.overflowPolicy}`
+    );
+
+    closeQueueConfigModal();
+  }
+
+  function setupQueueConfigHandlers() {
+    document.querySelectorAll('.btn-queue-config').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const qName = e.currentTarget.getAttribute('data-queue');
+        openQueueConfigModal(qName);
+      });
+    });
+
+    if (btnCloseQueueConfigModal) {
+      btnCloseQueueConfigModal.addEventListener('click', closeQueueConfigModal);
+    }
+    if (btnSaveQueueConfig) {
+      btnSaveQueueConfig.addEventListener('click', saveQueueConfig);
+    }
+  }
+
   // ── Topic Wildcard Pattern Matcher ──
   function matchTopic(pattern, key) {
     if (pattern === '#') return true;
@@ -264,12 +412,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── AMQP Publish Engine ──
   function createMessage(exchange, routingKey, payload, headers, ttl) {
     msgCounter++;
+    const priority = pubPriority ? parseInt(pubPriority.value) || 0 : 0;
     return {
       id: `msg_${msgCounter}`,
       exchange,
       routingKey,
       payload,
       headers: headers || {},
+      priority,
       ttl: parseInt(ttl) || 0,
       retries: 0,
       publishedAt: new Date().toLocaleTimeString(),
@@ -299,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logEvent(
       'pub',
-      `Published <strong>[${msg.id}]</strong> to <em>${exchange}</em> (Key: '${key}')`
+      `Published <strong>[${msg.id}]</strong> to <em>${exchange}</em> (Key: '${key}', Priority: ${msg.priority})`
     );
     animateProducerPulse();
 
@@ -308,8 +458,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function routeMessage(msg) {
-    const targetQueues = new Set();
     const ex = msg.exchange;
+    const targetQueues = new Set();
 
     bindings.forEach((b) => {
       if (b.exchange !== ex) return;
@@ -348,12 +498,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     targetQueues.forEach((qName) => {
+      const policy = queuePolicies[qName] || { xMaxLength: 0, overflowPolicy: 'drop-head' };
+
+      if (policy.xMaxLength > 0 && queues[qName].length >= policy.xMaxLength) {
+        if (policy.overflowPolicy === 'reject-publish') {
+          logEvent(
+            'nack',
+            `OVERFLOW REJECT: Queue <strong>${qName}</strong> is FULL (${queues[qName].length}/${policy.xMaxLength}). Message [${msg.id}] REJECTED!`
+          );
+          return;
+        } else {
+          // drop-head: drop oldest message
+          const droppedMsg = queues[qName].shift();
+          logEvent(
+            'dlq',
+            `OVERFLOW DROP-HEAD: Queue <strong>${qName}</strong> max-length (${policy.xMaxLength}) reached. Dropped oldest msg [${droppedMsg.id}]`
+          );
+        }
+      }
+
       const msgClone = JSON.parse(JSON.stringify(msg));
       msgClone.history.push(`Routed to ${qName}`);
       queues[qName].push(msgClone);
+      sortQueueByPriority(qName);
       renderQueueMessages(qName);
       animatePacketFlow(ex, qName);
-      logEvent('sys', `Routed <strong>[${msg.id}]</strong> ➔ Queue <strong>${qName}</strong>`);
+      logEvent(
+        'sys',
+        `Routed <strong>[${msg.id}]</strong> (P${msg.priority}) ➔ Queue <strong>${qName}</strong>`
+      );
     });
   }
 
@@ -379,7 +552,15 @@ document.addEventListener('DOMContentLoaded', () => {
         msg.retries > 0
           ? `<span class="retry-badge" title="Retry attempts">${msg.retries}</span>`
           : '';
-      pill.innerHTML = `<i class="fas fa-envelope"></i> ${msg.id} ${retryTag}`;
+
+      let prioTag = '';
+      if (msg.priority && msg.priority > 0) {
+        const pClass =
+          msg.priority >= 8 ? 'p-badge-high' : msg.priority >= 4 ? 'p-badge-mid' : 'p-badge-low';
+        prioTag = `<span class="${pClass}" title="Priority ${msg.priority}">P${msg.priority}</span>`;
+      }
+
+      pill.innerHTML = `<i class="fas fa-envelope"></i> ${msg.id} ${prioTag} ${retryTag}`;
 
       pill.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -874,6 +1055,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBindingsList();
   renderConsumers();
   renderAllQueues();
+  renderQueuePolicyTags();
+  setupQueueConfigHandlers();
   setTimeout(drawConnectionLines, 300);
 
   logEvent('sys', 'RabbitMQ Messaging Engine Ready.');

@@ -999,3 +999,89 @@ input:checked + .slider::before {
     stroke-dashoffset: 0;
   }
 }
+
+/* ── Queue Settings & Policy Tags ── */
+.btn-queue-config {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-queue-config:hover {
+  color: var(--rmq-orange);
+  background: rgba(255, 107, 0, 0.15);
+  transform: rotate(45deg);
+}
+
+.queue-policy-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.2rem 0 0.4rem;
+}
+
+.tag-policy {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.08rem 0.35rem;
+  border-radius: 3px;
+}
+
+.tag-quorum {
+  color: var(--rmq-purple);
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.tag-stream {
+  color: var(--rmq-cyan);
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.tag-priority {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.tag-max-len {
+  color: var(--rmq-amber);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.p-badge-high {
+  color: var(--rmq-rose);
+  background: rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  font-weight: bold;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.62rem;
+}
+
+.p-badge-mid {
+  color: var(--rmq-amber);
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-weight: bold;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.62rem;
+}
+
+.p-badge-low {
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.1);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.62rem;
+}

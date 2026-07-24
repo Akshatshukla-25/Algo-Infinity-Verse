@@ -122,8 +122,19 @@
               />
             </div>
 
-            <!-- TTL & Retry Params -->
+            <!-- Priority, TTL & Retry Params -->
             <div class="input-group-row">
+              <div class="input-group">
+                <label for="pubPriority"><i class="fas fa-arrow-up-9-1"></i> Priority (0-10)</label>
+                <input
+                  type="number"
+                  id="pubPriority"
+                  value="0"
+                  min="0"
+                  max="10"
+                  placeholder="0 (Default)"
+                />
+              </div>
               <div class="input-group">
                 <label for="pubTTL"><i class="fas fa-clock"></i> Message TTL (sec)</label>
                 <input
@@ -329,8 +340,17 @@
             <div class="node queue-node" id="q-orders" data-queue="orders_queue">
               <div class="queue-header">
                 <span class="q-title"><i class="fas fa-shopping-cart"></i> orders_queue</span>
+                <button
+                  type="button"
+                  class="btn-queue-config"
+                  data-queue="orders_queue"
+                  title="Configure Queue Arguments & Policy"
+                >
+                  <i class="fas fa-gear"></i>
+                </button>
                 <span class="q-count-badge" id="count-orders">0</span>
               </div>
+              <div class="queue-policy-tags" id="policy-tags-orders"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill" id="fill-orders" style="width: 0%"></div>
               </div>
@@ -345,8 +365,17 @@
                 <span class="q-title"
                   ><i class="fas fa-clock-rotate-left"></i> retry_queue (TTL 3s)</span
                 >
+                <button
+                  type="button"
+                  class="btn-queue-config"
+                  data-queue="retry_queue"
+                  title="Configure Queue Arguments & Policy"
+                >
+                  <i class="fas fa-gear"></i>
+                </button>
                 <span class="q-count-badge count-retry" id="count-retry">0</span>
               </div>
+              <div class="queue-policy-tags" id="policy-tags-retry"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill fill-retry" id="fill-retry" style="width: 0%"></div>
               </div>
@@ -357,8 +386,17 @@
             <div class="node queue-node" id="q-logs" data-queue="logs_queue">
               <div class="queue-header">
                 <span class="q-title"><i class="fas fa-terminal"></i> logs_queue</span>
+                <button
+                  type="button"
+                  class="btn-queue-config"
+                  data-queue="logs_queue"
+                  title="Configure Queue Arguments & Policy"
+                >
+                  <i class="fas fa-gear"></i>
+                </button>
                 <span class="q-count-badge" id="count-logs">0</span>
               </div>
+              <div class="queue-policy-tags" id="policy-tags-logs"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill" id="fill-logs" style="width: 0%"></div>
               </div>
@@ -369,8 +407,17 @@
             <div class="node queue-node" id="q-notifications" data-queue="notifications_queue">
               <div class="queue-header">
                 <span class="q-title"><i class="fas fa-bell"></i> notifications_queue</span>
+                <button
+                  type="button"
+                  class="btn-queue-config"
+                  data-queue="notifications_queue"
+                  title="Configure Queue Arguments & Policy"
+                >
+                  <i class="fas fa-gear"></i>
+                </button>
                 <span class="q-count-badge" id="count-notifications">0</span>
               </div>
+              <div class="queue-policy-tags" id="policy-tags-notifications"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill" id="fill-notifications" style="width: 0%"></div>
               </div>
@@ -383,8 +430,17 @@
                 <span class="q-title"
                   ><i class="fas fa-skull-crossbones"></i> dead_letter_queue</span
                 >
+                <button
+                  type="button"
+                  class="btn-queue-config"
+                  data-queue="dlq_queue"
+                  title="Configure Queue Arguments & Policy"
+                >
+                  <i class="fas fa-gear"></i>
+                </button>
                 <span class="q-count-badge count-dlq" id="count-dlq">0</span>
               </div>
+              <div class="queue-policy-tags" id="policy-tags-dlq"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill fill-dlq" id="fill-dlq" style="width: 0%"></div>
               </div>
@@ -503,6 +559,76 @@
         </div>
       </aside>
     </main>
+
+    <!-- Queue Configuration Modal -->
+    <div class="modal-overlay hidden" id="queueConfigModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="fas fa-sliders"></i> RabbitMQ Queue Policy & Arguments Settings</h3>
+          <button type="button" class="btn-close-modal" id="btnCloseQueueConfigModal">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="inspector-workbench">
+            <h4
+              id="configQueueNameTitle"
+              style="margin: 0 0 0.8rem; font-size: 0.95rem; color: var(--rmq-orange)"
+            >
+              Target Queue: orders_queue
+            </h4>
+            <div class="input-group-row">
+              <div class="input-group">
+                <label for="cfgQueueType"><i class="fas fa-layer-group"></i> Queue Type</label>
+                <select id="cfgQueueType">
+                  <option value="classic">Classic Queue</option>
+                  <option value="quorum">Quorum Queue (Raft Replicated)</option>
+                  <option value="stream">Stream Queue (Append-Only Log)</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="cfgMaxPriority"
+                  ><i class="fas fa-arrow-up-9-1"></i> x-max-priority (Max Priority)</label
+                >
+                <input
+                  type="number"
+                  id="cfgMaxPriority"
+                  value="10"
+                  min="0"
+                  max="10"
+                  placeholder="0 = disabled"
+                />
+              </div>
+            </div>
+            <div class="input-group-row mt-2">
+              <div class="input-group">
+                <label for="cfgMaxLength"
+                  ><i class="fas fa-ruler-horizontal"></i> x-max-length (Max Queue Depth)</label
+                >
+                <input
+                  type="number"
+                  id="cfgMaxLength"
+                  value="10"
+                  min="0"
+                  max="20"
+                  placeholder="0 = unlimited"
+                />
+              </div>
+              <div class="input-group">
+                <label for="cfgOverflowPolicy"><i class="fas fa-water"></i> Overflow Policy</label>
+                <select id="cfgOverflowPolicy">
+                  <option value="drop-head">drop-head (Drop oldest message)</option>
+                  <option value="reject-publish">reject-publish (Reject incoming publish)</option>
+                </select>
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary w-100 mt-3" id="btnSaveQueueConfig">
+              <i class="fas fa-save"></i> Save Policy Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Script File -->
     <script src="rabbitmq-visualizer.js"></script>
