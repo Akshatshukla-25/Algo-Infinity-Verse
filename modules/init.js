@@ -31,6 +31,7 @@ import { initPersonalityQuiz } from './personality-quiz.js';
 import { initBookmarkCollections } from './bookmarkUI.js';
 import { initRevisionDuePopup } from './revisionDuePopup.js';
 import { initStoreModal } from './xpStore.js';
+import { initShareProgress } from './shareProgress.js';
 
 function loadUserData() {
   if (typeof window.loadUserData === 'function') {
@@ -163,6 +164,7 @@ function initializeApp() {
   initPersonalityQuiz();
   initRevisionDuePopup();
   initStoreModal();
+  initShareProgress();
 
   // Ensure page is at top after all modules initialize
   if (window.scrollY !== 0) {
