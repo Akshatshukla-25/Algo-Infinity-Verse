@@ -38,6 +38,13 @@ const visualizers = [
     icon: 'fa-network-wired',
     desc: 'Visualize Distributed Transactions and Compensating Actions using the Sagas Pattern.',
   },
+  {
+    name: 'TLS 1.3 Handshake Simulator',
+    path: '/pages/visualizers/tls13-simulator/tls13-simulator.html',
+    category: 'Security & Crypto',
+    icon: 'fa-lock',
+    desc: 'Interactive visualizer for the TLS 1.3 cryptographic handshake protocol (1-RTT and 0-RTT).',
+  },
   // ── Sorting & Searching ──
   {
     name: 'Sorting Visualizer',
@@ -998,11 +1005,11 @@ const visualizers = [
     desc: 'Guaranteed O(1) worst-case lookup via two tables and eviction chains.',
   },
   {
-  name: 'Cuckoo Filter Visualizer',
-  path: '/pages/visualizers/cuckoo-filter/cuckoo-filter.html',
-  category: 'Data Structures',
-  icon: 'fa-filter',
-  desc: 'Bloom Filters that can delete — fingerprint XOR dual-bucket scheme, cuckoo eviction chains, false positive demo, and Bloom vs Cuckoo space comparison.',
+    name: 'Cuckoo Filter Visualizer',
+    path: '/pages/visualizers/cuckoo-filter/cuckoo-filter.html',
+    category: 'Data Structures',
+    icon: 'fa-filter',
+    desc: 'Bloom Filters that can delete — fingerprint XOR dual-bucket scheme, cuckoo eviction chains, false positive demo, and Bloom vs Cuckoo space comparison.',
   },
   {
     name: 'LSH Visualizer',
@@ -1047,11 +1054,11 @@ const visualizers = [
     desc: 'How RAID 6 and QR codes survive missing data — points on a polynomial curve, live disk failures.',
   },
   {
-  name: 'Kalman Filter Visualizer',
-  path: '/pages/visualizers/kalman-filter/kalman-filter.html',
-  category: 'Algorithms',
-  icon: 'fa-chart-line',
-  desc: 'GPS and robotics state estimation — watch predict/update steps, Kalman gain, Gaussian belief narrowing, and sensor noise vs estimation accuracy live.',
+    name: 'Kalman Filter Visualizer',
+    path: '/pages/visualizers/kalman-filter/kalman-filter.html',
+    category: 'Algorithms',
+    icon: 'fa-chart-line',
+    desc: 'GPS and robotics state estimation — watch predict/update steps, Kalman gain, Gaussian belief narrowing, and sensor noise vs estimation accuracy live.',
   },
   {
     name: "Mo's Algorithm Visualizer",
