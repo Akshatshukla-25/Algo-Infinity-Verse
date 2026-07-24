@@ -126,6 +126,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const flowSvgLayer = document.getElementById('flowSvgLayer');
 
+  // ── Multi-Node HA Cluster State ──
+  const clusterNodes = {
+    'node-a': { id: 'node-a', name: 'Node-A', status: 'online' },
+    'node-b': { id: 'node-b', name: 'Node-B', status: 'online' },
+    'node-c': { id: 'node-c', name: 'Node-C', status: 'online' },
+  };
+
+  const queueHA = {
+    orders_queue: { leaderNode: 'node-a', followerNodes: ['node-b', 'node-c'] },
+    retry_queue: { leaderNode: 'node-b', followerNodes: ['node-a', 'node-c'] },
+    logs_queue: { leaderNode: 'node-c', followerNodes: ['node-a', 'node-b'] },
+    notifications_queue: { leaderNode: 'node-a', followerNodes: ['node-b', 'node-c'] },
+    dlq_queue: { leaderNode: 'node-b', followerNodes: ['node-a', 'node-c'] },
+  };
+
+  const clusterElectionBanner = document.getElementById('clusterElectionBanner');
+  const clusterElectionMsg = document.getElementById('clusterElectionMsg');
+
+  function renderQueueHATags() {
+    Object.keys(queueHA).forEach((qName) => {
+      const tagContainerId = `ha-tags-${qName.replace('_queue', '')}`;
+      const container = document.getElementById(tagContainerId);
+      if (!container) return;
+
+      const ha = queueHA[qName];
+      const leaderName = clusterNodes[ha.leaderNode]
+        ? clusterNodes[ha.leaderNode].name
+        : ha.leaderNode;
+      const leaderStatus = clusterNodes[ha.leaderNode]
+        ? clusterNodes[ha.leaderNode].status
+        : 'online';
+
+      let html = `<span class="ha-badge-leader ${leaderStatus === 'crashed' ? 'crashed' : ''}" title="Queue Leader Node">👑 ${leaderName}</span>`;
+
+      ha.followerNodes.forEach((fId) => {
+        const fName = clusterNodes[fId] ? clusterNodes[fId].name : fId;
+        const fStatus = clusterNodes[fId] ? clusterNodes[fId].status : 'online';
+        if (fStatus === 'online') {
+          html += `<span class="ha-badge-follower" title="Mirrored Follower Replica">🛡️ ${fName}</span>`;
+        }
+      });
   // ── Broker Resource Pressure & Flow Control State ──
   let resourcePressure = 20;
   let isConnectionBlocked = false;
@@ -292,6 +333,102 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function renderClusterNodesUI() {
+    Object.keys(clusterNodes).forEach((nId) => {
+      const node = clusterNodes[nId];
+      const card = document.getElementById(`card-${nId}`);
+      const statusBadge = document.getElementById(`status-${nId}`);
+      const btn = document.querySelector(`.btn-kill-node[data-node="${nId}"]`);
+
+      if (card && statusBadge && btn) {
+        if (node.status === 'online') {
+          card.className = 'cluster-node-card online';
+          statusBadge.className = 'c-node-badge healthy';
+          statusBadge.textContent = 'HEALTHY';
+          btn.className = 'btn-kill-node';
+          btn.innerHTML =
+            '<i class="fas fa-power-off"></i> <span class="lbl-kill">Kill Node</span>';
+        } else {
+          card.className = 'cluster-node-card crashed';
+          statusBadge.className = 'c-node-badge crashed';
+          statusBadge.textContent = 'CRASHED';
+          btn.className = 'btn-kill-node btn-revive';
+          btn.innerHTML = '<i class="fas fa-bolt"></i> <span class="lbl-kill">Revive Node</span>';
+        }
+      }
+    });
+  }
+
+  function toggleNodeCrash(nodeId) {
+    const node = clusterNodes[nodeId];
+    if (!node) return;
+
+    if (node.status === 'online') {
+      node.status = 'crashed';
+      logEvent(
+        'dlq',
+        `CRASH ALARM: Node <strong>${node.name}</strong> went OFFLINE! Triggering election protocol...`
+      );
+
+      // Election Failover for queues led by this node
+      const promotedQueues = [];
+      Object.keys(queueHA).forEach((qName) => {
+        const ha = queueHA[qName];
+        if (ha.leaderNode === nodeId) {
+          // Elect first healthy follower
+          const nextLeader = ha.followerNodes.find(
+            (fId) => clusterNodes[fId] && clusterNodes[fId].status === 'online'
+          );
+          if (nextLeader) {
+            ha.followerNodes = ha.followerNodes.filter((id) => id !== nextLeader);
+            ha.followerNodes.push(nodeId);
+            ha.leaderNode = nextLeader;
+            promotedQueues.push({ queue: qName, newLeader: clusterNodes[nextLeader].name });
+          }
+        }
+      });
+
+      if (promotedQueues.length > 0) {
+        const promoText = promotedQueues
+          .map(
+            (p) =>
+              `${clusterNodes[nodeId].name} crashed! ${p.newLeader} promoted to LEADER for ${p.queue}`
+          )
+          .join('; ');
+        showElectionBanner(`${promoText} (Zero Message Loss)`);
+        logEvent(
+          'ack',
+          `ELECTION COMPLETED: Promoted new leaders for ${promotedQueues.length} queues with zero message loss.`
+        );
+      }
+    } else {
+      node.status = 'online';
+      logEvent(
+        'sys',
+        `NODE RECOVERED: <strong>${node.name}</strong> rejoined the cluster as a mirrored follower.`
+      );
+    }
+
+    renderClusterNodesUI();
+    renderQueueHATags();
+  }
+
+  function showElectionBanner(msg) {
+    if (!clusterElectionBanner || !clusterElectionMsg) return;
+    clusterElectionMsg.textContent = msg;
+    clusterElectionBanner.classList.remove('hidden');
+    setTimeout(() => {
+      clusterElectionBanner.classList.add('hidden');
+    }, 4500);
+  }
+
+  function setupClusterNodeHandlers() {
+    document.querySelectorAll('.btn-kill-node').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const nodeId = e.currentTarget.getAttribute('data-node');
+        toggleNodeCrash(nodeId);
+      });
+    });
   function openQueueConfigModal(qName) {
     activeConfigQueue = qName;
     const p = queuePolicies[qName] || {
@@ -1154,6 +1291,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBindingsList();
   renderConsumers();
   renderAllQueues();
+  renderClusterNodesUI();
+  renderQueueHATags();
+  setupClusterNodeHandlers();
   renderQueuePolicyTags();
   setupQueueConfigHandlers();
   setTimeout(drawConnectionLines, 300);

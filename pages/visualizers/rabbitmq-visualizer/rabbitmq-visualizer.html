@@ -249,6 +249,63 @@
 
       <!-- Center Column: Visualization Stage & Canvas -->
       <section class="panel panel-center">
+        <!-- Cluster Topology Nodes Bar -->
+        <div class="cluster-nodes-bar" id="clusterNodesBar">
+          <div class="cluster-title"><i class="fas fa-network-wired"></i> RabbitMQ HA Cluster:</div>
+          <div class="node-cards-row">
+            <div class="cluster-node-card online" id="card-node-a">
+              <div class="c-node-head">
+                <span class="c-node-name"><i class="fas fa-server"></i> Node-A</span>
+                <span class="c-node-badge healthy" id="status-node-a">HEALTHY</span>
+              </div>
+              <div class="c-node-actions">
+                <button
+                  type="button"
+                  class="btn-kill-node"
+                  data-node="node-a"
+                  title="Simulate Node Crash / Offline"
+                >
+                  <i class="fas fa-power-off"></i> <span class="lbl-kill">Kill Node</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="cluster-node-card online" id="card-node-b">
+              <div class="c-node-head">
+                <span class="c-node-name"><i class="fas fa-server"></i> Node-B</span>
+                <span class="c-node-badge healthy" id="status-node-b">HEALTHY</span>
+              </div>
+              <div class="c-node-actions">
+                <button
+                  type="button"
+                  class="btn-kill-node"
+                  data-node="node-b"
+                  title="Simulate Node Crash / Offline"
+                >
+                  <i class="fas fa-power-off"></i> <span class="lbl-kill">Kill Node</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="cluster-node-card online" id="card-node-c">
+              <div class="c-node-head">
+                <span class="c-node-name"><i class="fas fa-server"></i> Node-C</span>
+                <span class="c-node-badge healthy" id="status-node-c">HEALTHY</span>
+              </div>
+              <div class="c-node-actions">
+                <button
+                  type="button"
+                  class="btn-kill-node"
+                  data-node="node-c"
+                  title="Simulate Node Crash / Offline"
+                >
+                  <i class="fas fa-power-off"></i> <span class="lbl-kill">Kill Node</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Topology Controls Bar -->
         <div class="topology-toolbar">
           <div class="toolbar-left">
@@ -344,6 +401,16 @@
           </div>
         </div>
 
+        <!-- Cluster Failover Election Notification Banner -->
+        <div class="cluster-election-banner hidden" id="clusterElectionBanner">
+          <span class="election-title"
+            ><i class="fas fa-vote-yea"></i> RAFT/QUORUM ELECTION PROTOCOL:</span
+          >
+          <span class="election-msg" id="clusterElectionMsg"
+            >Node-A crashed! Node-B promoted to LEADER with zero message loss.</span
+          >
+        </div>
+
         <!-- Interactive Stage Grid -->
         <div class="topology-stage" id="topologyStage">
           <!-- Flow Control Waves / Backpressure Barrier Layer -->
@@ -375,6 +442,14 @@
               <div class="node-header">
                 <span class="ex-tag tag-direct">DIRECT</span>
                 <span class="ex-name">amq.direct</span>
+                <button
+                  type="button"
+                  class="btn-breakpoint"
+                  data-ex="amq.direct"
+                  title="Toggle Breakpoint on Exchange"
+                >
+                  <i class="fas fa-circle-dot"></i>
+                </button>
               </div>
               <div class="ex-desc">Exact match routing key</div>
             </div>
@@ -383,6 +458,14 @@
               <div class="node-header">
                 <span class="ex-tag tag-topic">TOPIC</span>
                 <span class="ex-name">amq.topic</span>
+                <button
+                  type="button"
+                  class="btn-breakpoint"
+                  data-ex="amq.topic"
+                  title="Toggle Breakpoint on Exchange"
+                >
+                  <i class="fas fa-circle-dot"></i>
+                </button>
               </div>
               <div class="ex-desc">Wildcards (*: 1 word, #: 0+ words)</div>
             </div>
@@ -391,6 +474,14 @@
               <div class="node-header">
                 <span class="ex-tag tag-fanout">FANOUT</span>
                 <span class="ex-name">amq.fanout</span>
+                <button
+                  type="button"
+                  class="btn-breakpoint"
+                  data-ex="amq.fanout"
+                  title="Toggle Breakpoint on Exchange"
+                >
+                  <i class="fas fa-circle-dot"></i>
+                </button>
               </div>
               <div class="ex-desc">Broadcasts to all bound queues</div>
             </div>
@@ -399,6 +490,14 @@
               <div class="node-header">
                 <span class="ex-tag tag-headers">HEADERS</span>
                 <span class="ex-name">amq.headers</span>
+                <button
+                  type="button"
+                  class="btn-breakpoint"
+                  data-ex="amq.headers"
+                  title="Toggle Breakpoint on Exchange"
+                >
+                  <i class="fas fa-circle-dot"></i>
+                </button>
               </div>
               <div class="ex-desc">Match header key-value pairs</div>
             </div>
@@ -407,6 +506,14 @@
               <div class="node-header">
                 <span class="ex-tag tag-dlx">DLX</span>
                 <span class="ex-name">amq.dlx</span>
+                <button
+                  type="button"
+                  class="btn-breakpoint"
+                  data-ex="amq.dlx"
+                  title="Toggle Breakpoint on Exchange"
+                >
+                  <i class="fas fa-circle-dot"></i>
+                </button>
               </div>
               <div class="ex-desc">Dead Letter Exchange</div>
             </div>
@@ -429,6 +536,9 @@
                   <i class="fas fa-gear"></i>
                 </button>
                 <span class="q-count-badge" id="count-orders">0</span>
+              </div>
+              <div class="queue-ha-tags" id="ha-tags-orders">
+                <!-- Leader & Follower badges rendered dynamically -->
               </div>
               <div class="queue-policy-tags" id="policy-tags-orders"></div>
               <div class="queue-depth-bar">
@@ -455,6 +565,7 @@
                 </button>
                 <span class="q-count-badge count-retry" id="count-retry">0</span>
               </div>
+              <div class="queue-ha-tags" id="ha-tags-retry"></div>
               <div class="queue-policy-tags" id="policy-tags-retry"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill fill-retry" id="fill-retry" style="width: 0%"></div>
@@ -476,6 +587,7 @@
                 </button>
                 <span class="q-count-badge" id="count-logs">0</span>
               </div>
+              <div class="queue-ha-tags" id="ha-tags-logs"></div>
               <div class="queue-policy-tags" id="policy-tags-logs"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill" id="fill-logs" style="width: 0%"></div>
@@ -497,6 +609,7 @@
                 </button>
                 <span class="q-count-badge" id="count-notifications">0</span>
               </div>
+              <div class="queue-ha-tags" id="ha-tags-notifications"></div>
               <div class="queue-policy-tags" id="policy-tags-notifications"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill" id="fill-notifications" style="width: 0%"></div>
@@ -520,6 +633,7 @@
                 </button>
                 <span class="q-count-badge count-dlq" id="count-dlq">0</span>
               </div>
+              <div class="queue-ha-tags" id="ha-tags-dlq"></div>
               <div class="queue-policy-tags" id="policy-tags-dlq"></div>
               <div class="queue-depth-bar">
                 <div class="queue-depth-fill fill-dlq" id="fill-dlq" style="width: 0%"></div>
