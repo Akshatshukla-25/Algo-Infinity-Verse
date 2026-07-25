@@ -268,6 +268,13 @@ const visualizers = [
 
   // ── Graph Algorithms ──
   {
+    name: 'Max Flow Race: Edmonds-Karp vs Push-Relabel',
+    path: '/pages/visualizers/max-flow-race-visualizer/max-flow-race-visualizer.html',
+    category: 'Graph Algorithms',
+    icon: 'fa-water',
+    desc: 'Race Edmonds-Karp against Push-Relabel on adversarial max flow networks.',
+  },
+  {
     name: 'Graph Visualizer',
     path: '/pages/visualizers/graph-visualizer/graph-visualizer.html',
     category: 'Graph Algorithms',
