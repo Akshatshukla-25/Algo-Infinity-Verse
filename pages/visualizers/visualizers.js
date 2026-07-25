@@ -268,6 +268,13 @@ const visualizers = [
 
   // ── Graph Algorithms ──
   {
+    name: 'Bitmask DP: TSP',
+    path: '/pages/visualizers/bitmask-dp-visualizer/bitmask-dp-visualizer.html',
+    category: 'Graph Algorithms',
+    icon: 'fa-microchip',
+    desc: 'Solve Traveling Salesman using integer bit operations.',
+  },
+  {
     name: 'Max Flow Race: Edmonds-Karp vs Push-Relabel',
     path: '/pages/visualizers/max-flow-race-visualizer/max-flow-race-visualizer.html',
     category: 'Graph Algorithms',
