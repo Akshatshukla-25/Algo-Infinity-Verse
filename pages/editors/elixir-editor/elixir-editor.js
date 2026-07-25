@@ -220,9 +220,10 @@ IO.puts(Greeter.greet("Random String"))`,
 /**
  * Sends files to the Piston execution API.
  * @param {object[]} files - The files array in project state.
+ * @param {AbortSignal} [signal] - Optional AbortSignal to cancel the request.
  * @returns {Promise<object>} The output and errors array.
  */
-async function executeElixir(files) {
+async function executeElixir(files, signal) {
   if (files.length === 0 || !files.some((f) => f.content.trim())) {
     return { output: [], errors: ['No code to execute.'] };
   }
@@ -247,6 +248,9 @@ async function executeElixir(files) {
         compile_memory_limit: -1,
         run_memory_limit: -1,
       }),
+      // Pass the AbortSignal so the browser can cancel the in-flight request
+      // when a new Run is triggered before the previous one completes.
+      signal,
     });
 
     if (!response.ok) {
@@ -275,6 +279,10 @@ async function executeElixir(files) {
 
     return { output, errors };
   } catch (error) {
+    // AbortError is not a real failure — the user triggered a new run
+    if (error.name === 'AbortError') {
+      return { output: [], errors: [] };
+    }
     return { output: [], errors: ['Execution Error: ' + error.message] };
   }
 }
@@ -346,6 +354,8 @@ function initElixirEditor() {
 
   const SAVE_KEY = 'elixir-editor-project';
   let runSeq = 0;
+  let runAbortController = null; // Tracks the active Piston fetch so it can be aborted on re-run
+  let highlightDebounceTimer = null; // Debounce handle for syntax highlight updates
 
   // Project state
   let files = [];
@@ -459,7 +469,12 @@ function initElixirEditor() {
   }
 
   function updateSyntaxHighlight() {
-    highlight.innerHTML = highlightElixir(editor.value) + '\n';
+    // Debounce at 80 ms — for large files a synchronous highlight on every
+    // keydown blocks the main thread and causes visible input lag.
+    clearTimeout(highlightDebounceTimer);
+    highlightDebounceTimer = setTimeout(() => {
+      highlight.innerHTML = highlightElixir(editor.value) + '\n';
+    }, 80);
   }
 
   function updateLineNumbers() {
@@ -724,11 +739,19 @@ function initElixirEditor() {
 
   async function runCode() {
     const seq = ++runSeq;
+
+    // Cancel any in-flight Piston request from a previous run
+    if (runAbortController) {
+      runAbortController.abort();
+    }
+    runAbortController = new AbortController();
+    const { signal } = runAbortController;
+
     setStatus('running');
     outputBody.innerHTML = '<span class="ex-output-placeholder">Compiling and running...</span>';
     consoleBody.innerHTML = '<span class="ex-console-placeholder">No compilation errors.</span>';
 
-    const { output, errors } = await executeElixir(files);
+    const { output, errors } = await executeElixir(files, signal);
     if (seq !== runSeq) return;
 
     if (output.length > 0) {
@@ -739,7 +762,7 @@ function initElixirEditor() {
         el.textContent = line;
         outputBody.appendChild(el);
       });
-    } else {
+    } else if (errors.length === 0) {
       outputBody.innerHTML =
         '<span class="ex-output-placeholder">No standard output produced.</span>';
     }
