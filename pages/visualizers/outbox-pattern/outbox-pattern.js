@@ -30,6 +30,7 @@ const els = {
 
 let orderCount = 0;
 let isProcessing = false;
+let isPublishing = false; // Guard: prevents relay from publishing the same event twice concurrently
 let relayInterval = null;
 
 function initOutbox() {
@@ -50,8 +51,13 @@ function initOutbox() {
 }
 
 function resetAll() {
+  // Stop any running relay before resetting state to avoid race conditions
+  // where a mid-flight publish cycle mutates DOM that has already been cleared.
+  stopRelay();
+
   orderCount = 0;
   isProcessing = false;
+  isPublishing = false; // Reset publish guard so the fresh relay starts clean
   els.ordersTable.innerHTML = '<div class="empty-state">No orders</div>';
   els.outboxTable.innerHTML = '<div class="empty-state">No pending events</div>';
   els.kafkaStream.innerHTML = '';
@@ -132,14 +138,25 @@ async function handleCreateOrder() {
   els.btnCreate.disabled = false;
 }
 
+function stopRelay() {
+  if (relayInterval) {
+    clearInterval(relayInterval);
+    relayInterval = null;
+  }
+}
+
 function startRelay() {
-  if (relayInterval) clearInterval(relayInterval);
+  stopRelay(); // Always clear the previous interval before starting a new one
 
   relayInterval = setInterval(async () => {
-    if (isProcessing) return; // don't poll while animating main flow to avoid visual clutter
+    // Skip this tick if the main order flow is animating or a publish is already in-flight.
+    // Without the isPublishing guard the same PENDING row can be picked up by two
+    // consecutive ticks when the animation takes longer than the poll interval (2 s).
+    if (isProcessing || isPublishing) return;
 
     const pending = els.outboxTable.querySelector('.outbox-row[data-status="PENDING"]');
     if (pending) {
+      isPublishing = true; // Acquire publish lock
       els.relayProcess.className = 'relay-process relay-active';
       els.relayProcess.querySelector('.status-text').textContent = 'Publishing...';
 
@@ -151,23 +168,28 @@ function startRelay() {
       // Animate packet to Kafka
       await animatePacket(pending, els.kafkaStream, `Publish ${payload}`);
 
-      // Mark processed
-      pending.dataset.status = 'PROCESSED';
-      pending.className = 'db-row outbox-row processed';
-      pending.textContent = pending.textContent.replace('PENDING', 'PROCESSED');
+      // Only update if the row is still in the DOM (not cleared by a reset)
+      if (pending.parentNode) {
+        // Mark processed
+        pending.dataset.status = 'PROCESSED';
+        pending.className = 'db-row outbox-row processed';
+        pending.textContent = pending.textContent.replace('PENDING', 'PROCESSED');
 
-      // Add to Kafka
-      const kEvent = document.createElement('div');
-      kEvent.className = 'kafka-event';
-      kEvent.textContent = payload;
-      els.kafkaStream.prepend(kEvent);
+        // Add to Kafka
+        const kEvent = document.createElement('div');
+        kEvent.className = 'kafka-event';
+        kEvent.textContent = payload;
+        els.kafkaStream.prepend(kEvent);
 
-      els.relayProcess.className = 'relay-process';
-      els.relayProcess.querySelector('.status-text').textContent = 'Polling Outbox...';
+        els.relayProcess.className = 'relay-process';
+        els.relayProcess.querySelector('.status-text').textContent = 'Polling Outbox...';
 
-      els.expTitle.innerHTML =
-        '<i class="fas fa-check-circle" style="color:var(--color-relay)"></i> 3. Message Relayed';
-      els.expText.innerHTML = `The background Message Relay (e.g., a cron job or Debezium CDC) read the pending event from the Outbox and published it to the Kafka Broker successfully.`;
+        els.expTitle.innerHTML =
+          '<i class="fas fa-check-circle" style="color:var(--color-relay)"></i> 3. Message Relayed';
+        els.expText.innerHTML = `The background Message Relay (e.g., a cron job or Debezium CDC) read the pending event from the Outbox and published it to the Kafka Broker successfully.`;
+      }
+
+      isPublishing = false; // Release publish lock
     }
   }, 2000);
 }
