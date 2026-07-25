@@ -826,8 +826,15 @@ const visualizers = [
 
   // ── Math, Geometry & Signals ──
   {
+    name: 'Haar Wavelet Transform',
+    path: '/pages/visualizers/haar-wavelet-visualizer/haar-wavelet-visualizer.html',
+    category: 'Math & Geometry',
+    icon: 'fa-wave-square',
+    desc: 'Visualize multi-resolution signal decomposition and JPEG2000 compression mechanics.',
+  },
+  {
     name: 'FFT Visualizer',
-    path: '/pages/visualizer/fft-visualizer/fft-visualizer.html',
+    path: '/pages/visualizers/fft-visualizer/fft-visualizer.html',
     category: 'Math & Geometry',
     icon: 'fa-chart-line',
     desc: 'Fast Fourier Transform — convert between time and frequency domains.',
