@@ -30,12 +30,14 @@ self.onmessage = async (e) => {
     const { code } = e.data;
     logs.length = 0;
     
+    let localGlobals = null;
     try {
         const pyodide = await pyodidePromise;
         const startTime = performance.now();
         
-        // Execute Python script
-        const result = await pyodide.runPythonAsync(code);
+        // Execute Python script within an isolated global dictionary namespace
+        localGlobals = pyodide.globals.get("dict")();
+        const result = await pyodide.runPythonAsync(code, { globals: localGlobals });
         const endTime = performance.now();
         
         const executionTime = (endTime - startTime).toFixed(2);
@@ -51,6 +53,10 @@ self.onmessage = async (e) => {
             error: err.message || String(err),
             logs: [...logs]
         });
+    } finally {
+        if (localGlobals && typeof localGlobals.destroy === 'function') {
+            try { localGlobals.destroy(); } catch (_) {}
+        }
     }
 };
 `;
