@@ -2323,7 +2323,7 @@ function initNavbar() {
 
   window.addEventListener('resize', () => {
     if (!isMobile()) {
-      if (navLinks.classList.contains('active')) {
+      if (navLinks && navLinks.classList.contains('active')) {
         toggleMenu(false);
       }
     } else {

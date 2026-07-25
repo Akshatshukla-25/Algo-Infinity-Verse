@@ -1923,12 +1923,15 @@ const clearBtn = document.getElementById('vizClearBtn');
 const filterContainer = document.getElementById('vizFilters');
 const emptyState = document.getElementById('vizEmpty');
 const countDisplay = document.getElementById('vizCountDisplay');
+const paginationContainer = document.getElementById('vizPagination');
 
+const PAGE_SIZE = 20;
 let activeCategory =
   new URLSearchParams(window.location.search).get('category') ||
   localStorage.getItem('vizFilterCategory') ||
   'all';
 let searchQuery = '';
+let vizCurrentPage = 1;
 const pageReferrer = document.referrer;
 
 /* ─── Build filter chips ─── */
@@ -1958,6 +1961,7 @@ function buildFilters() {
         url.searchParams.set('category', activeCategory);
       }
       history.pushState({}, '', url);
+      vizCurrentPage = 1;
       render();
     });
     filterContainer.appendChild(btn);
@@ -1985,11 +1989,19 @@ function render() {
   if (filtered.length === 0) {
     grid.innerHTML = '';
     emptyState.style.display = 'block';
+    renderPagination(0);
     return;
   }
 
   emptyState.style.display = 'none';
-  grid.innerHTML = filtered
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (vizCurrentPage > totalPages) vizCurrentPage = totalPages;
+
+  const start = (vizCurrentPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+  grid.innerHTML = pageItems
     .map(
       (v, i) => `
     <a href="${v.path}" target="_blank" rel="noopener noreferrer" class="viz-card" role="listitem" style="animation-delay:${reducedMotion ? '0s' : Math.min(i * 0.025, 0.8)}s">
@@ -2004,7 +2016,77 @@ function render() {
   `
     )
     .join('');
+
+  renderPagination(filtered.length, totalPages);
 }
+
+/* ─── Render pagination ─── */
+function renderPagination(totalItems, totalPages) {
+  if (!paginationContainer) return;
+
+  if (totalItems <= PAGE_SIZE || totalPages <= 1) {
+    paginationContainer.style.display = 'none';
+    paginationContainer.innerHTML = '';
+    return;
+  }
+
+  paginationContainer.style.display = 'flex';
+
+  const getPageNumbers = (current, total) => {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const pages = [];
+    const delta = 1;
+    const rangeStart = Math.max(2, current - delta);
+    const rangeEnd = Math.min(total - 1, current + delta);
+    pages.push(1);
+    if (rangeStart > 2) pages.push('...');
+    for (let i = rangeStart; i <= rangeEnd; i++) pages.push(i);
+    if (rangeEnd < total - 1) pages.push('...');
+    pages.push(total);
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers(vizCurrentPage, totalPages);
+
+  let html = '';
+  html += `<button type="button" class="viz-page-btn viz-page-prev"${vizCurrentPage === 1 ? ' disabled' : ''} aria-label="Previous page">&laquo; Prev</button>`;
+
+  html += '<div class="viz-page-numbers">';
+  for (const p of pageNumbers) {
+    if (p === '...') {
+      html += '<span class="viz-page-ellipsis">&hellip;</span>';
+    } else {
+      html += `<button type="button" class="viz-page-num${p === vizCurrentPage ? ' active' : ''}" data-page="${p}"${p === vizCurrentPage ? ' aria-current="page"' : ''}>${p}</button>`;
+    }
+  }
+  html += '</div>';
+
+  html += `<button type="button" class="viz-page-btn viz-page-next"${vizCurrentPage === totalPages ? ' disabled' : ''} aria-label="Next page">Next &raquo;</button>`;
+
+  paginationContainer.innerHTML = html;
+}
+
+/* ─── Pagination event delegation ─── */
+paginationContainer.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn || btn.disabled) return;
+
+  if (btn.classList.contains('viz-page-prev')) {
+    vizCurrentPage--;
+    render();
+  } else if (btn.classList.contains('viz-page-next')) {
+    vizCurrentPage++;
+    render();
+  } else if (btn.classList.contains('viz-page-num')) {
+    const page = parseInt(btn.dataset.page, 10);
+    if (page && page !== vizCurrentPage) {
+      vizCurrentPage = page;
+      render();
+    }
+  }
+});
 
 function escHtml(str) {
   const d = document.createElement('div');
@@ -2016,6 +2098,7 @@ function escHtml(str) {
 searchInput.addEventListener('input', () => {
   searchQuery = searchInput.value;
   clearBtn.classList.toggle('visible', searchQuery.length > 0);
+  vizCurrentPage = 1;
   render();
 });
 
@@ -2023,6 +2106,7 @@ clearBtn.addEventListener('click', () => {
   searchInput.value = '';
   searchQuery = '';
   clearBtn.classList.remove('visible');
+  vizCurrentPage = 1;
   render();
   searchInput.focus();
 });
@@ -2071,5 +2155,6 @@ window.addEventListener('popstate', () => {
     localStorage.getItem('vizFilterCategory') ||
     'all';
   syncChipFromURL();
+  vizCurrentPage = 1;
   render();
 });
