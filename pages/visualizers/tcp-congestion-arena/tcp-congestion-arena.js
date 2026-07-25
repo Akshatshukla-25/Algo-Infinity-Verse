@@ -50,7 +50,9 @@ function initTCP() {
 }
 
 function initChart() {
-  chart = new Chart(els.chartCtx, {
+  function createChart() {
+    if (typeof Chart === 'undefined') return;
+    chart = new Chart(els.chartCtx, {
     type: 'line',
     data: {
       labels: chartData.labels,
@@ -92,6 +94,13 @@ function initChart() {
       },
     },
   });
+  }
+
+  if (typeof lazyVisualizer !== 'undefined') {
+    lazyVisualizer.lazyLoadChartJS(els.chartCtx.canvas, createChart);
+  } else {
+    createChart();
+  }
 }
 
 function toggleSimulation() {
@@ -200,7 +209,7 @@ function updateUI() {
 }
 
 function updateChart() {
-  chart.update();
+  if (chart) chart.update();
 }
 
 function spawnPackets() {

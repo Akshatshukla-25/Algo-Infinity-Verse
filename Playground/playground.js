@@ -645,6 +645,12 @@ let profilerChartInstance = null;
 function drawProfilerChart(canvas, results) {
     if (!canvas) return;
     if (!window.Chart) {
+        if (typeof lazyVisualizer !== 'undefined') {
+            lazyVisualizer.lazyLoadChartJS(canvas, function() {
+                drawProfilerChart(canvas, results);
+            });
+            return;
+        }
         console.warn('Chart.js is not loaded.');
         return;
     }

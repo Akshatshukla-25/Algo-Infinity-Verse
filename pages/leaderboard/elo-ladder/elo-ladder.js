@@ -232,15 +232,19 @@
             return;
         }
 
-        const ctx = document.getElementById('ratingChart').getContext('2d');
+        var chartCanvas = document.getElementById('ratingChart');
+        if (!chartCanvas) return;
+        var ctx = chartCanvas.getContext('2d');
         if (ratingChart) {
             ratingChart.destroy();
         }
 
-        const labels = player.history.map(h => h.date);
-        const data = player.history.map(h => h.rating);
+        function createChart() {
+            if (typeof Chart === 'undefined') return;
+            var labels = player.history.map(function(h) { return h.date; });
+            var data = player.history.map(function(h) { return h.rating; });
 
-        ratingChart = new Chart(ctx, {
+            ratingChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
@@ -285,8 +289,14 @@
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        if (typeof lazyVisualizer !== 'undefined') {
+            lazyVisualizer.lazyLoadChartJS(chartCanvas, createChart);
+        } else {
+            createChart();
+        }
     }
 
     // ----- Filtering -----

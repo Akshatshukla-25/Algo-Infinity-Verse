@@ -179,7 +179,11 @@
   </main>
 </div>
 
-<script type="module" src="marching-cubes.js"></script>
+<script src="/modules/lazyVisualizer.js"></script>
+<script>
+  /* Defer module script until the 3D viewport enters the viewport */
+  lazyVisualizer.lazyLoadModule('#viewport', 'marching-cubes.js');
+</script>
     <script src="/modules/quick-notes/quick-notes.js"></script>
 </body>
 </html>
