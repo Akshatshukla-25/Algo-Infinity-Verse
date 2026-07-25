@@ -775,6 +775,13 @@ const visualizers = [
 
   // ── Security & Cryptography ──
   {
+    name: 'Chinese Remainder Theorem',
+    path: '/pages/visualizers/chinese-remainder-theorem/chinese-remainder-theorem.html',
+    category: 'Security & Crypto',
+    icon: 'fa-clover',
+    desc: 'Reconstruct secrets from modular shadows and speed up RSA.',
+  },
+  {
     name: 'RSA Cryptography Visualizer',
     path: '/pages/visualizers/rsa-visualizer/rsa-visualizer.html',
     category: 'Security & Crypto',
