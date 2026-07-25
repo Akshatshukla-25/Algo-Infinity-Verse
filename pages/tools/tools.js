@@ -50,12 +50,48 @@ const practiceTools = [
   { name: "Weekly DSA Study Plan", path: "/pages/tools/weekly-study-plan/weekly-study-plan.html", category: "Dashboards", icon: "fa-calendar-week", desc: "Hours/week + weak topics + interview date → auto 7-day plan with quiz/visualizer deep links and localStorage XP hooks." },
 
   // ── Simulators ──
-  { name: "Algorithm Arena", path: "/pages/tools/algorithm-arena/algorithm-arena.html", category: "Simulators", icon: "fa-gamepad", desc: "Pit algorithms against each other in head-to-head performance battles." },
-  { name: "Memory Leak Simulator", path: "/pages/tools/memory-leak-simulator/memory-leak-simulator.html", category: "Simulators", icon: "fa-memory", desc: "Simulate memory leaks to understand how improper management impacts performance." },
-  { name: "Git Simulator", path: "/pages/tools/git-simulator/git-simulator.html", category: "Simulators", icon: "fa-code-fork", desc: "Interactive Git simulation to master branching, merging, and version control workflows." },
-  { name: "AI Bug Injector", path: "/pages/tools/ai-bug-injector/ai-bug-injector.html", category: "Simulators", icon: "fa-bug", desc: "Inject realistic bugs into your code and practice debugging under pressure." },
-  { name: "Contest Hub", path: "/pages/tools/contest/contest.html", category: "Simulators", icon: "fa-trophy", desc: "Join timed coding contests to compete, track rankings, and sharpen problem-solving speed." },
-  { name: "Interview Panic Mode", path: "/pages/tools/interview-panic-mode/interview-panic-mode.html", category: "Simulators", icon: "fa-bolt", desc: "Rapid-fire revision mode simulating last-minute interview pressure and time constraints." },
+  {
+    name: 'Algorithm Arena',
+    path: '/pages/tools/algorithm-arena/algorithm-arena.html',
+    category: 'Simulators',
+    icon: 'fa-gamepad',
+    desc: 'Pit algorithms against each other in head-to-head performance battles.',
+  },
+  {
+    name: 'Memory Leak Simulator',
+    path: '/pages/tools/memory-leak-simulator/memory-leak-simulator.html',
+    category: 'Simulators',
+    icon: 'fa-memory',
+    desc: 'Simulate memory leaks to understand how improper management impacts performance.',
+  },
+  {
+    name: 'Git Simulator',
+    path: '/pages/tools/git-simulator/git-simulator.html',
+    category: 'Simulators',
+    icon: 'fa-code-fork',
+    desc: 'Interactive Git simulation to master branching, merging, and version control workflows.',
+  },
+  {
+    name: 'AI Bug Injector',
+    path: '/pages/tools/ai-bug-injector/ai-bug-injector.html',
+    category: 'Simulators',
+    icon: 'fa-bug',
+    desc: 'Inject realistic bugs into your code and practice debugging under pressure.',
+  },
+  {
+    name: 'Contest Hub',
+    path: '/pages/tools/contest/contest.html',
+    category: 'Simulators',
+    icon: 'fa-trophy',
+    desc: 'Join timed coding contests to compete, track rankings, and sharpen problem-solving speed.',
+  },
+  {
+    name: 'Interview Panic Mode',
+    path: '/pages/tools/interview-panic-mode/interview-panic-mode.html',
+    category: 'Simulators',
+    icon: 'fa-bolt',
+    desc: 'Rapid-fire revision mode simulating last-minute interview pressure and time constraints.',
+  },
 
   // ── Other ──
   { name: "Comparison Tool", path: "/pages/tools/compare/compare.html", category: "Other", icon: "fa-not-equal", desc: "Compare two code snippets or algorithms to highlight differences in approach and performance." },
@@ -72,19 +108,27 @@ const practiceTools = [
 
 /* ─── Categories ─── */
 const categories = [
-  "All", "Analysis", "Practice Aids", "Learning Tools",
-  "Debugging", "Dashboards", "Simulators", "Other"
+  'All',
+  'Analysis',
+  'Practice Aids',
+  'Learning Tools',
+  'Debugging',
+  'Dashboards',
+  'Simulators',
+  'Collaboration',
+  'Other',
 ];
 
 /* ─── Category pastel colors ─── */
 const categoryColors = {
-  "analysis": "#bae6fd",
-  "practice-aids": "#fed7aa",
-  "learning-tools": "#a7f3d0",
-  "debugging": "#fecaca",
-  "dashboards": "#fecdd3",
-  "simulators": "#fde68a",
-  "other": "#bfdbfe",
+  analysis: '#bae6fd',
+  'practice-aids': '#fed7aa',
+  'learning-tools': '#a7f3d0',
+  debugging: '#fecaca',
+  dashboards: '#fecdd3',
+  simulators: '#fde68a',
+  collaboration: '#ddd6fe',
+  other: '#bfdbfe',
 };
 
 /* ─── DOM refs ─── */
@@ -95,24 +139,26 @@ const filterContainer = document.getElementById('tlFilters');
 const emptyState = document.getElementById('tlEmpty');
 const countDisplay = document.getElementById('tlCountDisplay');
 
-let activeCategory = new URLSearchParams(window.location.search).get('category')
-  || localStorage.getItem('tlFilterCategory')
-  || 'all';
+let activeCategory =
+  new URLSearchParams(window.location.search).get('category') ||
+  localStorage.getItem('tlFilterCategory') ||
+  'all';
 let searchQuery = '';
 const pageReferrer = document.referrer;
 
 /* ─── Build filter chips ─── */
 function buildFilters() {
-  categories.forEach(cat => {
+  categories.forEach((cat) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tl-filter-chip' + (cat === 'All' ? ' active' : '');
     btn.dataset.category = cat === 'All' ? 'all' : cat.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     btn.setAttribute('role', 'tab');
     btn.setAttribute('aria-selected', cat === 'All' ? 'true' : 'false');
-    btn.textContent = cat + (cat !== 'All' ? ` (${practiceTools.filter(v => v.category === cat).length})` : '');
+    btn.textContent =
+      cat + (cat !== 'All' ? ` (${practiceTools.filter((v) => v.category === cat).length})` : '');
     btn.addEventListener('click', () => {
-      filterContainer.querySelectorAll('.tl-filter-chip').forEach(c => {
+      filterContainer.querySelectorAll('.tl-filter-chip').forEach((c) => {
         c.classList.remove('active');
         c.setAttribute('aria-selected', 'false');
       });
@@ -136,11 +182,13 @@ function buildFilters() {
 /* ─── Render cards ─── */
 function render() {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const filtered = practiceTools.filter(v => {
-    const matchCategory = activeCategory === 'all' ||
+  const filtered = practiceTools.filter((v) => {
+    const matchCategory =
+      activeCategory === 'all' ||
       v.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === activeCategory;
     const q = searchQuery.toLowerCase();
-    const matchSearch = !q ||
+    const matchSearch =
+      !q ||
       v.name.toLowerCase().includes(q) ||
       v.category.toLowerCase().includes(q) ||
       v.desc.toLowerCase().includes(q);
@@ -156,9 +204,10 @@ function render() {
   }
 
   emptyState.style.display = 'none';
-  grid.innerHTML = filtered.map((v, i) => {
-    const catKey = v.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    return `
+  grid.innerHTML = filtered
+    .map((v, i) => {
+      const catKey = v.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return `
     <a href="${v.path}" class="tl-card" role="listitem" data-category="${catKey}" style="animation-delay:${reducedMotion ? '0s' : Math.min(i * 0.025, 0.8)}s">
       <span class="tl-card-icon" style="color:${categoryColors[catKey] || 'var(--tl-primary)'}"><i class="fas ${v.icon}"></i></span>
       <span class="tl-card-title">${escHtml(v.name)}</span>
@@ -168,7 +217,8 @@ function render() {
         <span class="tl-card-arrow"><i class="fas fa-arrow-right"></i></span>
       </div>
     </a>`;
-  }).join('');
+    })
+    .join('');
 }
 
 function escHtml(str) {
@@ -226,7 +276,7 @@ document.getElementById('tlBackBtn')?.addEventListener('click', () => {
 /* ─── Sorting Reveal: bubble-sort the scrambled title letters ─── */
 
 function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 function shuffleArray(arr) {
@@ -257,10 +307,12 @@ function initSortingReveal() {
   const chars = text.split('');
 
   /* Split into letter spans */
-  title.innerHTML = chars.map((char) => {
-    if (char === ' ') return `<span class="tl-title-space"> </span>`;
-    return `<span class="tl-title-letter">${char}</span>`;
-  }).join('');
+  title.innerHTML = chars
+    .map((char) => {
+      if (char === ' ') return `<span class="tl-title-space"> </span>`;
+      return `<span class="tl-title-letter">${char}</span>`;
+    })
+    .join('');
 
   const letterSpans = [...title.querySelectorAll('.tl-title-letter')];
   const n = letterSpans.length;
@@ -274,14 +326,16 @@ function initSortingReveal() {
   */
   const items = letterSpans.map((span, idx) => ({
     char: span.textContent,
-    origIdx: idx
+    origIdx: idx,
   }));
 
   /* Scramble the items (avoid any landing in original position) */
   let scrambled = derangeItems([...items]);
 
   /* Apply scrambled chars to the spans */
-  scrambled.forEach((item, i) => { letterSpans[i].textContent = item.char; });
+  scrambled.forEach((item, i) => {
+    letterSpans[i].textContent = item.char;
+  });
 
   /* ─── Kick off the async sort animation ─── */
   (async () => {
@@ -300,7 +354,6 @@ function initSortingReveal() {
         b.style.transform = 'translateY(-10px)';
         a.style.color = '#fde68a';
         b.style.color = '#fde68a';
-
 
         await sleep(15);
 
@@ -388,7 +441,7 @@ initSortingReveal();
 
 /* Restore active chip from URL */
 function syncChipFromURL() {
-  filterContainer.querySelectorAll('.tl-filter-chip').forEach(c => {
+  filterContainer.querySelectorAll('.tl-filter-chip').forEach((c) => {
     const isActive = c.dataset.category === activeCategory;
     c.classList.toggle('active', isActive);
     c.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -399,9 +452,10 @@ render();
 
 /* Handle browser back/forward */
 window.addEventListener('popstate', () => {
-  activeCategory = new URLSearchParams(window.location.search).get('category')
-    || localStorage.getItem('tlFilterCategory')
-    || 'all';
+  activeCategory =
+    new URLSearchParams(window.location.search).get('category') ||
+    localStorage.getItem('tlFilterCategory') ||
+    'all';
   syncChipFromURL();
   render();
 });
