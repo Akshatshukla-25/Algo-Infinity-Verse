@@ -268,7 +268,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .ra-score-circle {
@@ -279,37 +279,48 @@
   align-items: center;
   justify-content: center;
   background: var(--ra-card);
-  border: 4px solid var(--ra-primary);
+  border: 4px solid var(--ra-text-muted);
   box-shadow:
-    0 0 32px rgba(252, 200, 208, 0.12),
-    inset 0 0 32px rgba(252, 200, 208, 0.03);
-  animation: ra-score-glow 3s ease-in-out infinite;
-  transition: transform 0.3s;
+    0 0 32px rgba(255, 255, 255, 0.04),
+    inset 0 0 32px rgba(255, 255, 255, 0.01);
+  transition: transform 0.3s, border-color 0.5s, box-shadow 0.5s;
 }
 
 .ra-score-circle:hover {
   transform: scale(1.03);
 }
 
+/* Score color states */
+.ra-score-circle.score-excellent {
+  border-color: var(--ra-emerald);
+  --glow-r: 16; --glow-g: 185; --glow-b: 129;
+  animation: ra-score-glow-pulse 3s ease-in-out infinite;
+}
+
+.ra-score-circle.score-high {
+  border-color: #06b6d4;
+  --glow-r: 6; --glow-g: 182; --glow-b: 212;
+  animation: ra-score-glow-pulse 3s ease-in-out infinite;
+}
+
+.ra-score-circle.score-mid {
+  border-color: var(--ra-warning);
+  --glow-r: 245; --glow-g: 158; --glow-b: 11;
+  animation: ra-score-glow-pulse 3s ease-in-out infinite;
+}
+
+.ra-score-circle.score-low {
+  border-color: var(--ra-error);
+  --glow-r: 251; --glow-g: 113; --glow-b: 133;
+  animation: ra-score-glow-pulse 3s ease-in-out infinite;
+}
+
 .ra-score-number {
   font-family: var(--ra-font-display);
   font-size: 3rem;
   font-weight: 700;
-  color: var(--ra-primary);
+  color: var(--ra-text);
   line-height: 1;
-}
-
-@keyframes ra-score-glow {
-  0%, 100% {
-    box-shadow:
-      0 0 32px rgba(252, 200, 208, 0.12),
-      inset 0 0 32px rgba(252, 200, 208, 0.03);
-  }
-  50% {
-    box-shadow:
-      0 0 48px rgba(252, 200, 208, 0.2),
-      inset 0 0 32px rgba(252, 200, 208, 0.03);
-  }
 }
 
 .ra-score-label {
@@ -321,11 +332,75 @@
   margin-top: 0.75rem;
 }
 
+/* Consolidated glow keyframe using CSS custom properties */
+@keyframes ra-score-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 32px rgba(var(--glow-r, 255), var(--glow-g, 255), var(--glow-b, 255), 0.15),
+                inset 0 0 32px rgba(var(--glow-r, 255), var(--glow-g, 255), var(--glow-b, 255), 0.02);
+  }
+  50% {
+    box-shadow: 0 0 48px rgba(var(--glow-r, 255), var(--glow-g, 255), var(--glow-b, 255), 0.28),
+                inset 0 0 32px rgba(var(--glow-r, 255), var(--glow-g, 255), var(--glow-b, 255), 0.02);
+  }
+}
+
+/* ── Category Scores Bar ────────────────────── */
+.ra-category-scores {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.ra-category-score {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  background: var(--ra-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-family: var(--ra-font-mono);
+  cursor: default;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.ra-category-score:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.02);
+  transform: translateY(-1px);
+}
+
+.ra-category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cat-color, var(--ra-text-muted));
+  flex-shrink: 0;
+}
+
+.ra-category-name {
+  color: var(--ra-text-secondary);
+  font-family: var(--ra-font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ra-category-value {
+  color: var(--ra-text);
+  font-weight: 600;
+  margin-left: 0.15rem;
+}
+
 /* --- Results Grid --- */
 .ra-results-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
   margin-bottom: 2.5rem;
 }
 
@@ -467,6 +542,12 @@
 }
 
 /* --- Responsive --- */
+@media (max-width: 900px) {
+  .ra-results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 640px) {
   .repo-analyzer-page {
     padding: 4.5rem 1rem 2rem;
@@ -487,6 +568,10 @@
 
   .ra-results-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ra-category-scores {
+    gap: 0.5rem;
   }
 
   .ra-score-circle {
@@ -521,4 +606,34 @@
   outline: 1px solid var(--ra-error);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* --- Warnings Banner --- */
+.ra-warnings-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1rem;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--ra-radius);
+  color: var(--ra-warning);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  animation: ra-slide-down 0.25s ease-out;
+}
+
+.ra-warnings-banner i {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.ra-warning-item {
+  color: var(--ra-text-secondary);
+  padding: 0.25rem 0;
+}
+
+.ra-warning-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }

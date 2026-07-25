@@ -54,8 +54,9 @@
         </div>
         <h1 class="ra-hero-title">Repository Analyzer</h1>
         <p class="ra-hero-subtitle">
-          Scan any GitHub, GitLab, or Bitbucket repository for CI/CD automation,
-          dependency management, and testing best practices.
+          Scan any GitHub, GitLab, or Bitbucket repository for
+          CI/CD automation, code quality, security scanning, and
+          documentation coverage best practices.
         </p>
       </div>
 
@@ -86,19 +87,50 @@
       <!-- Loading -->
       <div id="loadingIndicator" class="ra-loading" aria-live="polite">
         <div class="ra-spinner" role="status" aria-label="Loading"></div>
-        <p class="ra-loading-text">Scanning workflows &amp; configurations&hellip;</p>
+        <p class="ra-loading-text">Scanning workflows, configs, and files&hellip;</p>
       </div>
 
       <!-- Results -->
       <div id="resultsContainer" class="ra-results" aria-live="polite">
         <div class="ra-score-wrapper">
-          <div class="ra-score-circle">
+          <div class="ra-score-circle" id="scoreCircle">
             <span class="ra-score-number" id="scoreDisplay">0</span>
           </div>
-          <span class="ra-score-label">CI/CD Score</span>
+          <span class="ra-score-label" id="scoreLabel">Overall Health Score</span>
+        </div>
+
+        <!-- Category Scores -->
+        <div class="ra-category-scores">
+          <div class="ra-category-score" data-category="ci-cd">
+            <span class="ra-category-dot" style="--cat-color: var(--ra-cyan)"></span>
+            <span class="ra-category-name">CI/CD</span>
+            <span class="ra-category-value" id="ciCdScore">-</span>
+          </div>
+          <div class="ra-category-score" data-category="code-quality">
+            <span class="ra-category-dot" style="--cat-color: var(--ra-emerald)"></span>
+            <span class="ra-category-name">Code Quality</span>
+            <span class="ra-category-value" id="codeQualityScore">-</span>
+          </div>
+          <div class="ra-category-score" data-category="security">
+            <span class="ra-category-dot" style="--cat-color: var(--ra-warning)"></span>
+            <span class="ra-category-name">Security</span>
+            <span class="ra-category-value" id="securityScore">-</span>
+          </div>
+          <div class="ra-category-score" data-category="docs">
+            <span class="ra-category-dot" style="--cat-color: #a78bfa"></span>
+            <span class="ra-category-name">Documentation</span>
+            <span class="ra-category-value" id="docsScore">-</span>
+          </div>
+        </div>
+
+        <!-- Warnings Banner (shown when API errors occur, e.g. rate limiting) -->
+        <div id="warningsBanner" class="ra-warnings-banner" role="alert" style="display: none;">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div id="warningsList"></div>
         </div>
 
         <div class="ra-results-grid">
+          <!-- CI/CD Card -->
           <div class="ra-result-card">
             <div class="ra-result-icon" id="depsIcon">
               <i class="fas fa-box"></i>
@@ -112,6 +144,51 @@
             </div>
             <h4>Automated Tests</h4>
             <p id="testsText">Pending</p>
+          </div>
+          <!-- Code Quality Card -->
+          <div class="ra-result-card">
+            <div class="ra-result-icon" id="linterIcon">
+              <i class="fas fa-code"></i>
+            </div>
+            <h4>Linter</h4>
+            <p id="linterText">Pending</p>
+          </div>
+          <div class="ra-result-card">
+            <div class="ra-result-icon" id="formatterIcon">
+              <i class="fas fa-paint-brush"></i>
+            </div>
+            <h4>Formatter</h4>
+            <p id="formatterText">Pending</p>
+          </div>
+          <!-- Security Card -->
+          <div class="ra-result-card">
+            <div class="ra-result-icon" id="sastIcon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h4>SAST Scanning</h4>
+            <p id="sastText">Pending</p>
+          </div>
+          <div class="ra-result-card">
+            <div class="ra-result-icon" id="depScanIcon">
+              <i class="fas fa-search"></i>
+            </div>
+            <h4>Dep. Scanning</h4>
+            <p id="depScanText">Pending</p>
+          </div>
+          <!-- Documentation Card -->
+          <div class="ra-result-card">
+            <div class="ra-result-icon" id="readmeIcon">
+              <i class="fas fa-book"></i>
+            </div>
+            <h4>README</h4>
+            <p id="readmeText">Pending</p>
+          </div>
+          <div class="ra-result-card">
+            <div class="ra-result-icon" id="licenseIcon">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <h4>License</h4>
+            <p id="licenseText">Pending</p>
           </div>
         </div>
 

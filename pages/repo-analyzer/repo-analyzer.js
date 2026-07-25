@@ -11,11 +11,31 @@
     loadingIndicator: document.getElementById('loadingIndicator'),
     resultsContainer: document.getElementById('resultsContainer'),
     scoreDisplay: document.getElementById('scoreDisplay'),
+    scoreCircle: document.getElementById('scoreCircle'),
+    scoreLabel: document.getElementById('scoreLabel'),
     depsIcon: document.getElementById('depsIcon'),
     depsText: document.getElementById('depsText'),
     testsIcon: document.getElementById('testsIcon'),
     testsText: document.getElementById('testsText'),
+    linterIcon: document.getElementById('linterIcon'),
+    linterText: document.getElementById('linterText'),
+    formatterIcon: document.getElementById('formatterIcon'),
+    formatterText: document.getElementById('formatterText'),
+    sastIcon: document.getElementById('sastIcon'),
+    sastText: document.getElementById('sastText'),
+    depScanIcon: document.getElementById('depScanIcon'),
+    depScanText: document.getElementById('depScanText'),
+    readmeIcon: document.getElementById('readmeIcon'),
+    readmeText: document.getElementById('readmeText'),
+    licenseIcon: document.getElementById('licenseIcon'),
+    licenseText: document.getElementById('licenseText'),
+    ciCdScore: document.getElementById('ciCdScore'),
+    codeQualityScore: document.getElementById('codeQualityScore'),
+    securityScore: document.getElementById('securityScore'),
+    docsScore: document.getElementById('docsScore'),
     recommendationsList: document.getElementById('recommendationsList'),
+    warningsBanner: document.getElementById('warningsBanner'),
+    warningsList: document.getElementById('warningsList'),
   };
 
   /* ---- Validation ---- */
@@ -91,6 +111,7 @@
       frame++;
       if (frame >= totalFrames) {
         dom.scoreDisplay.textContent = target;
+        updateScoreColor(target);
         return;
       }
       current = Math.round(step * frame);
@@ -99,6 +120,53 @@
     }
 
     requestAnimationFrame(tick);
+  }
+
+  /* ---- Score Color ---- */
+
+  function updateScoreColor(score) {
+    var circle = dom.scoreCircle;
+    // Remove existing color classes
+    circle.classList.remove('score-low', 'score-mid', 'score-high', 'score-excellent');
+
+    if (score >= 80) {
+      circle.classList.add('score-excellent');
+    } else if (score >= 60) {
+      circle.classList.add('score-high');
+    } else if (score >= 40) {
+      circle.classList.add('score-mid');
+    } else {
+      circle.classList.add('score-low');
+    }
+  }
+
+  /* ---- Helper: set card status (uses safe DOM methods, no innerHTML for dynamic content) ---- */
+
+  function setCardIcon(iconEl, isSuccess) {
+    // Clear previous content
+    while (iconEl.firstChild) {
+      iconEl.removeChild(iconEl.firstChild);
+    }
+    var icon = document.createElement('i');
+    icon.className = isSuccess
+      ? 'fas fa-check-circle icon-success'
+      : 'fas fa-times-circle icon-error';
+    iconEl.appendChild(icon);
+  }
+
+  function setCardStatus(iconEl, textEl, isPresent, presentLabel, missingLabel) {
+    setCardIcon(iconEl, isPresent);
+    textEl.textContent = isPresent ? (presentLabel || 'Configured') : (missingLabel || 'Missing');
+  }
+
+  /* ---- Helper: set category score ---- */
+
+  function setCategoryScore(element, score) {
+    if (typeof score === 'number') {
+      element.textContent = score + '/100';
+    } else {
+      element.textContent = '-';
+    }
   }
 
   /* ---- Main Analysis ---- */
@@ -131,31 +199,36 @@
         return response.json();
       })
       .then(function (data) {
-        animateScore(data.score);
+        // Overall health score
+        animateScore(data.overallScore !== undefined ? data.overallScore : 0);
 
-        /* Dependencies */
-        if (data.details && data.details.hasDependencies) {
-          dom.depsIcon.innerHTML =
-            '<i class="fas fa-check-circle icon-success"></i>';
-          dom.depsText.textContent = 'Configured';
-        } else {
-          dom.depsIcon.innerHTML =
-            '<i class="fas fa-times-circle icon-error"></i>';
-          dom.depsText.textContent = 'Missing';
-        }
+        // ── Category scores ────────────────────────────────────────────────
+        setCategoryScore(dom.ciCdScore, data.ciCd ? data.ciCd.score : 0);
+        setCategoryScore(dom.codeQualityScore, data.codeQuality ? data.codeQuality.score : 0);
+        setCategoryScore(dom.securityScore, data.security ? data.security.score : 0);
+        setCategoryScore(dom.docsScore, data.documentation ? data.documentation.score : 0);
 
-        /* Tests */
-        if (data.details && data.details.hasTests) {
-          dom.testsIcon.innerHTML =
-            '<i class="fas fa-check-circle icon-success"></i>';
-          dom.testsText.textContent = 'Configured';
-        } else {
-          dom.testsIcon.innerHTML =
-            '<i class="fas fa-times-circle icon-error"></i>';
-          dom.testsText.textContent = 'Missing';
-        }
+        // ── CI/CD details ──────────────────────────────────────────────────
+        var ciCd = data.ciCd || {};
+        setCardStatus(dom.depsIcon, dom.depsText, ciCd.hasDependencies);
+        setCardStatus(dom.testsIcon, dom.testsText, ciCd.hasTests);
 
-        /* Recommendations */
+        // ── Code Quality details ───────────────────────────────────────────
+        var codeQuality = data.codeQuality || {};
+        setCardStatus(dom.linterIcon, dom.linterText, codeQuality.hasLinter, 'Configured', 'Missing');
+        setCardStatus(dom.formatterIcon, dom.formatterText, codeQuality.hasFormatter, 'Configured', 'Missing');
+
+        // ── Security details ───────────────────────────────────────────────
+        var security = data.security || {};
+        setCardStatus(dom.sastIcon, dom.sastText, security.hasSast, 'Configured', 'Missing');
+        setCardStatus(dom.depScanIcon, dom.depScanText, security.hasDependencyScan, 'Configured', 'Missing');
+
+        // ── Documentation details ──────────────────────────────────────────
+        var docs = data.documentation || {};
+        setCardStatus(dom.readmeIcon, dom.readmeText, docs.hasReadme, 'Present', 'Missing');
+        setCardStatus(dom.licenseIcon, dom.licenseText, docs.hasLicense, 'Present', 'Missing');
+
+        // ── Recommendations ────────────────────────────────────────────────
         if (data.recommendations && data.recommendations.length > 0) {
           dom.recommendationsList.innerHTML = data.recommendations
             .map(function (rec) {
@@ -169,6 +242,18 @@
         } else {
           dom.recommendationsList.innerHTML =
             '<li><i class="fas fa-check-circle" style="color: var(--ra-emerald)"></i> No recommendations needed — your repository looks solid.</li>';
+        }
+
+        // ── Warnings (API errors like rate limiting) ─────────────────────
+        if (data.warnings && data.warnings.length > 0) {
+          dom.warningsBanner.style.display = 'flex';
+          dom.warningsList.innerHTML = data.warnings
+            .map(function (w) {
+              return '<div class="ra-warning-item">' + escapeHtml(w) + '</div>';
+            })
+            .join('');
+        } else {
+          dom.warningsBanner.style.display = 'none';
         }
 
         dom.resultsContainer.classList.add('visible');
