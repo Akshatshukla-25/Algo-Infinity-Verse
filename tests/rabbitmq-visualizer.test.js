@@ -87,4 +87,14 @@ describe('RabbitMQ Visualizer - AMQP Topic Tokenization & Routing Inspector', ()
     const noMatch = matchDirectWithBreakdown('orders.created', 'orders.deleted');
     expect(noMatch.matched).toBe(false);
   });
+
+  test('rabbitmq-visualizer.js includes MAX_HOP_COUNT and clearAllRetryTimers to break dead-letter loops', () => {
+    const freshCode = fs.readFileSync(
+      path.resolve(__dirname, '../pages/visualizers/rabbitmq-visualizer/rabbitmq-visualizer.js'),
+      'utf-8'
+    );
+    expect(freshCode).toContain('MAX_HOP_COUNT');
+    expect(freshCode).toContain('clearAllRetryTimers');
+    expect(freshCode).toContain('activeRetryTimers');
+  });
 });

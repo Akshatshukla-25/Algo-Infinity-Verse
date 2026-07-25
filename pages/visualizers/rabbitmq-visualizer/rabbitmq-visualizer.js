@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedMsgId = null;
 
   const MAX_RETRIES = 3;
+  const MAX_HOP_COUNT = 10;
+  let activeRetryTimers = [];
+
+  function clearAllRetryTimers() {
+    activeRetryTimers.forEach((timerId) => clearTimeout(timerId));
+    activeRetryTimers = [];
+  }
 
   // Telemetry stats
   const stats = {
@@ -166,6 +173,129 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       return { matched: true, keyTokens, patternTokens, steps };
     }
+    if (!pattern || !key) {
+      const isMatch = pattern === key;
+      steps.push({
+        step: 1,
+        keyToken: key || '(empty)',
+        patternToken: pattern || '(empty)',
+        rule: isMatch ? 'exact' : 'mismatch',
+        matched: isMatch,
+        explanation: isMatch ? 'Exact empty string match' : 'Pattern or key missing',
+      });
+      return { matched: isMatch, keyTokens, patternTokens, steps };
+    }
+    let stepNum = 0;
+    function mh(pi, ki) {
+      stepNum++;
+      const currentStep = stepNum;
+      const pToken = pi < patternTokens.length ? patternTokens[pi] : null;
+      const kToken = ki < keyTokens.length ? keyTokens[ki] : null;
+
+      if (pi === patternTokens.length && ki === keyTokens.length) {
+        steps.push({
+          step: currentStep,
+          keyToken: '(end)',
+          patternToken: '(end)',
+          rule: 'exact',
+          matched: true,
+          explanation: 'End of pattern and key reached successfully',
+        });
+        return true;
+      }
+      if (pi === patternTokens.length) {
+        steps.push({
+          step: currentStep,
+          keyToken: kToken,
+          patternToken: '(end)',
+          rule: 'length_mismatch',
+          matched: false,
+          explanation: `Key has remaining token "${kToken}" but pattern ended`,
+        });
+        return false;
+      }
+      if (pToken === '#') {
+        if (mh(pi + 1, ki)) {
+          steps.push({
+            step: currentStep,
+            keyToken: kToken || '(none)',
+            patternToken: '#',
+            rule: 'multi_wildcard',
+            matched: true,
+            explanation: `Wildcard "#" matched 0 words (skipped "#")`,
+          });
+          return true;
+        }
+        if (ki < keyTokens.length && mh(pi, ki + 1)) {
+          steps.push({
+            step: currentStep,
+            keyToken: kToken,
+            patternToken: '#',
+            rule: 'multi_wildcard',
+            matched: true,
+            explanation: `Wildcard "#" consumed token "${kToken}"`,
+          });
+          return true;
+        }
+        steps.push({
+          step: currentStep,
+          keyToken: kToken || '(none)',
+          patternToken: '#',
+          rule: 'multi_wildcard',
+          matched: false,
+          explanation: `Wildcard "#" failed to match remaining sequence`,
+        });
+        return false;
+      }
+      if (ki === keyTokens.length) {
+        steps.push({
+          step: currentStep,
+          keyToken: '(end)',
+          patternToken: pToken,
+          rule: 'length_mismatch',
+          matched: false,
+          explanation: `Pattern token "${pToken}" remaining but key ended`,
+        });
+        return false;
+      }
+      if (pToken === '*' || pToken === kToken) {
+        const isStar = pToken === '*';
+        const res = mh(pi + 1, ki + 1);
+        steps.push({
+          step: currentStep,
+          keyToken: kToken,
+          patternToken: pToken,
+          rule: isStar ? 'single_wildcard' : 'exact',
+          matched: res,
+          explanation: isStar
+            ? `Wildcard "*" matched token "${kToken}"`
+            : `Exact token match "${kToken}" === "${pToken}"`,
+        });
+        return res;
+      }
+      steps.push({
+        step: currentStep,
+        keyToken: kToken,
+        patternToken: pToken,
+        rule: 'mismatch',
+        matched: false,
+        explanation: `Token mismatch: "${kToken}" !== "${pToken}"`,
+      });
+      return false;
+    }
+    const isMatched = mh(0, 0);
+    steps.sort((a, b) => a.step - b.step);
+    const uniqueSteps = [];
+    const seen = new Set();
+    for (const s of steps) {
+      const id = `${s.step}-${s.keyToken}-${s.patternToken}-${s.matched}`;
+      if (!seen.has(id)) {
+        seen.add(id);
+        uniqueSteps.push(s);
+      }
+    }
+    return { matched: isMatched, keyTokens, patternTokens, steps: uniqueSteps };
+  }
   // ── Shovel & Federation State ──
   let isShovelActive = false;
   let wanLatency = 200;
@@ -270,6 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Run Shovel Engine worker every 2.5 seconds
     setInterval(runShovelCycle, 2500);
+  }
+
   // ── Multi-Node HA Cluster State ──
   const clusterNodes = {
     'node-a': { id: 'node-a', name: 'Node-A', status: 'online' },
@@ -311,6 +443,11 @@ document.addEventListener('DOMContentLoaded', () => {
           html += `<span class="ha-badge-follower" title="Mirrored Follower Replica">🛡️ ${fName}</span>`;
         }
       });
+
+      container.innerHTML = html;
+    });
+  }
+
   // ── Broker Resource Pressure & Flow Control State ──
   let resourcePressure = 20;
   let isConnectionBlocked = false;
@@ -391,6 +528,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateOutboundBufferUI() {
     if (outboundBufferTag) {
       outboundBufferTag.innerHTML = `<i class="fas fa-box-archive"></i> Outbound Buffer: ${outboundBuffer.length} msgs`;
+    }
+  }
+
   const pubPriority = document.getElementById('pubPriority');
 
   // ── Queue Policies State & Priority Heap Engine ──
@@ -573,6 +713,8 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleNodeCrash(nodeId);
       });
     });
+  }
+
   function openQueueConfigModal(qName) {
     activeConfigQueue = qName;
     const p = queuePolicies[qName] || {
@@ -636,140 +778,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── Topic Wildcard Pattern Matcher ──
-  function matchTopic(pattern, key) {
+  function _matchTopic(pattern, key) {
     if (pattern === '#') return true;
     if (!pattern || !key) return pattern === key;
-
-    if (!pattern || !key) {
-      const isMatch = pattern === key;
-      steps.push({
-        step: 1,
-        keyToken: key || '(empty)',
-        patternToken: pattern || '(empty)',
-        rule: isMatch ? 'exact' : 'mismatch',
-        matched: isMatch,
-        explanation: isMatch ? 'Exact empty string match' : 'Pattern or key missing',
-      });
-      return { matched: isMatch, keyTokens, patternTokens, steps };
-    }
-
-    let stepNum = 0;
-    function matchHelper(pi, ki) {
-      stepNum++;
-      const currentStep = stepNum;
-      const pToken = pi < patternTokens.length ? patternTokens[pi] : null;
-      const kToken = ki < keyTokens.length ? keyTokens[ki] : null;
-
-      if (pi === patternTokens.length && ki === keyTokens.length) {
-        steps.push({
-          step: currentStep,
-          keyToken: '(end)',
-          patternToken: '(end)',
-          rule: 'exact',
-          matched: true,
-          explanation: 'End of pattern and key reached successfully',
-        });
-        return true;
-      }
-
-      if (pi === patternTokens.length) {
-        steps.push({
-          step: currentStep,
-          keyToken: kToken,
-          patternToken: '(end)',
-          rule: 'length_mismatch',
-          matched: false,
-          explanation: `Key has remaining token "${kToken}" but pattern ended`,
-        });
+    const p = pattern.split('.');
+    const k = key.split('.');
+    function mh(pi, ki) {
+      if (pi === p.length && ki === k.length) return true;
+      if (pi === p.length) return false;
+      if (p[pi] === '#') {
+        if (mh(pi + 1, ki)) return true;
+        if (ki < k.length && mh(pi, ki + 1)) return true;
         return false;
       }
-
-      if (pToken === '#') {
-        if (matchHelper(pi + 1, ki)) {
-          steps.push({
-            step: currentStep,
-            keyToken: kToken || '(none)',
-            patternToken: '#',
-            rule: 'multi_wildcard',
-            matched: true,
-            explanation: `Wildcard "#" matched 0 words (skipped "#")`,
-          });
-          return true;
-        }
-        if (ki < keyTokens.length && matchHelper(pi, ki + 1)) {
-          steps.push({
-            step: currentStep,
-            keyToken: kToken,
-            patternToken: '#',
-            rule: 'multi_wildcard',
-            matched: true,
-            explanation: `Wildcard "#" consumed token "${kToken}"`,
-          });
-          return true;
-        }
-        steps.push({
-          step: currentStep,
-          keyToken: kToken || '(none)',
-          patternToken: '#',
-          rule: 'multi_wildcard',
-          matched: false,
-          explanation: `Wildcard "#" failed to match remaining sequence`,
-        });
-        return false;
-      }
-
-      if (ki === keyTokens.length) {
-        steps.push({
-          step: currentStep,
-          keyToken: '(end)',
-          patternToken: pToken,
-          rule: 'length_mismatch',
-          matched: false,
-          explanation: `Pattern token "${pToken}" remaining but key ended`,
-        });
-        return false;
-      }
-
-      if (pToken === '*' || pToken === kToken) {
-        const isStar = pToken === '*';
-        const res = matchHelper(pi + 1, ki + 1);
-        steps.push({
-          step: currentStep,
-          keyToken: kToken,
-          patternToken: pToken,
-          rule: isStar ? 'single_wildcard' : 'exact',
-          matched: res,
-          explanation: isStar
-            ? `Wildcard "*" matched token "${kToken}"`
-            : `Exact token match "${kToken}" === "${pToken}"`,
-        });
-        return res;
-      }
-
-      steps.push({
-        step: currentStep,
-        keyToken: kToken,
-        patternToken: pToken,
-        rule: 'mismatch',
-        matched: false,
-        explanation: `Token mismatch: "${kToken}" !== "${pToken}"`,
-      });
+      if (ki === k.length) return false;
+      if (p[pi] === '*' || p[pi] === k[ki]) return mh(pi + 1, ki + 1);
       return false;
     }
-
-    const isMatched = matchHelper(0, 0);
-    steps.sort((a, b) => a.step - b.step);
-    const uniqueSteps = [];
-    const seen = new Set();
-    for (const s of steps) {
-      const id = `${s.step}-${s.keyToken}-${s.patternToken}-${s.matched}`;
-      if (!seen.has(id)) {
-        seen.add(id);
-        uniqueSteps.push(s);
-      }
-    }
-
-    return { matched: isMatched, keyTokens, patternTokens, steps: uniqueSteps };
+    return mh(0, 0);
   }
 
   // ── Headers Matching Logic & Breakdown ──
@@ -1209,6 +1235,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function routeMessage(msg) {
+    msg.hopCount = (msg.hopCount || 0) + 1;
+    if (msg.hopCount > MAX_HOP_COUNT) {
+      logEvent(
+        'dlq',
+        `CRITICAL: Message <strong>[${msg.id}]</strong> exceeded max routing hop limit (${MAX_HOP_COUNT})! Routing cycle broken ➔ Moved to <strong>dead_letter_queue</strong>`
+      );
+      queues.dlq_queue.push(msg);
+      stats.dlq++;
+      updateStatsUI();
+      renderQueueMessages('dlq_queue');
+      return;
+    }
+
     const ex = msg.exchange;
     const frames = [];
     const targetQueues = new Set();
@@ -1437,7 +1476,8 @@ document.addEventListener('DOMContentLoaded', () => {
           );
 
           // Schedule TTL retry timer
-          setTimeout(() => {
+          const timerId = setTimeout(() => {
+            activeRetryTimers = activeRetryTimers.filter((id) => id !== timerId);
             const idx = queues.retry_queue.findIndex((m) => m.id === msg.id);
             if (idx !== -1) {
               const retryMsg = queues.retry_queue.splice(idx, 1)[0];
@@ -1450,6 +1490,7 @@ document.addEventListener('DOMContentLoaded', () => {
               );
             }
           }, 3000 / simSpeed);
+          activeRetryTimers.push(timerId);
         } else {
           // Exceeded max retries -> DLQ
           msg.history.push(`Exceeded ${MAX_RETRIES} retries. Sent to amq.dlx -> dlq_queue`);
@@ -1719,6 +1760,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Scenario Presets Engine ──
   function loadPresetScenario(scenarioKey) {
+    clearAllRetryTimers();
     // Reset Queues
     Object.keys(queues).forEach((k) => (queues[k] = []));
     renderAllQueues();
@@ -1792,6 +1834,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnResetSim.addEventListener('click', () => {
+    clearAllRetryTimers();
     Object.keys(queues).forEach((k) => (queues[k] = []));
     renderAllQueues();
     stats.published = 0;
