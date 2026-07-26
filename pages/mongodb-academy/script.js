@@ -1416,8 +1416,62 @@ db.orders.aggregate([
           'Put $limit before $skip for pagination to avoid sorting unnecessary documents',
         ],
       },
+      {
+        id: 'm5-l4',
+        title: '$graphLookup — Recursive Graph Queries',
+        objectives: [
+          'Understand graph models and hierarchical data in MongoDB',
+          'Use $graphLookup for recursive BFS traversal',
+          'Control recursion depth with maxDepth',
+          'Prevent infinite loops with cycle detection',
+        ],
+        content: `
+          <h2 class="text-2xl font-bold mb-4 text-gray-900">$graphLookup — Recursive Graph Queries</h2>
+          <p class="mb-4 text-gray-700 leading-relaxed">$graphLookup performs a recursive search on a collection, making it perfect for hierarchical data (like org charts, categories) and network connections (like friends-of-friends).</p>
+
+          <h3 class="text-xl font-semibold mt-6 mb-3 text-gray-800">Traversing an Organization Chart</h3>
+          <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto mb-4"><code>// Find Alice and all her direct/indirect reports
+db.employees.aggregate([
+  { $match: { name: 'Alice' } },
+  {
+    $graphLookup: {
+      from: 'employees',          // Collection to traverse
+      startWith: '$name',         // Seed value
+      connectFromField: 'name',   // Value to follow in next hop
+      connectToField: 'reportsTo', // Field to match in 'from' collection
+      as: 'managementChain',      // Output array
+      maxDepth: 5,                // Max hops allowed
+      depthField: 'depth'         // Injects hop count into results
+    }
+  }
+])</code></pre>
+
+          <div class="bg-blue-50 border-l-4 border-blue-600 p-4 my-6 rounded-r-lg">
+            <p class="text-blue-800"><strong>🔗 Breadth-First Search:</strong> $graphLookup executes a BFS. It finds all immediate children (depth 0), then their children (depth 1), and so on. It also automatically tracks visited nodes to prevent infinite loops in cyclic graphs!</p>
+          </div>
+        `,
+        defaultCode:
+          'db.employees.aggregate([\n  { $match: { name: "Bob" } },\n  { $graphLookup: {\n    from: "employees",\n    startWith: "$name",\n    connectFromField: "name",\n    connectToField: "reportsTo",\n    as: "reports",\n    maxDepth: 2,\n    depthField: "level"\n  }}\n])',
+        takeaways: [
+          '$graphLookup recursively joins a collection to itself or another collection',
+          'startWith seeds the search, connectFromField drives the next hop, connectToField is the target to match',
+          'maxDepth limits the recursion to prevent performance issues',
+          'depthField injects the zero-based hop count into each matched document',
+        ],
+      },
     ],
     quiz: [
+      {
+        id: 'q5-0',
+        question: 'What does maxDepth: 0 mean in a $graphLookup stage?',
+        options: [
+          'Infinite recursion',
+          'No traversal, only the initial document is returned',
+          'Traverse exactly 0 hops (only direct children/matches)',
+          'It throws an error',
+        ],
+        correct: 2,
+      },
       {
         id: 'q5-1',
         question: 'What does the $lookup stage do?',
@@ -1489,6 +1543,13 @@ db.orders.aggregate([
         dataset: 'orders',
         defaultCode:
           '// Optimized:\ndb.orders.aggregate([\n  { $match: { status: "delivered" } },\n  { $sort: { total: -1 } },\n  { $limit: 3 }\n])',
+      },
+      {
+        title: 'Management Chain',
+        description: 'Use $graphLookup to find all direct and indirect reports of Alice (CEO).',
+        dataset: 'employees',
+        defaultCode:
+          'db.employees.aggregate([\n  { $match: { name: "Alice" } },\n  { $graphLookup: {\n    from: "employees",\n    startWith: "$name",\n    connectFromField: "name",\n    connectToField: "reportsTo",\n    as: "reportingTree",\n    maxDepth: 5,\n    depthField: "depth"\n  }}\n])',
       },
     ],
   },
@@ -3997,6 +4058,8 @@ function processPipeline(stages, data) {
           return { ...doc, [stage.$lookup.as]: foreignIndex.get(localVal) || [] };
         });
       }
+    } else if (stage.$graphLookup) {
+      currentData = processGraphLookupStage(stage.$graphLookup, currentData, mockDB);
     } else if (stage.$unwind) {
       currentData = processUnwindStage(stage.$unwind, currentData);
     } else if (stage.$bucket) {
@@ -4246,6 +4309,55 @@ function appendTerminalOutput(promptText, className, message) {
 
   const terminal = document.getElementById('terminal-content');
   terminal.scrollTop = terminal.scrollHeight;
+}
+
+function processGraphLookupStage(expr, data, db) {
+  const fromData = db[expr.from] || [];
+  const startWithField =
+    typeof expr.startWith === 'string' && expr.startWith.startsWith('$')
+      ? expr.startWith.slice(1)
+      : expr.startWith;
+
+  // O(N) index on connectToField
+  const index = new Map();
+  fromData.forEach((fDoc) => {
+    const val = fDoc[expr.connectToField];
+    if (!index.has(val)) index.set(val, []);
+    index.get(val).push(fDoc);
+  });
+
+  return data.map((doc) => {
+    let startVal = doc[startWithField] !== undefined ? doc[startWithField] : expr.startWith;
+    if (!Array.isArray(startVal)) startVal = [startVal];
+
+    const results = [];
+    const visited = new Set();
+    const maxDepth = expr.maxDepth !== undefined ? expr.maxDepth : 10;
+
+    // Queue stores { val: connectFromVal, depth: currentDepth }
+    const queue = startVal.map((v) => ({ val: v, depth: 0 }));
+
+    while (queue.length > 0) {
+      const { val, depth } = queue.shift();
+      if (depth > maxDepth) continue;
+
+      const matches = index.get(val) || [];
+      matches.forEach((m) => {
+        const cVal = m[expr.connectFromField];
+        if (!visited.has(cVal)) {
+          visited.add(cVal);
+          const resDoc = { ...m };
+          if (expr.depthField) resDoc[expr.depthField] = depth;
+          results.push(resDoc);
+          if (depth < maxDepth) {
+            queue.push({ val: cVal, depth: depth + 1 });
+          }
+        }
+      });
+    }
+
+    return { ...doc, [expr.as]: results };
+  });
 }
 
 // Run app
