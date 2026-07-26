@@ -178,12 +178,14 @@ function initCanvas() {
   canvas.height = wrapper.clientHeight;
 
   window.addEventListener('resize', () => {
-    canvas.width = wrapper.clientWidth;
-    canvas.height = wrapper.clientHeight;
-    if (versions.length > 0 && currentViewingVersion >= 0) {
-      layoutTree(versions);
-      drawCanvasForVersion(currentViewingVersion);
-    }
+    requestAnimationFrame(() => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      if (versions.length > 0 && currentViewingVersion >= 0) {
+        layoutTree(versions);
+        drawCanvasForVersion(currentViewingVersion);
+      }
+    });
   });
 }
 
