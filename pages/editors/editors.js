@@ -103,6 +103,14 @@ const editors = [
   },
 
   {
+    name: 'Lua Editor',
+    path: '/pages/editors/lua-editor/lua-editor.html',
+    category: 'Scripting Languages',
+    icon: 'fa-moon',
+    desc: 'Write Lua and run it via a self-contained in-browser interpreter — no server, no API key.',
+  },
+
+  {
     name: 'PHP Editor',
     path: '/pages/editors/php-editor/php-editor.html',
     category: 'Scripting Languages',
