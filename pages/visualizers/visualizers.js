@@ -654,6 +654,13 @@ const visualizers = [
 
   // ── Distributed Systems ──
   {
+    name: 'Rendezvous Hashing (HRW)',
+    path: '/pages/visualizers/rendezvous-hashing-visualizer/rendezvous-hashing-visualizer.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Load balance perfectly without using any Consistent Hash Rings.',
+  },
+  {
     name: 'Raft Simulator',
     path: '/pages/ai-features/raft-simulator/raft-simulator.html',
     category: 'Distributed Systems',
