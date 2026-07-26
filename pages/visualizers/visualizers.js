@@ -942,6 +942,13 @@ const visualizers = [
 
   // ── Data Structures ──
   {
+    name: 'Deterministic vs Randomized Skip List',
+    path: '/pages/visualizers/deterministic-skip-list-visualizer/deterministic-skip-list-visualizer.html',
+    category: 'Data Structures',
+    icon: 'fa-layer-group',
+    desc: 'See how structural invariants eliminate the need for coin flips.',
+  },
+  {
     name: 'Linked List Visualizer',
     path: '/pages/visualizers/linked-list-visualizer/linked-list-visualizer.html',
     category: 'Data Structures',
