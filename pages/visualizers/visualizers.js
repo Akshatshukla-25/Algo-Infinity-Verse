@@ -438,6 +438,13 @@ const visualizers = [
 
   // ── Dynamic Programming ──
   {
+    name: 'Patience Sorting (LIS)',
+    path: '/pages/visualizers/patience-sorting-visualizer/patience-sorting-visualizer.html',
+    category: 'Dynamic Programming',
+    icon: 'fa-layer-group',
+    desc: 'Visualize the O(n log n) Longest Increasing Subsequence algorithm using a beautifully visual card-sorting trick.',
+  },
+  {
     name: 'DP Visualizer',
     path: '/pages/visualizers/dp-visualizer/dp-visualizer.html',
     category: 'Dynamic Programming',
