@@ -102,6 +102,10 @@
       "destination": "/pages/leaderboard/preview.html"
     },
     {
+      "source": "/streaks",
+      "destination": "/pages/streaks/streak-dashboard.html"
+    },
+    {
       "source": "/api/battles/:path*",
       "destination": "/api/battles"
     }
