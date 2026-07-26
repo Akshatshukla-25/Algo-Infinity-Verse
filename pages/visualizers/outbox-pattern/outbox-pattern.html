@@ -120,6 +120,38 @@
           </div>
         </section>
 
+        <!-- Consumer Groups -->
+        <section class="system-panel consumer-panel">
+          <div class="panel-header" style="justify-content: space-between">
+            <h2><i class="fas fa-users"></i> Consumer Groups</h2>
+            <div>
+              <button id="btnDropMsg" class="btn btn-sm btn-secondary" style="font-size: 0.75rem">
+                <i class="fas fa-exclamation-triangle"></i> Drop Msg
+              </button>
+            </div>
+          </div>
+          <div class="panel-body" style="display: flex; gap: 10px">
+            <!-- Consumer A -->
+            <div class="consumer-group" id="consumerA">
+              <div class="consumer-header">
+                <h4>Inventory Service</h4>
+                <div class="consumer-lag">Lag: <span id="lagA">0</span></div>
+              </div>
+              <div class="consumer-status" id="statusA">Polling...</div>
+              <div class="consumer-log" id="logA"></div>
+            </div>
+            <!-- Consumer B -->
+            <div class="consumer-group" id="consumerB">
+              <div class="consumer-header">
+                <h4>Notification Service</h4>
+                <div class="consumer-lag">Lag: <span id="lagB">0</span></div>
+              </div>
+              <div class="consumer-status" id="statusB">Polling...</div>
+              <div class="consumer-log" id="logB"></div>
+            </div>
+          </div>
+        </section>
+
         <!-- Network Canvas for Animations -->
         <div id="animationLayer"></div>
       </div>

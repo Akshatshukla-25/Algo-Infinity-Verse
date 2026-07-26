@@ -26,12 +26,25 @@ const els = {
   animLayer: document.getElementById('animationLayer'),
   expTitle: document.getElementById('expTitle'),
   expText: document.getElementById('expText'),
+
+  btnDropMsg: document.getElementById('btnDropMsg'),
+  lagA: document.getElementById('lagA'),
+  lagB: document.getElementById('lagB'),
+  statusA: document.getElementById('statusA'),
+  statusB: document.getElementById('statusB'),
+  logA: document.getElementById('logA'),
+  logB: document.getElementById('logB'),
 };
 
 let orderCount = 0;
 let isProcessing = false;
 let isPublishing = false; // Guard: prevents relay from publishing the same event twice concurrently
 let relayInterval = null;
+
+let kafkaEvents = []; // stores objects { id: 'ORD-1001', payload: '...' }
+let consumerA = { offset: 0, cache: new Set(), interval: null, name: 'Inventory' };
+let consumerB = { offset: 0, cache: new Set(), interval: null, name: 'Notification' };
+let simulateDropMsg = false;
 
 function initOutbox() {
   els.btnCreate.addEventListener('click', handleCreateOrder);
@@ -46,8 +59,18 @@ function initOutbox() {
     }
   });
 
+  if (els.btnDropMsg) {
+    els.btnDropMsg.addEventListener('click', () => {
+      simulateDropMsg = true;
+      alert(
+        'Next message to consumers will be dropped (simulating network issue). Wait for redelivery!'
+      );
+    });
+  }
+
   // Start relay background process
   startRelay();
+  startConsumers();
 }
 
 function resetAll() {
@@ -73,7 +96,16 @@ function resetAll() {
     `;
 
   els.btnCreate.disabled = false;
+
+  kafkaEvents = [];
+  consumerA = { offset: 0, cache: new Set(), interval: null, name: 'Inventory' };
+  consumerB = { offset: 0, cache: new Set(), interval: null, name: 'Notification' };
+  if (els.logA) els.logA.innerHTML = '';
+  if (els.logB) els.logB.innerHTML = '';
+  updateLag();
+
   startRelay();
+  startConsumers();
 }
 
 async function handleCreateOrder() {
@@ -168,26 +200,23 @@ function startRelay() {
       // Animate packet to Kafka
       await animatePacket(pending, els.kafkaStream, `Publish ${payload}`);
 
-      // Only update if the row is still in the DOM (not cleared by a reset)
-      if (pending.parentNode) {
-        // Mark processed
-        pending.dataset.status = 'PROCESSED';
-        pending.className = 'db-row outbox-row processed';
-        pending.textContent = pending.textContent.replace('PENDING', 'PROCESSED');
+      // Mark processed
+      pending.dataset.status = 'PROCESSED';
+      pending.className = 'db-row outbox-row processed';
+      pending.textContent = pending.textContent.replace('PENDING', 'PROCESSED');
 
-        // Add to Kafka
-        const kEvent = document.createElement('div');
-        kEvent.className = 'kafka-event';
-        kEvent.textContent = payload;
-        els.kafkaStream.prepend(kEvent);
+      // Add to Kafka
+      const kEvent = document.createElement('div');
+      kEvent.className = 'kafka-event';
+      kEvent.textContent = payload;
+      els.kafkaStream.prepend(kEvent);
 
-        els.relayProcess.className = 'relay-process';
-        els.relayProcess.querySelector('.status-text').textContent = 'Polling Outbox...';
+      const parsed = JSON.parse(payload);
+      kafkaEvents.push({ id: parsed.order_id, payload: payload });
+      updateLag();
 
-        els.expTitle.innerHTML =
-          '<i class="fas fa-check-circle" style="color:var(--color-relay)"></i> 3. Message Relayed';
-        els.expText.innerHTML = `The background Message Relay (e.g., a cron job or Debezium CDC) read the pending event from the Outbox and published it to the Kafka Broker successfully.`;
-      }
+      els.relayProcess.className = 'relay-process';
+      els.relayProcess.querySelector('.status-text').textContent = 'Polling Outbox...';
 
       isPublishing = false; // Release publish lock
     }
@@ -244,4 +273,63 @@ function animatePacket(fromEl, toEl, text) {
       resolve();
     };
   });
+}
+
+function updateLag() {
+  if (els.lagA) els.lagA.textContent = Math.max(0, kafkaEvents.length - consumerA.offset);
+  if (els.lagB) els.lagB.textContent = Math.max(0, kafkaEvents.length - consumerB.offset);
+}
+
+function logConsumer(logEl, msg, isDup = false) {
+  if (!logEl) return;
+  const div = document.createElement('div');
+  div.className = 'log-entry' + (isDup ? ' dup' : '');
+  div.textContent = msg;
+  logEl.prepend(div);
+}
+
+function startConsumers() {
+  if (consumerA.interval) clearInterval(consumerA.interval);
+  if (consumerB.interval) clearInterval(consumerB.interval);
+
+  const poll = async (consumer, statusEl, logEl) => {
+    if (consumer.offset < kafkaEvents.length) {
+      if (statusEl) statusEl.textContent = 'Processing...';
+      const event = kafkaEvents[consumer.offset];
+
+      if (simulateDropMsg) {
+        logConsumer(logEl, `[ERROR] Dropped msg ${event.id}. Lag increases.`);
+        simulateDropMsg = false;
+        if (statusEl) statusEl.textContent = 'Polling...';
+        updateLag();
+        return; // Missed the message, offset does not advance
+      }
+
+      await sleep(500); // Simulate processing time
+
+      if (consumer.cache.has(event.id)) {
+        logConsumer(logEl, `[IDEMPOTENT] Ignored dup ${event.id}`, true);
+      } else {
+        consumer.cache.add(event.id);
+        logConsumer(logEl, `[OK] Processed ${event.id}`);
+      }
+
+      consumer.offset++;
+      updateLag();
+      if (statusEl) statusEl.textContent = 'Polling...';
+    } else {
+      // Redelivery simulation chance (if caught up)
+      if (kafkaEvents.length > 0 && Math.random() < 0.05) {
+        // 5% chance of redelivery
+        const randomEvt = kafkaEvents[Math.floor(Math.random() * kafkaEvents.length)];
+        logConsumer(logEl, `[REDELIVERY] Rcvd ${randomEvt.id}`, true);
+        if (consumer.cache.has(randomEvt.id)) {
+          logConsumer(logEl, `[IDEMPOTENT] Ignored dup ${randomEvt.id}`, true);
+        }
+      }
+    }
+  };
+
+  consumerA.interval = setInterval(() => poll(consumerA, els.statusA, els.logA), 1500);
+  consumerB.interval = setInterval(() => poll(consumerB, els.statusB, els.logB), 2500); // slower consumer
 }

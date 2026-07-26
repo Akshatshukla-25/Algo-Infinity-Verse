@@ -480,3 +480,60 @@ input:checked + .slider:before {
   line-height: 1.5;
   font-size: 0.95rem;
 }
+
+/* Consumer Groups */
+.consumer-panel {
+  grid-column: span 1;
+}
+.consumer-group {
+  flex: 1;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.consumer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 5px;
+}
+.consumer-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+.consumer-lag {
+  font-size: 0.8rem;
+  color: #f59e0b;
+  font-family: 'Fira Code', monospace;
+  font-weight: bold;
+}
+.consumer-status {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+.consumer-log {
+  flex: 1;
+  background: #1e1e1e;
+  border-radius: 4px;
+  padding: 5px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.75rem;
+  color: #10b981;
+  overflow-y: auto;
+  max-height: 120px;
+}
+.consumer-log .log-entry {
+  margin-bottom: 3px;
+  word-break: break-all;
+}
+.consumer-log .log-entry.dup {
+  color: #f59e0b;
+}
