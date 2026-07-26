@@ -131,6 +131,13 @@ const visualizers = [
     desc: 'Compare leftmost, rightmost, and insert-position binary search side-by-side with lo/hi/mid and mid±1 rules.',
   },
   {
+  name: "Diffie Hellman Key Exchange Visualizer",
+  path: "/pages/visualizers/diffie-hellman-key-exchange/diffie-hellman-visualizer.html",
+  category: "Security & Crypto",
+  icon: "fa-key",
+  desc: "Interactive visualization of the Diffie Hellman key exchange protocol."
+},
+  {
     name: 'Fast/Slow Pointer Simulator',
     path: '/pages/visualizers/fast-slow-pointer-simulator/fast-slow-pointer-simulator.html',
     category: 'Sorting & Searching',
