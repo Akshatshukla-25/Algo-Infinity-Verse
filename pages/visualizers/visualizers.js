@@ -61,6 +61,13 @@ const visualizers = [
   },
   // ── Sorting & Searching ──
   {
+    name: 'Ternary Search Visualizer',
+    path: '/pages/visualizers/ternary-search-visualizer/ternary-search-visualizer.html',
+    category: 'Sorting & Searching',
+    icon: 'fa-mountain',
+    desc: 'Find the maximum of a unimodal function by shrinking the search space by 1/3.',
+  },
+  {
     name: 'Sorting Visualizer',
     path: '/pages/visualizers/sorting-visualizer/sorting-visualizer.html',
     category: 'Sorting & Searching',
