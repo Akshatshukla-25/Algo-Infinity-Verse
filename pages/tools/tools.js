@@ -42,6 +42,7 @@ const practiceTools = [
   { name: "Solution Evolution", path: "/pages/tools/solution-evolution/solution-evolution.html", category: "Debugging", icon: "fa-code-branch", desc: "Visualize how brute-force solutions evolve into optimized ones through iterative refinement." },
   { name: "Algorithm Crime Lab", path: "/pages/tools/investigation-lab/investigation-lab.html", category: "Debugging", icon: "fa-flask", desc: "Investigate algorithmic failures and bugs in a forensic-style debugging environment." },
   { name: "DSA Detective Mode", path: "/pages/tools/dsa-detective/dsa-detective.html", category: "Debugging", icon: "fa-gun", desc: "Guess the correct algorithm from clues in a detective-style interactive challenge." },
+  { name: "DSA Crossword Puzzle", path: "/pages/tools/dsa-crossword/dsa-crossword.html", category: "Learning Tools", icon: "fa-puzzle-piece", desc: "Test DSA vocabulary with interactive crossword puzzles. Three difficulty levels with timers, reveals, and best score tracking." },
   { name: "Fix the Bug", path: "/pages/tools/fix-the-bug/fix-the-bug.html", category: "Debugging", icon: "fa-bug", desc: "Find and fix bugs in 50+ broken code snippets across JS, Python, Java, and C++ with XP rewards, streak tracking, and detailed explanations." },
 
   // ── Dashboards ──
