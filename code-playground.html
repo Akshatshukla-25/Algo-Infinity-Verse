@@ -503,7 +503,9 @@
         display: flex;
         flex-direction: column;
         opacity: 0;
-        transition: width 0.3s ease, opacity 0.3s ease;
+        transition:
+          width 0.3s ease,
+          opacity 0.3s ease;
         flex-shrink: 0;
         position: relative;
       }
@@ -1152,38 +1154,91 @@
         <button type="button" id="reviewBtn" aria-label="Request AI review">
           <i class="fas fa-robot"></i> Request AI Review
         </button>
+        <button
+          type="button"
+          id="explainBtn"
+          aria-label="Explain Code line-by-line"
+          style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white"
+        >
+          <i class="fas fa-wand-magic-sparkles"></i> Explain Code
+        </button>
         <button type="button" id="templateBtn" aria-label="Load template code">
           📄 Load Template
         </button>
         <button type="button" id="clearBtn" aria-label="Clear editor">🗑️ Clear</button>
-        <button type="button" id="snippetsBtn" class="snippets-toggle-btn" aria-label="Toggle snippets library">
+        <button
+          type="button"
+          id="snippetsBtn"
+          class="snippets-toggle-btn"
+          aria-label="Toggle snippets library"
+        >
           <i class="fas fa-code-branch"></i> <span>Snippets</span>
         </button>
       </div>
       <div class="editor-wrapper">
         <div id="editor-container" aria-label="Code editor"></div>
         <!-- Snippets Library Side Panel -->
-        <aside id="snippetsPanel" class="snippets-panel" aria-label="Code Snippets Library" role="complementary">
+        <aside
+          id="snippetsPanel"
+          class="snippets-panel"
+          aria-label="Code Snippets Library"
+          role="complementary"
+        >
           <div class="snippets-panel-header">
             <h3><i class="fas fa-code-branch"></i> Snippets</h3>
-            <button type="button" id="snippetsPanelClose" class="snippets-close-btn" aria-label="Close snippets panel">&times;</button>
+            <button
+              type="button"
+              id="snippetsPanelClose"
+              class="snippets-close-btn"
+              aria-label="Close snippets panel"
+            >
+              &times;
+            </button>
           </div>
 
           <div class="snippets-panel-toolbar">
             <div class="snippets-search-wrapper">
               <i class="fas fa-search snippets-search-icon"></i>
-              <input type="text" id="snippetsSearch" class="snippets-search-input" placeholder="Search snippets..." aria-label="Search snippets">
-              <button type="button" id="snippetsClearSearch" class="snippets-clear-search" aria-label="Clear search">&times;</button>
+              <input
+                type="text"
+                id="snippetsSearch"
+                class="snippets-search-input"
+                placeholder="Search snippets..."
+                aria-label="Search snippets"
+              />
+              <button
+                type="button"
+                id="snippetsClearSearch"
+                class="snippets-clear-search"
+                aria-label="Clear search"
+              >
+                &times;
+              </button>
             </div>
             <div class="snippets-filter-row">
-              <select id="snippetsCategoryFilter" class="snippets-filter-select" aria-label="Filter by category">
+              <select
+                id="snippetsCategoryFilter"
+                class="snippets-filter-select"
+                aria-label="Filter by category"
+              >
                 <option value="">All Categories</option>
               </select>
-              <button type="button" id="snippetsAddBtn" class="snippets-add-btn" aria-label="Add new snippet" title="Add new snippet">
+              <button
+                type="button"
+                id="snippetsAddBtn"
+                class="snippets-add-btn"
+                aria-label="Add new snippet"
+                title="Add new snippet"
+              >
                 <i class="fas fa-plus"></i>
               </button>
             </div>
-            <button type="button" id="snippetsEmptyBtn" class="snippets-action-btn hidden" onclick="resetToDefaultSnippets()">
+            <button
+              type="button"
+              id="snippetsEmptyBtn"
+              class="snippets-action-btn hidden"
+              onclick="resetToDefaultSnippets()"
+            >
               <i class="fas fa-undo"></i> Restore Defaults
             </button>
           </div>
@@ -1218,6 +1273,7 @@
           </div>
         </div>
       </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
     <script>
       const templates = {
@@ -1316,6 +1372,24 @@
         clearReviews();
       });
 
+      const explainBtn = document.getElementById('explainBtn');
+      if (explainBtn) {
+        explainBtn.addEventListener('click', () => {
+          const code = editor ? editor.getValue() : '';
+          const lang = document.getElementById('lang')
+            ? document.getElementById('lang').value
+            : 'javascript';
+          if (!code || !code.trim()) {
+            alert('Please write or load some code first before requesting an explanation.');
+            return;
+          }
+          try {
+            localStorage.setItem('explain_code_data', JSON.stringify({ code, lang }));
+          } catch (e) {}
+          window.location.href = '/pages/tools/code-explainer/code-explainer.html';
+        });
+      }
+
       // Safe output function
       function setOutput(text, type) {
         const output = document.getElementById('output');
@@ -1334,7 +1408,7 @@
         if (!canvas) return;
         if (!window.Chart) {
           if (typeof lazyVisualizer !== 'undefined') {
-            lazyVisualizer.lazyLoadChartJS(canvas, function() {
+            lazyVisualizer.lazyLoadChartJS(canvas, function () {
               drawProfilerChart(canvas, results);
             });
             return;
@@ -1984,7 +2058,7 @@
         if (query || category) {
           snippets = window.SnippetsLibrary.search(query || '');
           if (category) {
-            snippets = snippets.filter(s => s.category === category);
+            snippets = snippets.filter((s) => s.category === category);
           }
         } else {
           snippets = window.SnippetsLibrary.getAll();
@@ -2000,15 +2074,17 @@
         listEl.classList.remove('hidden');
         emptyState.classList.add('hidden');
 
-        listEl.innerHTML = snippets.map(snippet => {
-          const favClass = snippet.favorite ? 'favorite' : '';
-          const langLabel = snippet.language || 'js';
-          const tagsHtml = (snippet.tags || []).slice(0, 3).map(t =>
-            `            <span class="snippet-card-tag">${escapeHtml(t)}</span>`
-          ).join('');
-          const favActionClass = snippet.favorite ? 'is-favorite' : '';
-          const desc = snippet.description || '';
-          return `<div class="snippet-card ${favClass}" role="listitem">
+        listEl.innerHTML = snippets
+          .map((snippet) => {
+            const favClass = snippet.favorite ? 'favorite' : '';
+            const langLabel = snippet.language || 'js';
+            const tagsHtml = (snippet.tags || [])
+              .slice(0, 3)
+              .map((t) => `            <span class="snippet-card-tag">${escapeHtml(t)}</span>`)
+              .join('');
+            const favActionClass = snippet.favorite ? 'is-favorite' : '';
+            const desc = snippet.description || '';
+            return `<div class="snippet-card ${favClass}" role="listitem">
             <div class="snippet-card-main" tabindex="0" role="button" aria-label="Insert snippet: ${escapeHtml(snippet.name)}" data-snippet-id="${escapeHtml(snippet.id)}">
               <div class="snippet-card-name">${escapeHtml(snippet.name)}</div>
               <div class="snippet-card-desc">${escapeHtml(desc)}</div>
@@ -2024,12 +2100,13 @@
               <button type="button" class="delete-action" data-action="delete" data-id="${escapeHtml(snippet.id)}" title="Delete snippet"><i class="fas fa-trash"></i></button>
             </div>
           </div>`;
-        }).join('');
+          })
+          .join('');
 
         // Attach event listeners via delegation
         if (!listEl.dataset.listening) {
           listEl.dataset.listening = 'true';
-          listEl.addEventListener('click', function(e) {
+          listEl.addEventListener('click', function (e) {
             const actionBtn = e.target.closest('[data-action]');
             if (!actionBtn) {
               // Click on card body — insert snippet
@@ -2061,7 +2138,7 @@
           });
 
           // Keyboard support for enter/space on card body
-          listEl.addEventListener('keydown', function(e) {
+          listEl.addEventListener('keydown', function (e) {
             const card = e.target.closest('[data-snippet-id]');
             if (!card) return;
             if (e.key === 'Enter' || e.key === ' ') {
@@ -2076,7 +2153,11 @@
       /** Escape HTML to prevent XSS (safe for both text content and attribute values). */
       function escapeHtml(str) {
         if (typeof str !== 'string') return '';
-        return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
       }
 
       /** Insert snippet code into the Monaco editor */
@@ -2095,9 +2176,7 @@
             position.lineNumber,
             position.column
           );
-          editor.executeEdits('snippets', [
-            { range, text: snippet.code, forceMoveMarkers: true }
-          ]);
+          editor.executeEdits('snippets', [{ range, text: snippet.code, forceMoveMarkers: true }]);
           editor.focus();
           showSnippetNotification('Snippet inserted!', 'success');
         }
@@ -2142,8 +2221,11 @@
         const categories = window.SnippetsLibrary.getCategories();
         if (categoryFilter) {
           const currentVal = categoryFilter.value;
-          categoryFilter.innerHTML = '<option value="">All Categories</option>' +
-            categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          categoryFilter.innerHTML =
+            '<option value="">All Categories</option>' +
+            categories
+              .map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`)
+              .join('');
           if (currentVal && categories.includes(currentVal)) {
             categoryFilter.value = currentVal;
           }
@@ -2154,13 +2236,16 @@
 
       /** Show a small toast notification for snippet actions. Creates a temporary toast that auto-dismisses. */
       function showSnippetNotification(message, type) {
-        const container = document.getElementById('snippetToastContainer') || (function() {
-          const el = document.createElement('div');
-          el.id = 'snippetToastContainer';
-          el.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;';
-          document.body.appendChild(el);
-          return el;
-        })();
+        const container =
+          document.getElementById('snippetToastContainer') ||
+          (function () {
+            const el = document.createElement('div');
+            el.id = 'snippetToastContainer';
+            el.style.cssText =
+              'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;';
+            document.body.appendChild(el);
+            return el;
+          })();
 
         const toast = document.createElement('div');
         const bgColor = type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6';
@@ -2184,9 +2269,13 @@
 
       /** Reset snippets to defaults */
       function resetToDefaultSnippets() {
-        if (!confirm('This will overwrite all your custom snippets with the defaults. Continue?')) return;
+        if (!confirm('This will overwrite all your custom snippets with the defaults. Continue?'))
+          return;
         try {
-          localStorage.setItem('quickCodeSnippets', JSON.stringify(window.SnippetsLibrary.DEFAULT_SNIPPETS));
+          localStorage.setItem(
+            'quickCodeSnippets',
+            JSON.stringify(window.SnippetsLibrary.DEFAULT_SNIPPETS)
+          );
           updateSnippetsView();
           showSnippetNotification('Default snippets restored!', 'success');
         } catch (e) {
@@ -2285,8 +2374,11 @@
           description: descInput.value.trim(),
           code,
           language: langInput.value,
-          tags: tagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
-          category: categoryInput.value.trim() || 'General'
+          tags: tagsInput.value
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean),
+          category: categoryInput.value.trim() || 'General',
         };
 
         const editId = form.dataset.editId;
@@ -2304,10 +2396,7 @@
         if (result.success) {
           closeSnippetModal();
           updateSnippetsView();
-          showSnippetNotification(
-            editId ? 'Snippet updated!' : 'Snippet created!',
-            'success'
-          );
+          showSnippetNotification(editId ? 'Snippet updated!' : 'Snippet created!', 'success');
         } else {
           errorEl.textContent = result.error || 'Failed to save snippet.';
           errorEl.classList.add('visible');
@@ -2336,7 +2425,7 @@
         if (!panel || !toggleBtn) return;
 
         // Toggle panel
-        toggleBtn.addEventListener('click', function() {
+        toggleBtn.addEventListener('click', function () {
           const isOpen = panel.classList.toggle('open');
           this.classList.toggle('active', isOpen);
           document.querySelector('.editor-wrapper').classList.toggle('snippets-open', isOpen);
@@ -2356,7 +2445,7 @@
 
         // Close panel
         if (closeBtn) {
-          closeBtn.addEventListener('click', function() {
+          closeBtn.addEventListener('click', function () {
             panel.classList.remove('open');
             toggleBtn.classList.remove('active');
             document.querySelector('.editor-wrapper').classList.remove('snippets-open');
@@ -2368,7 +2457,7 @@
 
         // Search with debounce
         if (searchInput) {
-          searchInput.addEventListener('input', function() {
+          searchInput.addEventListener('input', function () {
             const query = this.value;
             const category = categoryFilter ? categoryFilter.value : '';
             if (clearSearchBtn) {
@@ -2380,7 +2469,7 @@
 
         // Clear search
         if (clearSearchBtn) {
-          clearSearchBtn.addEventListener('click', function() {
+          clearSearchBtn.addEventListener('click', function () {
             if (searchInput) {
               searchInput.value = '';
               this.classList.remove('visible');
@@ -2393,7 +2482,7 @@
 
         // Category filter
         if (categoryFilter) {
-          categoryFilter.addEventListener('change', function() {
+          categoryFilter.addEventListener('change', function () {
             const query = searchInput ? searchInput.value : '';
             renderSnippets(query, this.value);
           });
@@ -2401,7 +2490,7 @@
 
         // Add new snippet
         if (addBtn) {
-          addBtn.addEventListener('click', function() {
+          addBtn.addEventListener('click', function () {
             openSnippetModal();
           });
         }
@@ -2409,13 +2498,13 @@
         // Close modal on overlay click
         const modalOverlay = document.getElementById('snippetModalOverlay');
         if (modalOverlay) {
-          modalOverlay.addEventListener('click', function(e) {
+          modalOverlay.addEventListener('click', function (e) {
             if (e.target === this) closeSnippetModal();
           });
         }
 
         // Close modal on escape
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape') {
             const overlay = document.getElementById('snippetModalOverlay');
             if (overlay && overlay.classList.contains('active')) {
@@ -2425,7 +2514,7 @@
         });
 
         // Listen for snippet-insert custom event from other components
-        document.addEventListener('snippet-insert', function(e) {
+        document.addEventListener('snippet-insert', function (e) {
           if (e.detail && e.detail.snippet) {
             handleInsertSnippet(e.detail.snippet.id || e.detail.snippet);
           }
