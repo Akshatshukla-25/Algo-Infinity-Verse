@@ -26,6 +26,7 @@ const practiceTools = [
   { name: "Keyboard Shortcut Trainer", path: "/pages/tools/editor-shortcut-trainer/editor-shortcut-trainer.html", category: "Practice Aids", icon: "fa-keyboard", desc: "Practice code-editor shortcuts (run, format, comment, undo) in a score-and-streak trainer game." },
 
   // ── Learning Tools ──
+  { name: "Complexity Memory Game", path: "/pages/tools/complexity-memory-game/complexity-memory-game.html", category: "Learning Tools", icon: "fa-layer-group", desc: "Flip cards to match algorithm names with their Big-O complexities in this educational memory game." },
   { name: "Spaced Repetition Queue", path: "/pages/tools/spaced-repetition/review-queue.html", category: "Learning Tools", icon: "fa-rotate", desc: "Optimized review queue using SM-2 spaced repetition to maximize long-term retention." },
   { name: "DSA Focus Pomodoro", path: "/pages/tools/dsa-focus-timer/dsa-focus-timer.html", category: "Learning Tools", icon: "fa-clock", desc: "Topic-linked 25/5 pomodoro with DSA tags, localStorage session history, and study analytics." },
   { name: "AI Memory Scanner", path: "/pages/tools/memory-scanner/memory-scanner.html", category: "Learning Tools", icon: "fa-magnifying-glass", desc: "Scan your memory gaps and get personalized recommendations for topics to revisit." },
