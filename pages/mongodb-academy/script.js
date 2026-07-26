@@ -3783,6 +3783,10 @@ function executeMongoCommand(collectionName, method, args) {
         } else if (stage.$lookup) {
           const from = mockDB[stage.$lookup.from];
           if (from) {
+            currentData = currentData.map((doc) => {
+              const localVal = doc[stage.$lookup.localField];
+              const joined = from.filter((fDoc) => fDoc[stage.$lookup.foreignField] === localVal);
+              return { ...doc, [stage.$lookup.as]: joined };
             // Build an O(1) index on the foreign collection keyed by foreignField
             // to avoid O(N×M) nested-loop joins when $lookup is followed by $unwind
             // over large arrays.
@@ -3960,6 +3964,12 @@ function processPipeline(stages, data) {
     } else if (stage.$lookup) {
       const from = mockDB[stage.$lookup.from];
       if (from) {
+        currentData = currentData.map((doc) => ({
+          ...doc,
+          [stage.$lookup.as]: from.filter(
+            (fDoc) => fDoc[stage.$lookup.foreignField] === doc[stage.$lookup.localField]
+          ),
+        }));
         // Pre-build an index on the foreign collection to achieve O(N+M) instead of O(N×M)
         const foreignField = stage.$lookup.foreignField;
         const foreignIndex = new Map();
@@ -4016,40 +4026,59 @@ function processGroupStage(groupExpr, data) {
     if (!groups[key]) groups[key] = {};
     Object.entries(groupExpr).forEach(([k, expr]) => {
       if (k === '_id') return;
-      if (!groups[key][k]) {
+      if (groups[key][k] === undefined) {
         groups[key][k] = 0;
-        groups[key]._avgCount = groups[key]._avgCount || 0;
       }
+
       if (expr.$sum === 1) {
         groups[key][k]++;
       } else if (expr.$sum && typeof expr.$sum === 'string' && expr.$sum.startsWith('$')) {
         groups[key][k] += doc[expr.$sum.slice(1)] || 0;
       } else if (expr.$avg) {
-        groups[key]._avgCount++;
+        groups[key][`_meta_count_${k}`] = (groups[key][`_meta_count_${k}`] || 0) + 1;
         const field =
           typeof expr.$avg === 'string' && expr.$avg.startsWith('$') ? expr.$avg.slice(1) : null;
         if (field) groups[key][k] = (groups[key][k] || 0) + (doc[field] || 0);
       } else if (expr.$min) {
         const field =
           typeof expr.$min === 'string' && expr.$min.startsWith('$') ? expr.$min.slice(1) : null;
-        if (field && (groups[key][k] === undefined || doc[field] < groups[key][k]))
-          groups[key][k] = doc[field];
+        if (
+          field &&
+          (groups[key][k] === undefined || doc[field] < groups[key][k] || groups[key][k] === 0)
+        ) {
+          // Because we initialized to 0, min could incorrectly stick at 0 if real min > 0.
+          // However, if we just check groups[key][`_meta_set_${k}`]
+          if (!groups[key][`_meta_set_${k}`]) {
+            groups[key][k] = doc[field];
+            groups[key][`_meta_set_${k}`] = true;
+          } else if (doc[field] < groups[key][k]) {
+            groups[key][k] = doc[field];
+          }
+        }
       } else if (expr.$max) {
         const field =
           typeof expr.$max === 'string' && expr.$max.startsWith('$') ? expr.$max.slice(1) : null;
-        if (field && (groups[key][k] === undefined || doc[field] > groups[key][k]))
-          groups[key][k] = doc[field];
+        if (field) {
+          if (!groups[key][`_meta_set_${k}`]) {
+            groups[key][k] = doc[field];
+            groups[key][`_meta_set_${k}`] = true;
+          } else if (doc[field] > groups[key][k]) {
+            groups[key][k] = doc[field];
+          }
+        }
       }
     });
   });
   return Object.entries(groups).map(([k, v]) => {
     const obj = { _id: k === 'all' ? null : k };
-    Object.entries(v).forEach(([k2, _v2]) => {
-      if (k2 === '_avgCount') return;
-      obj[k2] =
-        k2 === 'avgTemp' || k2 === 'avgPrice' || k2 === 'avgRating'
-          ? Math.round((v[k2] / (v._avgCount || 1)) * 100) / 100
-          : v[k2];
+    Object.entries(v).forEach(([k2, v2]) => {
+      if (k2.startsWith('_meta_')) return;
+      if (groupExpr[k2] && groupExpr[k2].$avg) {
+        const count = v[`_meta_count_${k2}`] || 1;
+        obj[k2] = Math.round((v2 / count) * 100) / 100;
+      } else {
+        obj[k2] = v2;
+      }
     });
     return obj;
   });
