@@ -111,6 +111,14 @@ const editors = [
   },
 
   {
+    name: 'Julia Editor',
+    path: '/pages/editors/julia-editor/julia-editor.html',
+    category: 'Scripting Languages',
+    icon: 'fa-atom',
+    desc: 'Write Julia code with real control flow, functions, and closures, and see plots evaluated in real time. Runs a defined subset of Julia entirely in your browser.',
+  },
+
+  {
     name: 'PHP Editor',
     path: '/pages/editors/php-editor/php-editor.html',
     category: 'Scripting Languages',
