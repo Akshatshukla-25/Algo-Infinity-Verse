@@ -139,6 +139,95 @@ function renderTimeline() {
     btn.onclick = () => viewVersion(idx);
     tl.appendChild(btn);
   });
+  updateDiffDropdowns();
+}
+
+function updateDiffDropdowns() {
+  const diffPanel = document.getElementById('diffPanelContainer');
+  if (versions.length > 1) {
+    diffPanel.style.display = 'block';
+  } else {
+    diffPanel.style.display = 'none';
+    return;
+  }
+
+  const baseSel = document.getElementById('diffBaseVersion');
+  const compSel = document.getElementById('diffCompareVersion');
+
+  const prevBase = baseSel.value;
+  const prevComp = compSel.value;
+
+  baseSel.innerHTML = '';
+  compSel.innerHTML = '';
+
+  versions.forEach((v, idx) => {
+    baseSel.add(new Option(`V${idx}`, idx));
+    compSel.add(new Option(`V${idx}`, idx));
+  });
+
+  if (prevBase && prevBase < versions.length) baseSel.value = prevBase;
+  else baseSel.value = 0;
+
+  if (prevComp && prevComp < versions.length) compSel.value = prevComp;
+  else compSel.value = versions.length - 1;
+}
+
+function computeVersionDiff() {
+  const vIdxA = parseInt(document.getElementById('diffBaseVersion').value);
+  const vIdxB = parseInt(document.getElementById('diffCompareVersion').value);
+
+  if (isNaN(vIdxA) || isNaN(vIdxB) || vIdxA >= versions.length || vIdxB >= versions.length) {
+    updateStatus('Invalid versions for diff', 'error');
+    return;
+  }
+
+  // Clear other highlights
+  queryPath1.clear();
+  queryPath2.clear();
+  highlightNodes.clear();
+
+  const getReachable = (root) => {
+    const s = new Set();
+    const q = [root];
+    while (q.length > 0) {
+      const curr = q.shift();
+      s.add(curr.id);
+      if (curr.left) q.push(curr.left);
+      if (curr.right) q.push(curr.right);
+    }
+    return s;
+  };
+
+  const reachableA = getReachable(versions[vIdxA]);
+  const reachableB = getReachable(versions[vIdxB]);
+
+  const baseOnly = new Set([...reachableA].filter((x) => !reachableB.has(x)));
+  const compareOnly = new Set([...reachableB].filter((x) => !reachableA.has(x)));
+  const shared = new Set([...reachableA].filter((x) => reachableB.has(x)));
+
+  diffMode = true;
+  diffSets = { baseOnly, compareOnly, shared };
+
+  document.getElementById('btnClearDiff').style.display = 'inline-flex';
+
+  const summary = document.getElementById('diffSummary');
+  summary.style.display = 'block';
+  summary.innerHTML = `V${vIdxA} vs V${vIdxB} Diff Summary
+─────────────────────
+Base-only nodes:     <span style="color:#eab308">${baseOnly.size}</span>  (exclusive to V${vIdxA})
+Compare-only nodes:  <span style="color:#22c55e">${compareOnly.size}</span> (exclusive to V${vIdxB})
+Shared nodes:        <span style="color:#3b82f6">${shared.size}</span> (structurally shared)
+Total unique nodes:  ${new Set([...reachableA, ...reachableB]).size}`;
+
+  viewVersion(vIdxB);
+}
+
+function clearVersionDiff() {
+  diffMode = false;
+  diffSets = null;
+  document.getElementById('btnClearDiff').style.display = 'none';
+  document.getElementById('diffSummary').style.display = 'none';
+  viewVersion(currentViewingVersion);
 }
 
 function viewVersion(idx) {
@@ -166,9 +255,11 @@ function viewVersion(idx) {
 
 // Canvas Rendering
 let activeNodes = new Set();
-let highlightNodes = new Set();
 let queryPath1 = new Set();
 let queryPath2 = new Set();
+let highlightNodes = new Set();
+let diffMode = false;
+let diffSets = null; // { baseOnly, compareOnly, shared }
 
 function initCanvas() {
   canvas = document.getElementById('treeCanvas');
@@ -243,20 +334,35 @@ function drawCanvasForVersion(vIdx) {
     let scale = 1;
     let fontCol = '#fff';
 
-    if (highlightNodes.has(n.id) || queryPath1.has(n.id)) {
-      color = COL_HL;
-      scale = 1.2;
-      fontCol = COL_HL;
-    }
-    if (queryPath2.has(n.id)) {
-      color = COL_LCA;
-      scale = 1.2;
-      fontCol = COL_LCA;
-    }
-    if (activeNodes.has(n.id)) {
-      color = COL_LCA;
-      scale = 1.3;
-      fontCol = COL_LCA;
+    if (diffMode && diffSets) {
+      if (diffSets.baseOnly.has(n.id)) {
+        color = '#eab308'; // Base only
+        scale = 1.1;
+      } else if (diffSets.compareOnly.has(n.id)) {
+        color = '#22c55e'; // Compare only
+        scale = 1.1;
+      } else if (diffSets.shared.has(n.id)) {
+        color = '#3b82f6'; // Shared
+      } else {
+        color = 'rgba(255,255,255,0.1)';
+        fontCol = 'rgba(255,255,255,0.2)';
+      }
+    } else {
+      if (highlightNodes.has(n.id) || queryPath1.has(n.id)) {
+        color = COL_HL;
+        scale = 1.2;
+        fontCol = COL_HL;
+      }
+      if (queryPath2.has(n.id)) {
+        color = COL_LCA;
+        scale = 1.2;
+        fontCol = COL_LCA;
+      }
+      if (activeNodes.has(n.id)) {
+        color = COL_LCA;
+        scale = 1.3;
+        fontCol = COL_LCA;
+      }
     }
 
     ctx.beginPath();
@@ -295,7 +401,6 @@ document.getElementById('modeSelect').addEventListener('change', (e) => {
   } else {
     document.getElementById('standardControls').style.display = 'none';
     document.getElementById('kthControls').style.display = 'flex';
-    document.getElementById('arrayTitle').innerText = 'Original Array';
   }
   resetVis();
 });
@@ -646,6 +751,9 @@ function initHeroCanvas() {
 
 initCanvas();
 initHeroCanvas();
+
+document.getElementById('btnCompareDiff').addEventListener('click', computeVersionDiff);
+document.getElementById('btnClearDiff').addEventListener('click', clearVersionDiff);
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
