@@ -654,6 +654,11 @@ const visualizers = [
 
   // ── Distributed Systems ──
   {
+    name: 'Gossip-Based Failure Detection (SWIM Protocol)',
+    path: '/pages/visualizers/swim-protocol-visualizer/swim-protocol-visualizer.html',
+    category: 'Distributed Systems',
+    icon: 'fa-satellite-dish',
+    desc: 'Detect dead nodes efficiently without a central coordinator.',
     name: 'Rendezvous Hashing (HRW)',
     path: '/pages/visualizers/rendezvous-hashing-visualizer/rendezvous-hashing-visualizer.html',
     category: 'Distributed Systems',
