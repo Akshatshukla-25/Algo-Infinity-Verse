@@ -47,6 +47,13 @@ const practiceTools = [
     desc: 'Analyze your coding patterns to measure cognitive load and identify areas for improvement.',
   },
   {
+    name: 'Code Quality Checker',
+    path: '/pages/tools/code-quality-analyzer/code-quality-analyzer.html',
+    category: 'Analysis',
+    icon: 'fa-microscope',
+    desc: 'Analyze JavaScript/Python code for lint errors, DSA anti-patterns (nested loops, missing base cases), and readability grade with clickable line-level feedback.',
+  },
+  {
     name: 'Accessibility Audit Toolkit',
     path: '/pages/tools/a11y-audit-toolkit/a11y-audit-toolkit.html',
     category: 'Analysis',
