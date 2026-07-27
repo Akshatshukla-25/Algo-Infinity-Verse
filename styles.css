@@ -8728,7 +8728,7 @@ body.modal-open {
   -webkit-text-fill-color: var(--text-secondary);
 }
 
-.line-numbers {
+.code-editor .line-numbers {
   position: absolute;
   left: 0;
   top: 0;

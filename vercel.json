@@ -3,6 +3,11 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": null,
+  "functions": {
+    "api/execute/problem.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/login",
@@ -48,6 +53,10 @@
     {
       "source": "/practice",
       "destination": "/pages/practice/problems.html"
+    },
+    {
+      "source": "/practice/editor",
+      "destination": "/pages/practice/editor.html"
     },
     {
       "source": "/cplusplus-learning",

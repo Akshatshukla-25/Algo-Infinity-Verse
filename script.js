@@ -4707,12 +4707,7 @@ function getClassTemplate(lang, problem) {
   const fnName = problem.functionName || 'LRUCache';
   const params = problem.params || [];
 
-  let docComment = '';
-  if (problem.guide) {
-    const lines = problem.guide.split('\n');
-    const prefix = lang === 'python' ? '# ' : '// ';
-    docComment = lines.map((l) => prefix + l).join('\n') + '\n';
-  }
+  const docComment = '';
 
   const paramStr = params
     .map((p) => {
@@ -4726,16 +4721,13 @@ function getClassTemplate(lang, problem) {
 
   const templates = {
     javascript:
-      docComment +
       `class ${fnName} {\n    constructor(${paramStr}) {\n        \n    }\n\n    get(key) {\n        \n    }\n\n    put(key, value) {\n        \n    }\n}`,
     python:
-      docComment +
       `class ${fnName}:\n    def __init__(self, ${params.join(', ')}):\n        pass\n\n    def get(self, key: int) -> int:\n        pass\n\n    def put(self, key: int, value: int) -> None:\n        pass\n`,
-    java: `class ${fnName} {\n${docComment.replace(/^(.)/gm, '    $1')}    public ${fnName}(${paramStr}) {\n        \n    }\n\n    public int get(int key) {\n        return 0;\n    }\n\n    public void put(int key, int value) {\n        \n    }\n}`,
-    cpp: `#include <unordered_map>\nusing namespace std;\n\n${docComment}class ${fnName} {\npublic:\n    ${fnName}(${paramStr}) {\n        \n    }\n\n    int get(int key) {\n        return 0;\n    }\n\n    void put(int key, int value) {\n        \n    }\n};`,
-    c: `${docComment}// Use a struct with function pointers:\ntypedef struct {\n    int capacity;\n} LRUCache;\n\nLRUCache* createLRUCache(int capacity) {\n    return NULL;\n}\n\nint get(LRUCache* cache, int key) {\n    return 0;\n}\n\nvoid put(LRUCache* cache, int key, int value) {\n    \n}`,
+    java: `class ${fnName} {\n    public ${fnName}(${paramStr}) {\n        \n    }\n\n    public int get(int key) {\n        return 0;\n    }\n\n    public void put(int key, int value) {\n        \n    }\n}`,
+    cpp: `#include <unordered_map>\nusing namespace std;\n\nclass ${fnName} {\npublic:\n    ${fnName}(${paramStr}) {\n        \n    }\n\n    int get(int key) {\n        return 0;\n    }\n\n    void put(int key, int value) {\n        \n    }\n};`,
+    c: `// Use a struct with function pointers:\ntypedef struct {\n    int capacity;\n} LRUCache;\n\nLRUCache* createLRUCache(int capacity) {\n    return NULL;\n}\n\nint get(LRUCache* cache, int key) {\n    return 0;\n}\n\nvoid put(LRUCache* cache, int key, int value) {\n    \n}`,
     swift:
-      docComment +
       `class ${fnName} {\n    init(${paramStr}) {\n        \n    }\n\n    func get(_ key: Int) -> Int {\n        return 0\n    }\n\n    func put(_ key: Int, _ value: Int) {\n        \n    }\n}`,
   };
   return templates[lang] || templates.javascript;
@@ -4774,20 +4766,14 @@ function getDefaultCode(lang, problem) {
         .join(', ')
     : 'params';
 
-  let docComment = '';
-  if (problem.guide) {
-    const lines = problem.guide.split('\n');
-    const prefix = lang === 'python' ? '# ' : '// ';
-    docComment = lines.map((l) => prefix + l).join('\n') + '\n';
-  }
+  const docComment = '';
 
   const templates = {
     javascript:
-      docComment + 'function ' + fnName + '(' + (params.join(', ') || 'params') + ') {\n    \n}',
-    python: docComment + 'def ' + fnName + '(' + (params.join(', ') || 'params') + '):\n    pass\n',
+      'function ' + fnName + '(' + (params.join(', ') || 'params') + ') {\n    \n}',
+    python: 'def ' + fnName + '(' + (params.join(', ') || 'params') + '):\n    pass\n',
     java:
       'class Solution {\n' +
-      docComment.replace(/^(.)/gm, '    $1') +
       '    public ' +
       retType +
       ' ' +
@@ -4797,7 +4783,6 @@ function getDefaultCode(lang, problem) {
       ') {\n        \n    }\n}',
     cpp:
       '#include <string>\n#include <stack>\nusing namespace std;\n\n' +
-      docComment +
       retType +
       ' ' +
       fnName +
@@ -4806,14 +4791,13 @@ function getDefaultCode(lang, problem) {
       ') {\n    \n}',
     c:
       '#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n' +
-      docComment +
       retType +
       ' ' +
       fnName +
       '(' +
       paramStr +
       ') {\n    \n}',
-    swift: docComment + 'func ' + fnName + '(' + paramStr + ') -> ' + retType + ' {\n    \n}',
+    swift: 'func ' + fnName + '(' + paramStr + ') -> ' + retType + ' {\n    \n}'
   };
   return templates[lang] || templates.javascript;
 }
