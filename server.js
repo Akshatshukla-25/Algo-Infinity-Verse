@@ -4203,7 +4203,7 @@ if (process.env.VERCEL !== '1' && process.env.NODE_ENV !== 'test') {
       const host = process.env.HOST || '127.0.0.1';
 
       server.listen(port, host, () => {
-        // listening started
+        console.log(`\n\x1b[38;5;183mServer running at\x1b[0m \x1b[38;5;228mhttp://${host}:${port}\x1b[0m\n`);
       });
 
       server.on('error', (err) => {
