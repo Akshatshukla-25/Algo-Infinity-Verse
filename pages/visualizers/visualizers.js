@@ -822,6 +822,13 @@ const visualizers = [
 
   // ── Security & Cryptography ──
   {
+    name: 'Primality Testing',
+    path: '/pages/visualizers/primality-testing-visualizer/primality-testing-visualizer.html',
+    category: 'Security & Cryptography',
+    icon: 'fa-microscope',
+    desc: 'Visualize Miller-Rabin probabilistic testing vs AKS deterministic certainty.',
+  },
+  {
     name: 'Chinese Remainder Theorem',
     path: '/pages/visualizers/chinese-remainder-theorem/chinese-remainder-theorem.html',
     category: 'Security & Crypto',
