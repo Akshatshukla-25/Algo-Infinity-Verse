@@ -33,6 +33,7 @@
     initBugForm();
     initCharCounters();
     initTocScrollSpy();
+    initBackButton();
     initBackToTop();
     initChatFab();
     initFileInput();
@@ -55,6 +56,7 @@
     els.chatFab = document.getElementById("chatFab");
     els.chatPreview = document.getElementById("chatPreview");
     els.chatPreviewClose = document.getElementById("chatPreviewClose");
+    els.backBtn = document.getElementById("spBackBtn");
     els.backToTop = document.getElementById("backToTop");
     els.tocLinks = document.querySelectorAll(".toc-link");
     els.sections = document.querySelectorAll(".content-section");
@@ -383,6 +385,16 @@
           }
         }
       });
+    });
+  }
+
+  /* ══════════════════════════════════════════
+     BACK BUTTON
+     ══════════════════════════════════════════ */
+  function initBackButton() {
+    if (!els.backBtn) return;
+    els.backBtn.addEventListener("click", function () {
+      history.back();
     });
   }
 

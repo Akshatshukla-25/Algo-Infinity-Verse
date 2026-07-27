@@ -1283,6 +1283,64 @@ body[data-page="support"] {
   transform: translateY(-1px);
 }
 
+/* ── Back Button ── */
+.sp-back-btn {
+  position: absolute;
+  top: 4.5rem;
+  left: 1.5rem;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0.5rem 0.75rem;
+  background: var(--support-surface);
+  border: 1px solid var(--support-border);
+  border-radius: 100px;
+  color: var(--support-text-secondary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.sp-back-btn i {
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+}
+
+.sp-back-btn:hover {
+  border-color: var(--support-primary);
+  color: var(--support-primary);
+  background: var(--support-primary-light);
+}
+
+.sp-back-btn:hover i {
+  transform: translateX(-3px);
+}
+
+.sp-back-btn:focus-visible {
+  outline: 2px solid var(--support-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .sp-back-btn {
+    top: 3.5rem;
+    left: 0.75rem;
+    padding: 0.4rem 0.7rem 0.4rem 0.55rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-back-btn { transition: none; }
+  .sp-back-btn i { transition: none; }
+  .sp-back-btn:hover i { transform: none; }
+}
+
 /* ── Back to Top ── */
 .back-to-top {
   position: fixed;
