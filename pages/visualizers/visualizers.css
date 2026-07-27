@@ -364,6 +364,36 @@
   transform: translateX(3px);
 }
 
+/* ─── Category Section Header ─── */
+.viz-category-header {
+  grid-column: 1 / -1;
+  padding: 0.75rem 0 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.viz-category-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--viz-text);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.35rem;
+}
+
+.viz-category-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--viz-primary), transparent);
+  border-radius: 1px;
+}
+
 /* ─── Empty State ─── */
 .viz-empty {
   text-align: center;

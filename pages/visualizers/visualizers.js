@@ -2081,9 +2081,54 @@ function buildFilters() {
 }
 
 /* ─── Render cards ─── */
+/* ─── Group helper: reorder items so all cards of the same category
+   appear together, following the same order as the `categories` array ─── */
+function groupByCategory(items) {
+  const getSlug = (cat) => cat.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  // Group items by their category slug
+  const grouped = {};
+  items.forEach((v) => {
+    const slug = getSlug(v.category);
+    if (!grouped[slug]) {
+      grouped[slug] = { items: [] };
+    }
+    grouped[slug].items.push(v);
+  });
+
+  // Determine the order of slugs: predefined categories first, then extras
+  const orderedSlugs = [];
+  const seen = new Set();
+
+  categories.forEach((cat) => {
+    if (cat === 'All') return;
+    const slug = getSlug(cat);
+    if (grouped[slug] && !seen.has(slug)) {
+      orderedSlugs.push(slug);
+      seen.add(slug);
+    }
+  });
+
+  // Append any categories that exist in data but aren't in the predefined list
+  Object.keys(grouped).forEach((slug) => {
+    if (!seen.has(slug)) {
+      orderedSlugs.push(slug);
+      seen.add(slug);
+    }
+  });
+
+  // Flatten groups into a single ordered array
+  const result = [];
+  orderedSlugs.forEach((slug) => {
+    result.push(...grouped[slug].items);
+  });
+  return result;
+}
+
 function render() {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const filtered = visualizers.filter((v) => {
+
+  let filtered = visualizers.filter((v) => {
     const matchCategory =
       activeCategory === 'all' ||
       v.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === activeCategory;
@@ -2095,6 +2140,12 @@ function render() {
       v.desc.toLowerCase().includes(q);
     return matchCategory && matchSearch;
   });
+
+  // When viewing all categories, group cards by category so that related
+  // visualizers appear together rather than scattered by array order.
+  if (activeCategory === 'all') {
+    filtered = groupByCategory(filtered);
+  }
 
   countDisplay.textContent = filtered.length;
 
@@ -2113,10 +2164,20 @@ function render() {
   const start = (vizCurrentPage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
 
-  grid.innerHTML = pageItems
-    .map(
-      (v, i) => `
-    <a href="${v.path}" target="_blank" rel="noopener noreferrer" class="viz-card" role="listitem" style="animation-delay:${reducedMotion ? '0s' : Math.min(i * 0.025, 0.8)}s">
+  // Build HTML — insert a category section header before the first card of
+  // each new category when viewing all.
+  let lastCategory = '';
+  let animIndex = 0;
+  const cardHtml = pageItems
+    .map((v) => {
+      let html = '';
+      if (activeCategory === 'all' && v.category !== lastCategory) {
+        html += `<div class="viz-category-header">
+          <h2 class="viz-category-title">${escHtml(v.category)}</h2>
+        </div>`;
+        lastCategory = v.category;
+      }
+      html += `<a href="${v.path}" target="_blank" rel="noopener noreferrer" class="viz-card" role="listitem" style="animation-delay:${reducedMotion ? '0s' : Math.min(animIndex * 0.025, 0.8)}s">
       <span class="viz-card-icon" style="color:${categoryColors[v.category.toLowerCase().replace(/[^a-z0-9]+/g, '-')] || 'var(--viz-cyan)'}"><i class="fas ${v.icon}"></i></span>
       <span class="viz-card-title">${escHtml(v.name)}</span>
       <span class="viz-card-desc">${escHtml(v.desc)}</span>
@@ -2124,10 +2185,13 @@ function render() {
         <span class="viz-card-category">${escHtml(v.category)}</span>
         <span class="viz-card-arrow"><i class="fas fa-arrow-right"></i></span>
       </div>
-    </a>
-  `
-    )
+    </a>`;
+      animIndex++;
+      return html;
+    })
     .join('');
+
+  grid.innerHTML = cardHtml;
 
   renderPagination(filtered.length, totalPages);
 }
