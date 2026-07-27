@@ -18,10 +18,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const statNodes = document.getElementById('stat-nodes');
   const statKeys = document.getElementById('stat-keys');
 
+  const boundedLoadsToggle = document.getElementById('bounded-loads-toggle');
+  const cFactorGroup = document.getElementById('c-factor-group');
+  const cFactorSlider = document.getElementById('c-factor-slider');
+  const cFactorVal = document.getElementById('c-factor-val');
+
   const RING_RADIUS = 160;
   let nodes = [];
   let keys = [];
   let nextNodeId = 1;
+
+  boundedLoadsToggle.addEventListener('change', (e) => {
+    cFactorGroup.style.display = e.target.checked ? 'block' : 'none';
+    rebalanceKeys();
+    updateStats();
+  });
+
+  cFactorSlider.addEventListener('input', (e) => {
+    cFactorVal.textContent = e.target.value;
+    rebalanceKeys();
+    updateStats();
+  });
 
   function logMessage(msg) {
     const entry = document.createElement('div');
@@ -58,43 +75,37 @@ document.addEventListener('DOMContentLoaded', () => {
     node.el = el;
   }
 
-  function renderKey(keyObj) {
-    const coords = getCoords(keyObj.angle, RING_RADIUS - 30);
-
-    const el = document.createElement('div');
-    el.className = 'data-key';
-    el.style.left = `${coords.x}px`;
-    el.style.top = `${coords.y}px`;
-
-    el.innerHTML = `
-            <div class="key-label">${keyObj.key}</div>
-        `;
-
-    ringContainer.appendChild(el);
-    keyObj.el = el;
-
-    // Find target node and animate towards it
-    const target = findTargetNode(keyObj.angle);
-    if (target) {
-      logMessage(`Key '${keyObj.key}' mapped to Node ${target.id}`);
-      setTimeout(() => {
-        const targetCoords = getCoords(target.angle, RING_RADIUS);
-        el.style.left = `${targetCoords.x}px`;
-        el.style.top = `${targetCoords.y}px`;
-      }, 50);
-    }
-  }
-
-  function findTargetNode(keyAngle) {
+  function findTargetNode(keyAngle, currentLoads, capacity) {
     if (nodes.length === 0) return null;
 
-    // Find first node with angle >= keyAngle
     let sortedNodes = [...nodes].sort((a, b) => a.angle - b.angle);
-    for (let node of sortedNodes) {
-      if (node.angle >= keyAngle) return node;
+    
+    // Find the primary target index
+    let startIndex = 0;
+    for (let i = 0; i < sortedNodes.length; i++) {
+      if (sortedNodes[i].angle >= keyAngle) {
+        startIndex = i;
+        break;
+      }
     }
-    // Wraparound
-    return sortedNodes[0];
+
+    const useBounded = boundedLoadsToggle && boundedLoadsToggle.checked;
+
+    // Search for a node with capacity
+    for (let i = 0; i < sortedNodes.length; i++) {
+      const idx = (startIndex + i) % sortedNodes.length;
+      const node = sortedNodes[idx];
+      
+      if (!useBounded) return node; // Standard consistent hashing
+      
+      const load = currentLoads.get(node.id) || 0;
+      if (load < capacity) {
+        return node;
+      }
+    }
+    
+    // Fallback if all nodes are at capacity (shouldn't happen with valid c > 1, but just in case)
+    return sortedNodes[startIndex];
   }
 
   function updateStats() {
@@ -109,12 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
         varianceChart.innerHTML = '';
         varianceStats.textContent = 'Variance: 0.00';
       } else {
-        // Count keys per node
         const counts = new Map(nodes.map((n) => [n.id, 0]));
         keys.forEach((k) => {
-          const target = findTargetNode(k.angle);
-          if (target) {
-            counts.set(target.id, counts.get(target.id) + 1);
+          if (k.targetId !== undefined) {
+            counts.set(k.targetId, (counts.get(k.targetId) || 0) + 1);
           }
         });
 
@@ -163,12 +172,22 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const currentLoads = new Map(nodes.map((n) => [n.id, 0]));
+    const cFactor = parseFloat(cFactorSlider.value);
+    const capacity = Math.ceil((keys.length / nodes.length) * cFactor) + 1; // +1 to avoid 0 capacity lockouts
+
     keys.forEach((keyObj) => {
       keyObj.el.style.display = 'flex';
-      const target = findTargetNode(keyObj.angle);
+      const target = findTargetNode(keyObj.angle, currentLoads, capacity);
+      keyObj.targetId = target.id;
+      currentLoads.set(target.id, (currentLoads.get(target.id) || 0) + 1);
+
       const targetCoords = getCoords(target.angle, RING_RADIUS);
-      keyObj.el.style.left = `${targetCoords.x}px`;
-      keyObj.el.style.top = `${targetCoords.y}px`;
+      // Small delay for smooth animation
+      setTimeout(() => {
+        keyObj.el.style.left = `${targetCoords.x}px`;
+        keyObj.el.style.top = `${targetCoords.y}px`;
+      }, 50);
     });
   }
 
@@ -199,11 +218,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const key = keyInput.value.trim() || `data_${Math.floor(Math.random() * 1000)}`;
     const angle = simpleHash(key);
-
     const keyObj = { key, angle };
+    
+    const coords = getCoords(keyObj.angle, RING_RADIUS - 30);
+    const el = document.createElement('div');
+    el.className = 'data-key';
+    el.style.left = `${coords.x}px`;
+    el.style.top = `${coords.y}px`;
+    el.innerHTML = `<div class="key-label">${keyObj.key}</div>`;
+    
+    ringContainer.appendChild(el);
+    keyObj.el = el;
     keys.push(keyObj);
-    logMessage(`Hashing '${key}' -> Angle ${angle}°`);
-    renderKey(keyObj);
+
+    logMessage(`Added Key '${key}'`);
+    rebalanceKeys();
     updateStats();
     keyInput.value = '';
   });

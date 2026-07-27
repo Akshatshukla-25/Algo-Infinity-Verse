@@ -56,6 +56,21 @@
             </div>
           </div>
 
+          <div class="control-group" style="margin-top: 1rem">
+            <label>Bounded Loads</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+              <input type="checkbox" id="bounded-loads-toggle" />
+              <label for="bounded-loads-toggle" style="font-size: 0.85rem; cursor: pointer;">Enable Capacity Constraints</label>
+            </div>
+            <div id="c-factor-group" style="display: none; margin-top: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666;">
+                <span>Load Factor (c)</span>
+                <span id="c-factor-val">1.25</span>
+              </div>
+              <input type="range" id="c-factor-slider" min="1.0" max="2.0" step="0.05" value="1.25" style="width: 100%;" />
+            </div>
+          </div>
+
           <div class="stats-container">
             <h3>Current State</h3>
             <p>Total Nodes: <span id="stat-nodes">3</span></p>
