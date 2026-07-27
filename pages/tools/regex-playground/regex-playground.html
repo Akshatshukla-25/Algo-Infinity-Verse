@@ -259,18 +259,26 @@
               <div class="rg-card-header">
                 <i class="fas fa-play-circle" aria-hidden="true"></i>
                 <span>Simulator</span>
+                <span class="rg-nfa-state-count" id="rgNfaStateCount" style="margin-left:auto;font-size:0.75rem;color:#a855f7;"></span>
               </div>
               <div class="rg-nfa-controls">
                 <label for="rgNfaString" class="rg-label">Test String</label>
                 <input type="text" id="rgNfaString" class="rg-input" placeholder="String to evaluate..." disabled />
               </div>
+              <div class="rg-nfa-speed-row">
+                <label class="rg-label" style="font-size:0.75rem;">Speed</label>
+                <input type="range" id="rgNfaSpeed" min="100" max="1500" value="700" step="100" style="flex:1;" />
+                <span id="rgNfaSpeedVal" style="font-family:'Fira Code',monospace;font-size:0.72rem;color:#0ea5e9;min-width:45px;">700ms</span>
+              </div>
               <div class="rg-nfa-btn-row">
                 <button type="button" id="rgNfaStepBtn" class="rg-btn rg-btn-secondary" disabled><i class="fas fa-step-forward"></i> Step</button>
+                <button type="button" id="rgNfaRunBtn" class="rg-btn rg-btn-primary" disabled><i class="fas fa-play"></i> Run All</button>
                 <button type="button" id="rgNfaResetBtn" class="rg-btn rg-btn-ghost" disabled><i class="fas fa-undo"></i> Reset</button>
               </div>
               <div class="rg-nfa-tracker" id="rgNfaTracker">
                 <div class="rg-nfa-chars" id="rgNfaChars"></div>
               </div>
+              <div class="rg-nfa-epsilon-info" id="rgNfaEpsilonInfo" style="display:none;"></div>
               <div class="rg-nfa-verdict" id="rgNfaVerdict">
                 <i class="fas fa-info-circle"></i> Simulation idle.
               </div>
@@ -283,6 +291,7 @@
                 <span class="rg-legend-item"><span class="rg-legend-swatch start"></span> Start</span>
                 <span class="rg-legend-item"><span class="rg-legend-swatch accept"></span> Accept</span>
                 <span class="rg-legend-item"><span class="rg-legend-swatch active"></span> Active</span>
+                <span class="rg-legend-item"><span class="rg-legend-swatch dead"></span> Dead</span>
               </div>
             </div>
             <div class="rg-nfa-canvas">

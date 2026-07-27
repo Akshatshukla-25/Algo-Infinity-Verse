@@ -1024,3 +1024,54 @@ html.light-mode .rg-toast {
   border-color: var(--rg-sky);
   color: var(--rg-sky);
 }
+
+/* ── NFA Enhancements (Issue #3136) ──────────── */
+
+/* Dead state - all paths failed */
+.rg-cy-container .dead-state {
+  background-color: rgba(239, 68, 68, 0.25) !important;
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+  animation: deadPulse 0.6s ease-out forwards;
+}
+
+@keyframes deadPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* Epsilon edge highlight */
+.rg-cy-container .epsilon-edge {
+  line-color: #a855f7 !important;
+  target-arrow-color: #a855f7 !important;
+  width: 2.5px !important;
+  opacity: 1 !important;
+}
+
+/* Dead legend swatch */
+.rg-legend-swatch.dead {
+  background: #ef4444;
+  border: 2px solid #ef4444;
+}
+
+/* Speed row */
+.rg-nfa-speed-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0 0.1rem;
+}
+
+/* Epsilon info banner */
+.rg-nfa-epsilon-info {
+  font-size: 0.72rem;
+  font-family: 'Fira Code', monospace;
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  margin-top: 0.4rem;
+}

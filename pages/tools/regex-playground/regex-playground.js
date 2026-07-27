@@ -332,10 +332,15 @@
       nfaCompile: qs('#rgNfaCompileBtn'),
       nfaString: qs('#rgNfaString'),
       nfaStep: qs('#rgNfaStepBtn'),
+      nfaRun: qs('#rgNfaRunBtn'),
       nfaReset: qs('#rgNfaResetBtn'),
+      nfaSpeed: qs('#rgNfaSpeed'),
+      nfaSpeedVal: qs('#rgNfaSpeedVal'),
       nfaLogs: qs('#rgNfaLogs'),
       nfaChars: qs('#rgNfaChars'),
       nfaVerdict: qs('#rgNfaVerdict'),
+      nfaEpsilonInfo: qs('#rgNfaEpsilonInfo'),
+      nfaStateCount: qs('#rgNfaStateCount'),
       nfaCy: qs('#rgCy'),
       nfaEmpty: qs('#rgNfaEmpty'),
     };
@@ -1309,7 +1314,13 @@
 
   var nfaCy = null;
   var nfaGraphData = null;
-  var nfaSimState = { activeStates: new Set(), testString: '', currentIndex: 0 };
+  var nfaRunTimer = null;
+  var nfaSimState = {
+    testString: '',
+    currentIndex: 0,
+    activeStates: new Set(),
+    deadStates: new Set(),
+  };
 
   function nfaLog(msg, type) {
     type = type || 'info';
@@ -1443,22 +1454,32 @@
 
   function updateNfaUI() {
     if (!nfaCy) return;
-    nfaCy.nodes().removeClass('active-state');
+    nfaCy.nodes().removeClass('active-state dead-state');
     nfaSimState.activeStates.forEach(function (state) {
       nfaCy.getElementById(state.id).addClass('active-state');
     });
+    if (nfaSimState.activeStates.size === 0 && nfaSimState.currentIndex > 0) {
+      // All paths died — show dead state on all previously active nodes
+      nfaCy.nodes().filter(function(n){ return n.data('label') !== undefined; }).forEach(function(n){
+        n.addClass('dead-state');
+      });
+    }
+    // Update active state count badge
+    if (dom.nfaStateCount) {
+      var cnt = nfaSimState.activeStates.size;
+      dom.nfaStateCount.textContent = cnt > 0 ? cnt + ' active path' + (cnt > 1 ? 's' : '') : '';
+    }
   }
 
   function setNfaVerdict(type, html) {
     dom.nfaVerdict.className = 'rg-nfa-verdict ' + type;
     dom.nfaVerdict.innerHTML = html;
-  }
-
-  function handleNfaStep() {
+  }  function handleNfaStep() {
     if (nfaSimState.currentIndex >= nfaSimState.testString.length) return;
     var charToConsume = nfaSimState.testString[nfaSimState.currentIndex];
     var nextStates = new Set();
     var activeEdges = [];
+    var epsilonEdges = [];
     var activeStateArray = Array.from(nfaSimState.activeStates);
     activeStateArray.forEach(function (state) {
       if (state.transitions[charToConsume]) {
@@ -1475,7 +1496,21 @@
         });
       }
     });
-    nfaSimState.activeStates = getEpsilonClosure(nextStates);
+
+    // Compute epsilon closure and track ε-edges for visualization
+    var rawNext = Array.from(nextStates);
+    var closure = getEpsilonClosure(nextStates);
+    closure.forEach(function(state) {
+      if (!nextStates.has(state)) {
+        // This state was reached via ε-transitions
+        var epEdge = nfaGraphData.edges.find(function(e) {
+          return e.data.target === state.id && e.data.label === 'ε';
+        });
+        if (epEdge) epsilonEdges.push(epEdge.data.id);
+      }
+    });
+    nfaSimState.activeStates = closure;
+
     var charEls = dom.nfaChars.children;
     if (charEls[nfaSimState.currentIndex]) {
       charEls[nfaSimState.currentIndex].classList.add('consumed');
@@ -1487,35 +1522,54 @@
     ) {
       charEls[nfaSimState.currentIndex].classList.add('active');
     }
+
+    // Highlight edges on graph
     if (nfaCy) {
-      nfaCy.edges().removeClass('active-edge');
+      nfaCy.edges().removeClass('active-edge epsilon-edge');
       activeEdges.forEach(function (id) {
         nfaCy.getElementById(id).addClass('active-edge');
       });
+      epsilonEdges.forEach(function (id) {
+        nfaCy.getElementById(id).addClass('epsilon-edge');
+      });
       setTimeout(function () {
-        if (nfaCy) nfaCy.edges().removeClass('active-edge');
+        if (nfaCy) nfaCy.edges().removeClass('active-edge epsilon-edge');
       }, 500);
     }
+
+    // Show epsilon info
+    var epCount = closure.size - rawNext.length;
+    if (dom.nfaEpsilonInfo) {
+      if (epCount > 0) {
+        dom.nfaEpsilonInfo.style.display = 'block';
+        dom.nfaEpsilonInfo.innerHTML = '<i class="fas fa-arrows-alt-h"></i> ε-closure added ' + epCount + ' state(s) via epsilon transitions';
+      } else {
+        dom.nfaEpsilonInfo.style.display = 'none';
+      }
+    }
+
     updateNfaUI();
     if (nfaSimState.currentIndex >= nfaSimState.testString.length) {
       dom.nfaStep.disabled = true;
+      if (dom.nfaRun) dom.nfaRun.disabled = true;
       dom.nfaStep.innerHTML = '<i class="fas fa-flag-checkered"></i> Finished';
       checkNfaVerdict();
     } else {
       if (nfaSimState.activeStates.size === 0) {
         dom.nfaStep.disabled = true;
+        if (dom.nfaRun) dom.nfaRun.disabled = true;
         checkNfaVerdict();
       } else {
         setNfaVerdict(
           'processing',
           '<i class="fas fa-cog fa-spin"></i> Consumed \'' +
             charToConsume +
-            "'. Active: " +
+            "'. Active paths: " +
             nfaSimState.activeStates.size
         );
       }
     }
-  }
+  } }
 
   function checkNfaVerdict() {
     var accepted = false;
@@ -1557,6 +1611,7 @@
       dom.nfaString.disabled = false;
       dom.nfaReset.disabled = false;
       dom.nfaStep.disabled = false;
+      if (dom.nfaRun) dom.nfaRun.disabled = false;
       resetNfaSim();
     } catch (e) {
       nfaLog(e.message, 'error');
@@ -1610,6 +1665,55 @@
     dom.nfaStep.addEventListener('click', handleNfaStep);
     dom.nfaReset.addEventListener('click', resetNfaSim);
     dom.nfaString.addEventListener('input', resetNfaSim);
+
+    // Run All — auto-steps through the whole string
+    if (dom.nfaRun) {
+      dom.nfaRun.addEventListener('click', function () {
+        if (nfaRunTimer) {
+          clearInterval(nfaRunTimer);
+          nfaRunTimer = null;
+          dom.nfaRun.innerHTML = '<i class="fas fa-play"></i> Run All';
+          return;
+        }
+        dom.nfaRun.innerHTML = '<i class="fas fa-pause"></i> Pause';
+        var speed = dom.nfaSpeed ? parseInt(dom.nfaSpeed.value) : 700;
+        nfaRunTimer = setInterval(function () {
+          if (
+            nfaSimState.currentIndex >= nfaSimState.testString.length ||
+            nfaSimState.activeStates.size === 0
+          ) {
+            clearInterval(nfaRunTimer);
+            nfaRunTimer = null;
+            if (dom.nfaRun) dom.nfaRun.innerHTML = '<i class="fas fa-play"></i> Run All';
+            return;
+          }
+          handleNfaStep();
+        }, speed);
+      });
+    }
+
+    // Speed slider
+    if (dom.nfaSpeed) {
+      dom.nfaSpeed.addEventListener('input', function () {
+        var v = dom.nfaSpeed.value;
+        if (dom.nfaSpeedVal) dom.nfaSpeedVal.textContent = v + 'ms';
+        if (nfaRunTimer) {
+          clearInterval(nfaRunTimer);
+          nfaRunTimer = setInterval(function () {
+            if (
+              nfaSimState.currentIndex >= nfaSimState.testString.length ||
+              nfaSimState.activeStates.size === 0
+            ) {
+              clearInterval(nfaRunTimer);
+              nfaRunTimer = null;
+              if (dom.nfaRun) dom.nfaRun.innerHTML = '<i class="fas fa-play"></i> Run All';
+              return;
+            }
+            handleNfaStep();
+          }, parseInt(v));
+        }
+      });
+    }
 
     dom.nfaPattern.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') handleNfaCompile();
