@@ -209,9 +209,9 @@ grid.addEventListener('click', (e) => {
   const problem = getProblems().find((p) => p.id === id);
   if (!problem) return;
 
-  // Navigate to the new global Monaco editor
+  // Navigate to the new global Monaco editor in a new tab
   const preferredLang = localStorage.getItem('preferredLanguage') || 'javascript';
-  window.location.href = `/practice/editor?problemId=${problem.id}&lang=${preferredLang}`;
+  window.open(`/practice/editor?problemId=${problem.id}&lang=${preferredLang}`, '_blank', 'noopener,noreferrer');
 });
 
 /* ─── History API: browser back closes modal instead of leaving page ─── */
