@@ -110,6 +110,13 @@ const visualizers = [
     desc: 'Build and explore suffix arrays for string processing.',
   },
   {
+    name: 'SA-IS Suffix Array (Linear Time)',
+    path: '/pages/visualizers/sais-visualizer/sais-visualizer.html',
+    category: 'Sorting & Searching',
+    icon: 'fa-dna',
+    desc: 'Visualize the SA-IS linear-time algorithm using S/L classification and induced sorting.',
+  },
+  {
     name: 'Big-O Analyzer',
     path: '/pages/visualizers/big-o-analyzer/big-o-analyzer.html',
     category: 'Sorting & Searching',
