@@ -170,6 +170,13 @@ const practiceTools = [
     desc: 'Scan your memory gaps and get personalized recommendations for topics to revisit.',
   },
   {
+    name: 'Algorithm Cheat Sheet Generator',
+    path: '/pages/tools/cheat-sheet-generator/cheat-sheet-generator.html',
+    category: 'Learning Tools',
+    icon: 'fa-file-pdf',
+    desc: 'Generate printable/exportable PDF cheat sheets customized to your weak topics, code templates, Big-O charts, mnemonics, and personal notes.',
+  },
+  {
     name: 'My Notes & Mnemonics',
     path: '/pages/tools/my-notes/my-notes.html',
     category: 'Learning Tools',

@@ -10,6 +10,7 @@ import { explainCode } from '../services/codeExplainer.service.js';
 import sqlSimulatorRouter from './sqlSimulator.js';
 import streaksHandler from '../../api/streaks.js';
 import goalsHandler from '../../api/goals.js';
+import cheatSheetHandler from '../../api/cheat-sheet.js';
 
 const router = express.Router();
 
@@ -33,5 +34,6 @@ router.post('/explain-code', async (req, res) => {
 router.use('/sql', sqlSimulatorRouter);
 router.all('/streaks', (req, res) => streaksHandler(req, res));
 router.all('/goals', (req, res) => goalsHandler(req, res));
+router.all('/cheat-sheet', (req, res) => cheatSheetHandler(req, res));
 
 export default router;

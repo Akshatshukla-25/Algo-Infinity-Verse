@@ -20,6 +20,7 @@ import {
 import { handleUserPersonality } from '../handlers/personalityHandlers.js';
 import { handleRefactoringDojoSubmit } from './refactoringDojoRoutes.js';
 import { explainCode } from '../services/codeExplainer.service.js';
+import cheatSheetHandler from '../../api/cheat-sheet.js';
 
 const MAX_TOPIC_LENGTH = 100;
 
@@ -334,6 +335,16 @@ export function setupApiRoutes(req, res, pathname) {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(result));
+      },
+      'default',
+      false
+    )(req, res);
+  }
+
+  if (pathname === '/api/cheat-sheet' && (req.method === 'POST' || req.method === 'GET')) {
+    return wrapHandler(
+      async (req, res) => {
+        await cheatSheetHandler(req, res);
       },
       'default',
       false
