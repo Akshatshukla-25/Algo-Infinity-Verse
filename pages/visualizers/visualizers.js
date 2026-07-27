@@ -4,6 +4,13 @@
 
 const visualizers = [
   {
+    name: 'Roaring Bitmaps Data Compression',
+    path: '/pages/visualizers/roaring-bitmaps/roaring-bitmaps.html',
+    category: 'Data Structures',
+    icon: 'fa-boxes',
+    desc: 'Compress integers using Array, Bitmap, and Run containers.',
+  },
+  {
     name: 'Chandy-Lamport Distributed Snapshot',
     path: '/pages/visualizers/chandy-lamport/chandy-lamport.html',
     category: 'Distributed Systems',
