@@ -4,6 +4,13 @@
 
 const visualizers = [
   {
+    name: 'Quotient Filter Data Structure',
+    path: '/pages/visualizers/quotient-filter/quotient-filter.html',
+    category: 'Data Structures',
+    icon: 'fa-filter',
+    desc: 'Space-efficient probabilistic alternative to Bloom Filters.',
+  },
+  {
     name: 'Roaring Bitmaps Data Compression',
     path: '/pages/visualizers/roaring-bitmaps/roaring-bitmaps.html',
     category: 'Data Structures',
