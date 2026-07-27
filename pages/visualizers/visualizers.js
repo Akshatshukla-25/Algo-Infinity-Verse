@@ -924,6 +924,13 @@ const visualizers = [
 
   // ── Math, Geometry & Signals ──
   {
+    name: "Zeller's Congruence & Doomsday Algorithm",
+    path: '/pages/visualizers/zellers-congruence-visualizer/zellers-congruence-visualizer.html',
+    category: 'Math & Geometry',
+    icon: 'fa-calendar-day',
+    desc: 'Compute any day of the week instantly using modular arithmetic or Conway\'s mental-math method.',
+  },
+  {
     name: 'Haar Wavelet Transform',
     path: '/pages/visualizers/haar-wavelet-visualizer/haar-wavelet-visualizer.html',
     category: 'Math & Geometry',
