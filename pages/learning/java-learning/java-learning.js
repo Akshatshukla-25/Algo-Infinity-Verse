@@ -238,29 +238,53 @@ function initProgressTracker() {
   updateUI();
 
   // Observe lessons entering viewport
-  const lessons = document.querySelectorAll(".java-lesson");
-  const observer = new IntersectionObserver(
-    (entries) => {
-      let changed = false;
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const topic = entry.target.getAttribute("data-topic");
-          if (topic && !completed.has(topic)) {
-            completed.add(topic);
-            changed = true;
-          }
-        }
-      });
-      if (changed) {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify([...completed])
-        );
-        updateUI();
-      }
-    },
-    { threshold: 0.15, rootMargin: "0px 0px -20% 0px" }
-  );
+const lessons = document.querySelectorAll(".java-lesson");
 
-  lessons.forEach((l) => observer.observe(l));
+// Stores timers for visible lessons
+const visibleTimers = new Map();
+
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      const topic = entry.target.getAttribute("data-topic");
+
+      if (!topic || completed.has(topic)) return;
+
+      if (entry.isIntersecting) {
+        // Start timer only once
+        if (!visibleTimers.has(topic)) {
+          const timer = setTimeout(() => {
+            completed.add(topic);
+
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify([...completed])
+            );
+
+            updateUI();
+            // Clean up timer and stop observing this lesson
+            visibleTimers.delete(topic);
+          
+            observer.unobserve(entry.target);
+          }, 5000);
+
+
+          visibleTimers.set(topic, timer);
+        }
+      } else {
+        // Cancel timer if user scrolls away too quickly
+        if (visibleTimers.has(topic)) {
+          clearTimeout(visibleTimers.get(topic));
+          visibleTimers.delete(topic);
+        }
+      }
+    });
+  },
+  {
+    threshold: 0.75,
+    rootMargin: "0px"
+  }
+);
+
+lessons.forEach((lesson) => observer.observe(lesson));
 }
