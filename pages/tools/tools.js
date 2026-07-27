@@ -316,6 +316,13 @@ const practiceTools = [
     desc: 'Simulate memory leaks to understand how improper management impacts performance.',
   },
   {
+    name: 'Terminal Simulator',
+    path: '/pages/tools/terminal-simulator/terminal-simulator.html',
+    category: 'Simulators',
+    icon: 'fa-terminal',
+    desc: 'Learn Linux commands interactively with a fake filesystem, real-time terminal output, and 10 progressive challenges.',
+  },
+  {
     name: 'Git Simulator',
     path: '/pages/tools/git-simulator/git-simulator.html',
     category: 'Simulators',
