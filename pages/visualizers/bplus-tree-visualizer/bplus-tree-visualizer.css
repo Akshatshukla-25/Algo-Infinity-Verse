@@ -484,3 +484,15 @@
   color: #e11d48;
   border-color: #e11d48;
 }
+
+/* Sibling Borrowing visual styles */
+.bpt-node.borrow {
+  border-color: #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+.bpt-node.borrow .bpt-key {
+  background: rgba(245, 158, 11, 0.2);
+  border-right-color: #f59e0b;
+  color: #fcd34d;
+}

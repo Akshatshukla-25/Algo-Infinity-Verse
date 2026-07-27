@@ -196,13 +196,34 @@ function bptDeleteKey(tree, key, steps) {
     return false;
   }
 
+  let oldFirstKey = node.keys[0];
+
   node.keys.splice(idx, 1);
   node.values.splice(idx, 1);
 
   steps.push(bptSnapshot(tree, [node.id], 'Removed ' + key + ' from leaf', 'active'));
 
+  // Update routing key in ancestor if we deleted the first key
+  if (idx === 0 && node.keys.length > 0 && node.parent) {
+    bptUpdateSeparator(tree, node, oldFirstKey, node.keys[0], steps);
+  }
+
   bptFixUnderflow(tree, node, steps);
   return true;
+}
+
+function bptUpdateSeparator(tree, node, oldKey, newKey, steps) {
+  let curr = node;
+  while (curr.parent) {
+    let p = curr.parent;
+    let childIdx = p.children.indexOf(curr);
+    if (childIdx > 0 && p.keys[childIdx - 1] === oldKey) {
+      p.keys[childIdx - 1] = newKey;
+      steps.push(bptSnapshot(tree, [p.id], 'Updated routing key in parent from ' + oldKey + ' to ' + newKey, 'borrow'));
+      return;
+    }
+    curr = p;
+  }
 }
 
 function bptFixUnderflow(tree, node, steps) {
@@ -256,7 +277,7 @@ function bptBorrowFromLeft(tree, parent, idx, steps) {
     parent.keys[idx - 1] = borrowedKey;
   }
 
-  steps.push(bptSnapshot(tree, [node.id, left.id, parent.id], 'Borrowed a key from the left sibling', 'merge'));
+  steps.push(bptSnapshot(tree, [node.id, left.id, parent.id], 'Borrowed a key from the left sibling', 'borrow'));
 }
 
 function bptBorrowFromRight(tree, parent, idx, steps) {
@@ -276,7 +297,7 @@ function bptBorrowFromRight(tree, parent, idx, steps) {
     parent.keys[idx] = borrowedKey;
   }
 
-  steps.push(bptSnapshot(tree, [node.id, right.id, parent.id], 'Borrowed a key from the right sibling', 'merge'));
+  steps.push(bptSnapshot(tree, [node.id, right.id, parent.id], 'Borrowed a key from the right sibling', 'borrow'));
 }
 
 function bptMergeNodes(tree, parent, leftIdx, steps) {
