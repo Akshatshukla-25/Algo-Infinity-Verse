@@ -51,6 +51,9 @@ async function loadPartial(id, url) {
 
     document.getElementById(id).innerHTML = html;
     if (typeof handleActiveNav === 'function') handleActiveNav();
+    if (id === 'navbar-placeholder' && typeof _initNavbar === 'function') {
+      _initNavbar();
+    }
   } catch (e) {
     if (e.name !== 'AbortError') {
       void 0;
@@ -2199,12 +2202,17 @@ function initLoadingScreen() {
 }
 
 // ===== NAVBAR =====
+let navbarInitialized = false;
+
 function initNavbar() {
+  if (navbarInitialized) return;
   const menuToggle = document.getElementById('menuToggle');
   const navLinks = document.getElementById('navLinks');
 
+  if (!menuToggle || !navLinks) return;
+
   let overlay = document.querySelector('.nav-overlay');
-  if (!overlay && menuToggle && navLinks) {
+  if (!overlay) {
     overlay = document.createElement('div');
     overlay.className = 'nav-overlay';
     document.body.appendChild(overlay);
@@ -2228,18 +2236,16 @@ function initNavbar() {
     toggleMenu(false);
   };
 
-  if (menuToggle && navLinks) {
-    menuToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleMenu();
-    });
+  menuToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMenu();
+  });
 
-    if (overlay) overlay.addEventListener('click', closeMenu);
+  if (overlay) overlay.addEventListener('click', closeMenu);
 
-    navLinks.querySelectorAll('a').forEach((link) => {
-      link.addEventListener('click', closeMenu);
-    });
-  }
+  navLinks.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', closeMenu);
+  });
 
   const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
   const isMobile = () => window.matchMedia('(max-width: 1024px)').matches;
@@ -2335,7 +2341,11 @@ function initNavbar() {
       });
     }
   });
+
+  navbarInitialized = true;
 }
+
+const _initNavbar = initNavbar;
 
 // ===== HERO SECTION =====
 function initHeroSection() {
