@@ -289,6 +289,13 @@ const visualizers = [
 
   // ── Graph Algorithms ──
   {
+    name: "Dinic's Algorithm Visualizer",
+    path: '/pages/visualizers/dinics-algorithm-visualizer/dinics-algorithm-visualizer.html',
+    category: 'Graph Algorithms',
+    icon: 'fa-water',
+    desc: 'Visualize Level Graphs, Blocking Flows, and Pointer Advancement in O(V²E) time.',
+  },
+  {
     name: 'Bitmask DP: TSP',
     path: '/pages/visualizers/bitmask-dp-visualizer/bitmask-dp-visualizer.html',
     category: 'Graph Algorithms',
