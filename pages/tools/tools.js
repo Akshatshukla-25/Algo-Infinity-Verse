@@ -170,6 +170,13 @@ const practiceTools = [
     desc: 'Scan your memory gaps and get personalized recommendations for topics to revisit.',
   },
   {
+    name: 'Collaborative Code Playground',
+    path: '/pages/tools/collab-editor/collab-editor.html',
+    category: 'Learning Tools',
+    icon: 'fa-code-compare',
+    desc: 'Real-time collaborative code editor with shared execution, remote cursor presence, live chat, and snapshot forking.',
+  },
+  {
     name: 'Algorithm Cheat Sheet Generator',
     path: '/pages/tools/cheat-sheet-generator/cheat-sheet-generator.html',
     category: 'Learning Tools',
