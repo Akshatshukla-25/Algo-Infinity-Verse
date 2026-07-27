@@ -4,6 +4,13 @@
 
 const visualizers = [
   {
+    name: 'Chandy-Lamport Distributed Snapshot',
+    path: '/pages/visualizers/chandy-lamport/chandy-lamport.html',
+    category: 'Distributed Systems',
+    icon: 'fa-camera',
+    desc: 'Capture a consistent global state in a distributed system where nodes only have local clocks.',
+  },
+   {
     name: 'Hopfield Network Associative Memory',
     path: '/pages/visualizers/hopfield-network/hopfield-network.html',
     category: 'AI & ML',
