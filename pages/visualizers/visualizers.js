@@ -1516,6 +1516,13 @@ const visualizers = [
     desc: 'Interactive SWIM Protocol Simulator - Algo Infinity Verse visualization.',
   },
   {
+    name: 'BWT + MTF + RLE Pipeline',
+    path: '/pages/visualizers/bwt-mtf-rle-visualizer/bwt-mtf-rle-visualizer.html',
+    category: 'Algorithms',
+    icon: 'fa-compress-arrows-alt',
+    desc: 'Visualize the full bzip2 compression pipeline: Burrows-Wheeler Transform, Move-to-Front, and RLE.',
+  },
+  {
     name: 't-Digest Percentile Estimator',
     path: '/pages/visualizers/tdigest-percentile-estimator/tdigest-percentile-estimator.html',
     category: 'Algorithms',
