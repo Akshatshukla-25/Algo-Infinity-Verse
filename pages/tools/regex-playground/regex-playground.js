@@ -329,6 +329,7 @@
       exProgress: qs('#rgExProgress'),
       patGrid: qs('#rgPatGrid'),
       nfaPattern: qs('#rgNfaPattern'),
+      nfaMode: qs('#rgNfaMode'),
       nfaCompile: qs('#rgNfaCompileBtn'),
       nfaString: qs('#rgNfaString'),
       nfaStep: qs('#rgNfaStepBtn'),
@@ -1583,6 +1584,94 @@
     }
   }
 
+  function getSubsetSignature(stateSet) {
+    var ids = [];
+    stateSet.forEach(function (s) {
+      ids.push(s.id);
+    });
+    ids.sort();
+    return ids.join(',');
+  }
+
+  function compileDFA(nfa) {
+    var alphabet = new Set();
+    var visitedNfa = new Set();
+    var queueNfa = [nfa.start];
+    while (queueNfa.length > 0) {
+      var curr = queueNfa.shift();
+      if (visitedNfa.has(curr.id)) continue;
+      visitedNfa.add(curr.id);
+      for (var sym in curr.transitions) {
+        if (sym !== '\u03B5') {
+          alphabet.add(sym);
+        }
+        curr.transitions[sym].forEach(function (ns) {
+          if (!visitedNfa.has(ns.id)) queueNfa.push(ns);
+        });
+      }
+    }
+
+    var alphabetList = Array.from(alphabet).sort();
+    var startClosure = getEpsilonClosure([nfa.start]);
+    var startSig = getSubsetSignature(startClosure);
+
+    stateCounter = 0;
+    var dfaStart = new NFAState();
+    dfaStart.id = 'D0';
+    var isEnd = false;
+    startClosure.forEach(function (s) {
+      if (s.isEnd) isEnd = true;
+    });
+    dfaStart.isEnd = isEnd;
+
+    var dfaStates = new Map();
+    dfaStates.set(startSig, dfaStart);
+
+    var dfaQueue = [{ closure: startClosure, dfaState: dfaStart, sig: startSig }];
+    var processedSigs = new Set();
+
+    while (dfaQueue.length > 0) {
+      var current = dfaQueue.shift();
+      if (processedSigs.has(current.sig)) continue;
+      processedSigs.add(current.sig);
+
+      alphabetList.forEach(function (sym) {
+        var moveSet = new Set();
+        current.closure.forEach(function (nfaState) {
+          if (nfaState.transitions[sym]) {
+            nfaState.transitions[sym].forEach(function (target) {
+              moveSet.add(target);
+            });
+          }
+        });
+
+        if (moveSet.size === 0) return;
+
+        var nextClosure = getEpsilonClosure(moveSet);
+        var nextSig = getSubsetSignature(nextClosure);
+        if (!nextSig) return;
+
+        var targetDfaState = dfaStates.get(nextSig);
+        if (!targetDfaState) {
+          targetDfaState = new NFAState();
+          targetDfaState.id = 'D' + (++stateCounter);
+          var isTargetEnd = false;
+          nextClosure.forEach(function (s) {
+            if (s.isEnd) isTargetEnd = true;
+          });
+          targetDfaState.isEnd = isTargetEnd;
+
+          dfaStates.set(nextSig, targetDfaState);
+          dfaQueue.push({ closure: nextClosure, dfaState: targetDfaState, sig: nextSig });
+        }
+
+        current.dfaState.addTransition(sym, targetDfaState);
+      });
+    }
+
+    return new NFA(dfaStart, dfaStart);
+  }
+
   function handleNfaCompile() {
     var raw = dom.nfaPattern.value.trim();
     if (!raw) {
@@ -1590,14 +1679,20 @@
       return;
     }
     dom.nfaLogs.innerHTML = '';
-    nfaLog('Compiling: ' + raw);
+    var isDfa = dom.nfaMode && dom.nfaMode.value === 'dfa';
+    nfaLog('Compiling (' + (isDfa ? 'DFA' : 'NFA') + '): ' + raw);
     try {
       var formatted = insertExplicitConcat(raw);
       nfaLog('Concat inserted: ' + formatted);
       var postfix = toPostfix(formatted);
       nfaLog('Postfix: ' + postfix);
       var nfa = compileNFA(postfix);
-      nfaLog('NFA compiled successfully.', 'success');
+      if (isDfa) {
+        nfa = compileDFA(nfa);
+        nfaLog('Converted to DFA successfully via Powerset Construction.', 'success');
+      } else {
+        nfaLog('NFA compiled successfully.', 'success');
+      }
       nfaGraphData = extractGraphData(nfa);
       nfaLog(
         'Graph: ' +

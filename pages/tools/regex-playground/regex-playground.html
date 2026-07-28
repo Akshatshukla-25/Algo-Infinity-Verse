@@ -245,8 +245,12 @@
               </div>
               <div class="rg-nfa-controls">
                 <label for="rgNfaPattern" class="rg-label">Regex Pattern</label>
-                <div class="rg-nfa-input-row">
-                  <input type="text" id="rgNfaPattern" class="rg-input" value="(a|b)*abb" placeholder="e.g. (a|b)*abb" autocomplete="off" spellcheck="false" />
+                <div class="rg-nfa-input-row" style="gap:0.5rem;">
+                  <input type="text" id="rgNfaPattern" class="rg-input" value="(a|b)*abb" placeholder="e.g. (a|b)*abb" autocomplete="off" spellcheck="false" style="flex:1;" />
+                  <select id="rgNfaMode" class="rg-input" style="width:auto;padding:0.4rem;" title="Automaton Type">
+                    <option value="nfa">NFA</option>
+                    <option value="dfa">DFA</option>
+                  </select>
                   <button type="button" id="rgNfaCompileBtn" class="rg-btn rg-btn-primary">Compile</button>
                 </div>
                 <small class="rg-help">Supported ops: <code>*</code>, <code>+</code>, <code>?</code>, <code>|</code>, <code>()</code></small>
