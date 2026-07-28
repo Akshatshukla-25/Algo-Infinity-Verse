@@ -1260,11 +1260,11 @@
       <button id="predictBtn" class="btn btn-primary" type="button" aria-label="Predict acceptance">
         <i class="fas fa-chart-line"></i> Predict Acceptance
       </button>
-      <div id="predictionModal" class="modal" style="display: none">
+      <div id="predictionModal" class="modal" style="display: none" role="dialog" aria-modal="true" aria-labelledby="predictionModalTitle">
         <div class="modal-content">
           <div class="modal-header">
-            <h3>📊 Acceptance Prediction</h3>
-            <button id="closePredictionBtn" class="modal-close" type="button">&times;</button>
+            <h3 id="predictionModalTitle">📊 Acceptance Prediction</h3>
+            <button id="closePredictionBtn" class="modal-close" type="button" aria-label="Close modal">&times;</button>
           </div>
           <div class="modal-body">
             <div id="predictionResults">
