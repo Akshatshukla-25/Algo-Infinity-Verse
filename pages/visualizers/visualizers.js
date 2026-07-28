@@ -717,6 +717,13 @@ const visualizers = [
 
   // ── Distributed Systems ──
   {
+    name: 'Chord vs Skip Graph DHT Routing',
+    path: '/pages/visualizers/chord-vs-skip-graph/chord-vs-skip-graph.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Race Chord DHT against Skip Graph. Two distinct P2P lookup philosophies head-to-head.',
+  },
+  {
     name: 'PBFT Message Complexity Visualizer',
     path: '/pages/visualizers/pbft-complexity-visualizer/pbft-complexity-visualizer.html',
     category: 'Distributed Systems',
