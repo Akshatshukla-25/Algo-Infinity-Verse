@@ -931,6 +931,13 @@ const visualizers = [
 
   // ── Math, Geometry & Signals ──
   {
+    name: 'Delaunay Triangulation Visualizer',
+    path: '/pages/visualizers/delaunay-triangulation-visualizer/delaunay-triangulation-visualizer.html',
+    category: 'Math & Geometry',
+    icon: 'fa-draw-polygon',
+    desc: 'Explore Randomized Incremental Delaunay Triangulation and its Voronoi Dual. See optimal meshing in action.',
+  },
+  {
     name: "Zeller's Congruence & Doomsday Algorithm",
     path: '/pages/visualizers/zellers-congruence-visualizer/zellers-congruence-visualizer.html',
     category: 'Math & Geometry',
