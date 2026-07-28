@@ -89,6 +89,13 @@ const visualizers = [
   },
   // ── Sorting & Searching ──
   {
+    name: 'Interpolation Search Visualizer',
+    path: '/pages/visualizers/interpolation-search-visualizer/interpolation-search-visualizer.html',
+    category: 'Sorting & Searching',
+    icon: 'fa-chart-line',
+    desc: 'Watch Interpolation Search achieve O(log log n) speed on uniform data, but collapse to O(n) on skewed data compared to Binary Search.',
+  },
+  {
     name: 'Ternary Search Visualizer',
     path: '/pages/visualizers/ternary-search-visualizer/ternary-search-visualizer.html',
     category: 'Sorting & Searching',
