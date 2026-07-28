@@ -1045,6 +1045,30 @@
 
       /* Responsive */
       @media (max-width: 768px) {
+        body {
+          padding: 15px 10px;
+        }
+        .container {
+          padding: 20px 15px;
+          border-radius: 12px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .controls {
+          gap: 8px;
+        }
+        .editor-toolbar {
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .editor-toolbar button, .editor-toolbar select {
+          flex: 1 1 auto;
+          text-align: center;
+        }
+        #editor-container {
+          width: 100% !important;
+          max-width: 100%;
+        }
         .snippets-panel.open {
           position: absolute;
           right: 0;
@@ -1059,17 +1083,27 @@
           position: relative;
         }
         .snippet-modal-content {
-          max-width: 100%;
-          margin: 10px;
+          max-width: 95vw;
+          margin: 10px auto;
         }
       }
 
       @media (max-width: 480px) {
+        h1 {
+          font-size: 1.75rem;
+        }
         .snippets-panel.open {
-          width: 240px;
+          width: 100%; /* Full width on tiny screens */
+          border-radius: 0;
         }
         #snippetsBtn span {
           display: none;
+        }
+        .controls select {
+          width: 100%;
+        }
+        .editor-header h3 {
+          font-size: 1rem;
         }
       }
     </style>

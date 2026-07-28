@@ -10872,3 +10872,39 @@ html {
   align-items: center;
   gap: 0.3rem;
 }
+
+/* --- Global Responsive Layout Fixes --- */
+@media (max-width: 768px) {
+  body {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  .container, .wrapper {
+    width: 100% !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    box-sizing: border-box !important;
+  }
+  .modal-content, .quiz-modal-content {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    margin: 2vh auto !important;
+  }
+  .btn-group, .controls, .toolbar {
+    flex-wrap: wrap !important;
+  }
+  .visualizer-container, .canvas-wrapper {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-title {
+    font-size: 1.75rem !important;
+  }
+  .title-icon {
+    font-size: 1.75rem !important;
+  }
+}
