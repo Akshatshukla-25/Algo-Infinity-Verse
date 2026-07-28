@@ -487,6 +487,13 @@ const visualizers = [
 
   // ── Dynamic Programming ──
   {
+    name: 'Held-Karp TSP Visualizer',
+    path: '/pages/visualizers/held-karp-visualizer/held-karp-visualizer.html',
+    category: 'Dynamic Programming',
+    icon: 'fa-brain',
+    desc: 'Watch the dramatic difference between Factorial O(N!) and Exponential O(N²·2ᴺ) complexity in solving the Traveling Salesperson Problem.',
+  },
+  {
     name: 'Patience Sorting (LIS)',
     path: '/pages/visualizers/patience-sorting-visualizer/patience-sorting-visualizer.html',
     category: 'Dynamic Programming',
