@@ -8,7 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="redis-academy.css">
   <link rel="stylesheet" href="/styles/eli5-toggle.css">
-    <link rel="stylesheet" href="/styles/copy-code.css">
+  <link rel="stylesheet" href="/styles/copy-code.css">
+  <script src="/theme.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -27,10 +28,15 @@
         <h1>Redis Academy <span class="badge badge-redis">In-Memory Store</span></h1>
         <p>Interactive Caching, Pub/Sub, and Data Structures Simulator</p>
       </div>
-      <!-- new -->
-<a href="https://github.com/Eshajha19/Algo-Infinity-Verse" target="_blank" rel="noopener noreferrer" class="github-link" aria-label="GitHub Repository">
-        <i class="fa-brands fa-github"></i>
-      </a>
+      <div class="header-actions">
+        <button type="button" class="theme-toggle-btn" id="darkModeToggle" data-theme-toggle aria-label="Switch theme">
+          <i class="fa-solid fa-moon"></i>
+          <span>Dark Mode</span>
+        </button>
+        <a href="https://github.com/Eshajha19/Algo-Infinity-Verse" target="_blank" rel="noopener noreferrer" class="github-link" aria-label="GitHub Repository">
+          <i class="fa-brands fa-github"></i>
+        </a>
+      </div>
     </header>
 
     <main class="workspace">

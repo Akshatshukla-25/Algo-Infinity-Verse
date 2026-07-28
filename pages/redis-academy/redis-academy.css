@@ -64,6 +64,43 @@ body {
 .github-link { color: var(--text-secondary); font-size: 1.3rem; transition: color 0.2s; }
 .github-link:hover { color: var(--text-primary); }
 
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.96);
+}
+
+.theme-toggle-btn i {
+  font-size: 0.9rem;
+}
+
 /* Utilities */
 .mt-2 { margin-top: 0.5rem; }
 .mt-3 { margin-top: 1rem; }
@@ -341,6 +378,274 @@ body {
 }
 .quiz-submit:hover { background: #b91c1c; }
 .quiz-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Light Mode Overrides ──────────────────────────────────────── */
+html.light-mode {
+  --bg-dark: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+}
+
+html.light-mode body {
+  background-color: var(--bg-dark);
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(220, 56, 45, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.04) 0%, transparent 40%);
+}
+
+html.light-mode .glass-header,
+html.light-mode .glass-panel {
+  background: var(--bg-card);
+  border-color: var(--border-glass);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+}
+
+html.light-mode .back-btn {
+  color: var(--text-secondary);
+}
+
+html.light-mode .back-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.light-mode .btn-secondary {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: var(--border-glass);
+  color: var(--text-primary);
+}
+
+html.light-mode .btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+html.light-mode .main-stage {
+  background: var(--bg-card);
+  border-color: var(--border-glass);
+}
+
+html.light-mode .module-item {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html.light-mode .module-item:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html.light-mode .module-item.active {
+  background: rgba(220, 56, 45, 0.08);
+  border-color: rgba(220, 56, 45, 0.3);
+  color: var(--text-primary);
+}
+
+html.light-mode .module-item:not(.completed) .status-icon {
+  opacity: 0.4;
+}
+
+html.light-mode .progress-bar-container {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+html.light-mode .progress-fill {
+  box-shadow: 0 0 6px var(--success);
+}
+
+html.light-mode .tab-bar {
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom-color: var(--border-glass);
+}
+
+html.light-mode .tab-btn {
+  color: var(--text-secondary);
+}
+
+html.light-mode .tab-btn:hover {
+  color: var(--text-primary);
+}
+
+html.light-mode .tab-btn.active {
+  color: var(--redis-red);
+  border-bottom-color: var(--redis-red);
+}
+
+html.light-mode .lesson-header {
+  border-bottom-color: var(--border-glass);
+}
+
+html.light-mode .lesson-header h2 {
+  color: var(--text-primary);
+}
+
+html.light-mode .lesson-body {
+  color: var(--text-secondary);
+}
+
+html.light-mode .lesson-body h3 {
+  color: var(--text-primary);
+}
+
+html.light-mode .lesson-body h4 {
+  color: #0891b2;
+}
+
+html.light-mode .lesson-body strong {
+  color: var(--text-primary);
+}
+
+html.light-mode .lesson-body code {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0891b2;
+}
+
+html.light-mode .lesson-body pre {
+  background: #1e293b;
+  border-color: var(--border-glass);
+}
+
+html.light-mode .lesson-body pre code {
+  background: transparent;
+  color: #e2e8f0;
+}
+
+html.light-mode .lesson-body .tip-box {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+html.light-mode .terminal-panel {
+  background: #0f172a;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+html.light-mode .terminal-header {
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html.light-mode .status-indicator {
+  color: #94a3b8;
+}
+
+html.light-mode .inspector-panel h3 {
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.04);
+  border-bottom-color: var(--border-glass);
+}
+
+html.light-mode .inspector-tabs {
+  border-bottom-color: var(--border-glass);
+}
+
+html.light-mode .inspector-tab {
+  color: var(--text-secondary);
+}
+
+html.light-mode .inspector-tab:hover {
+  color: var(--text-primary);
+}
+
+html.light-mode .inspector-tab.active {
+  color: var(--redis-red);
+  border-bottom-color: var(--redis-red);
+}
+
+html.light-mode .inspector-content .empty-state {
+  color: var(--text-secondary);
+}
+
+html.light-mode .inspector-row {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html.light-mode .inspector-key {
+  color: #0891b2;
+}
+
+html.light-mode .inspector-val {
+  color: var(--text-primary);
+}
+
+html.light-mode .inspector-type {
+  color: var(--text-secondary);
+}
+
+html.light-mode .inspector-header {
+  color: var(--text-secondary);
+}
+
+html.light-mode .quiz-panel h2 {
+  color: var(--text-primary);
+}
+
+html.light-mode .quiz-question {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: var(--border-glass);
+}
+
+html.light-mode .quiz-question.correct {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+html.light-mode .quiz-question.incorrect {
+  border-color: rgba(220, 56, 45, 0.4);
+  background: rgba(220, 56, 45, 0.05);
+}
+
+html.light-mode .quiz-question p {
+  color: var(--text-primary);
+}
+
+html.light-mode .quiz-option {
+  border-color: var(--border-glass);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+html.light-mode .quiz-option:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.light-mode .quiz-option.selected {
+  border-color: var(--redis-red);
+  background: rgba(220, 56, 45, 0.06);
+}
+
+html.light-mode .quiz-option.correct-answer {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.06);
+  color: var(--success);
+}
+
+html.light-mode .quiz-option.wrong-answer {
+  border-color: var(--redis-red);
+  background: rgba(220, 56, 45, 0.06);
+  color: var(--redis-red);
+}
+
+html.light-mode .module-group-label {
+  color: var(--text-secondary);
+}
+
+html.light-mode .github-link {
+  color: var(--text-secondary);
+}
+
+html.light-mode .github-link:hover {
+  color: var(--text-primary);
+}
+
+html.light-mode .theme-toggle-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--border-glass);
+  color: var(--text-secondary);
+}
+
+html.light-mode .theme-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+}
 
 @media (max-width: 1024px) {
   .workspace { grid-template-columns: 1fr; }
