@@ -710,6 +710,13 @@ const visualizers = [
 
   // ── Distributed Systems ──
   {
+    name: 'PBFT Message Complexity Visualizer',
+    path: '/pages/visualizers/pbft-complexity-visualizer/pbft-complexity-visualizer.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Visualize the O(n²) scalability wall of Byzantine Consensus and the 3f+1 fault tolerance threshold.',
+  },
+  {
     name: 'Gossip-Based Failure Detection (SWIM Protocol)',
     path: '/pages/visualizers/swim-protocol-visualizer/swim-protocol-visualizer.html',
     category: 'Distributed Systems',
