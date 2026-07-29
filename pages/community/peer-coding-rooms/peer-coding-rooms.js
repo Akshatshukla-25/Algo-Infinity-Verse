@@ -170,6 +170,11 @@ document.addEventListener("DOMContentLoaded", () => {
     btnHostStartChallenge.style.display = "none";
 
     socket.emit("join-study-room", { roomId, userId: myUserId, userName: myUserName });
+    
+    // WebRTC initialization
+    initLocalStream().then(() => {
+      socket.emit("webrtc-join", roomId, myUserId);
+    });
   }
 
   // ── Socket Events ──
@@ -416,7 +421,14 @@ function ${problem.functionName || "solve"}(${(problem.params || []).join(", ")}
   btnExitRoom.addEventListener("click", () => {
     if (activeRoom) {
       socket.emit("leave-study-room", { roomId: activeRoom.id, userId: myUserId });
+      socket.emit("webrtc-leave", activeRoom.id, myUserId);
     }
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+    if (myVideo) myVideo.srcObject = null;
+    Object.keys(peers).forEach(closePeer);
     activeRoom = null;
     initLobby();
   });
@@ -511,7 +523,14 @@ function ${problem.functionName || "solve"}(${(problem.params || []).join(", ")}
   btnRecapBackToLobby.addEventListener("click", () => {
     if (activeRoom) {
       socket.emit("leave-study-room", { roomId: activeRoom.id, userId: myUserId });
+      socket.emit("webrtc-leave", activeRoom.id, myUserId);
     }
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+    if (myVideo) myVideo.srcObject = null;
+    Object.keys(peers).forEach(closePeer);
     activeRoom = null;
     initLobby();
   });
@@ -527,4 +546,141 @@ function ${problem.functionName || "solve"}(${(problem.params || []).join(", ")}
   btnClearConsole.addEventListener("click", () => {
     roomConsoleOutput.textContent = "";
   });
+
+  // ── WebRTC Video Mesh ──
+  let localStream = null;
+  const peers = {}; // socketId -> RTCPeerConnection
+  const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+  
+  const myVideo = document.getElementById("myVideo");
+  const roomVideoGrid = document.getElementById("roomVideoGrid");
+  const btnToggleMyVideo = document.getElementById("btnToggleMyVideo");
+  const btnToggleMyAudio = document.getElementById("btnToggleMyAudio");
+
+  async function initLocalStream() {
+    if (localStream) return;
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (myVideo) myVideo.srcObject = localStream;
+    } catch (err) {
+      console.warn("Could not get media devices", err);
+    }
+  }
+
+  function createPeerConnection(targetSocketId) {
+    if (peers[targetSocketId]) return peers[targetSocketId];
+    
+    const pc = new RTCPeerConnection(rtcConfig);
+    peers[targetSocketId] = pc;
+    
+    if (localStream) {
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    }
+    
+    pc.onicecandidate = (event) => {
+      if (event.candidate && activeRoom) {
+        socket.emit("webrtc-ice-candidate", activeRoom.id, event.candidate, targetSocketId);
+      }
+    };
+    
+    pc.ontrack = (event) => {
+      let videoEl = document.getElementById(`video-${targetSocketId}`);
+      if (!videoEl) {
+        const container = document.createElement("div");
+        container.className = "video-container remote-video";
+        container.id = `container-${targetSocketId}`;
+        container.style = "position: relative;";
+        
+        videoEl = document.createElement("video");
+        videoEl.id = `video-${targetSocketId}`;
+        videoEl.autoplay = true;
+        videoEl.playsinline = true;
+        videoEl.style = "width: 100%; border-radius: 8px; border: 1px solid var(--glass-border); background: #000;";
+        
+        const label = document.createElement("span");
+        label.className = "video-label";
+        label.style = "position:absolute; bottom:5px; left:5px; background:rgba(0,0,0,0.6); padding:2px 6px; border-radius:4px; font-size:0.7rem;";
+        label.textContent = "Peer"; 
+        
+        container.appendChild(videoEl);
+        container.appendChild(label);
+        if (roomVideoGrid) roomVideoGrid.appendChild(container);
+      }
+      videoEl.srcObject = event.streams[0];
+    };
+    
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === "disconnected" || pc.iceConnectionState === "failed") {
+        closePeer(targetSocketId);
+      }
+    };
+    
+    return pc;
+  }
+  
+  function closePeer(targetSocketId) {
+    if (peers[targetSocketId]) {
+      peers[targetSocketId].close();
+      delete peers[targetSocketId];
+    }
+    const container = document.getElementById(`container-${targetSocketId}`);
+    if (container) container.remove();
+  }
+
+  if (socket) {
+    socket.on("webrtc-user-joined", async (userId, targetSocketId) => {
+      if (!activeRoom) return;
+      const pc = createPeerConnection(targetSocketId);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit("webrtc-offer", activeRoom.id, offer, targetSocketId);
+    });
+    
+    socket.on("webrtc-offer", async (offer, targetSocketId) => {
+      if (!activeRoom) return;
+      const pc = createPeerConnection(targetSocketId);
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit("webrtc-answer", activeRoom.id, answer, targetSocketId);
+    });
+    
+    socket.on("webrtc-answer", async (answer, targetSocketId) => {
+      if (peers[targetSocketId]) {
+        await peers[targetSocketId].setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    });
+    
+    socket.on("webrtc-ice-candidate", async (candidate, targetSocketId) => {
+      if (peers[targetSocketId]) {
+        await peers[targetSocketId].addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    });
+    
+    socket.on("webrtc-user-left", (userId, targetSocketId) => {
+      closePeer(targetSocketId);
+    });
+    
+    if (btnToggleMyVideo) {
+      btnToggleMyVideo.addEventListener("click", () => {
+        if (!localStream) return;
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.enabled = !videoTrack.enabled;
+          btnToggleMyVideo.innerHTML = videoTrack.enabled ? '<i class="fas fa-camera"></i>' : '<i class="fas fa-camera-slash" style="color:var(--danger)"></i>';
+        }
+      });
+    }
+    
+    if (btnToggleMyAudio) {
+      btnToggleMyAudio.addEventListener("click", () => {
+        if (!localStream) return;
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) {
+          audioTrack.enabled = !audioTrack.enabled;
+          btnToggleMyAudio.innerHTML = audioTrack.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash" style="color:var(--danger)"></i>';
+        }
+      });
+    }
+  }
 });
