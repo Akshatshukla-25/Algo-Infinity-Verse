@@ -96,8 +96,8 @@ function initChart() {
   });
   }
 
-  if (typeof lazyVisualizer !== 'undefined') {
-    lazyVisualizer.lazyLoadChartJS(els.chartCtx.canvas, createChart);
+  if (window.lazyVisualizer) {
+    window.lazyVisualizer.lazyLoadChartJS(els.chartCtx.canvas, createChart);
   } else {
     createChart();
   }
