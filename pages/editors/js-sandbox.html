@@ -76,6 +76,18 @@ function solve(arr) {
 
           <div id="testsList" class="tests-list"></div>
 
+          <!-- Zero-Knowledge Proof (ZKP) Validation -->
+          <div id="zkpContainer" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid #10b981; border-radius: 8px; background: rgba(16, 185, 129, 0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+              <h3 style="margin:0; font-size:1rem; color:#10b981;"><i class="fas fa-shield-alt"></i> zk-SNARK Code Verification</h3>
+              <span id="zkpStatus" class="badge" style="background:#10b981; color:#fff;">Proof Generated</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+              The cryptographic proof below verifies you passed the hidden tests without exposing them or sending your code to the server.
+            </p>
+            <pre id="zkpProofText" class="transcript" style="font-size: 0.7rem; color:#a7f3d0; background:rgba(0,0,0,0.5); max-height: 100px; overflow-y:auto;">{}</pre>
+          </div>
+
           <div id="runtimeError" class="runtime-error" style="display:none"></div>
         </section>
       </section>
@@ -121,6 +133,7 @@ function solve(arr) {
     <script src="/auth.js"></script>
     <script src="/theme.js"></script>
     <script src="/auth-gate.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/8.8.2/acorn.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/escodegen/2.0.0/escodegen.browser.min.js"></script>
     <script type="module" src="./js-sandbox.js"></script>
