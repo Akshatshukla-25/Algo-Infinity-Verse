@@ -24,7 +24,7 @@ const visualizers = [
     icon: 'fa-camera',
     desc: 'Capture a consistent global state in a distributed system where nodes only have local clocks.',
   },
-   {
+  {
     name: 'Hopfield Network Associative Memory',
     path: '/pages/visualizers/hopfield-network/hopfield-network.html',
     category: 'AI & ML',
@@ -285,6 +285,13 @@ const visualizers = [
     category: 'Trees & BSTs',
     icon: 'fa-code-branch',
     desc: 'Interactive versioned segment tree with K-th smallest queries.',
+  },
+  {
+    name: 'Link-Cut Tree Visualizer',
+    path: '/pages/visualizers/link-cut-tree/link-cut-tree.html',
+    category: 'Trees & BSTs',
+    icon: 'fa-project-diagram',
+    desc: 'Dynamic graph connectivity on forest trees using auxiliary Splay Trees.',
   },
   {
     name: 'Heap Percolation Visualizer',
@@ -970,7 +977,7 @@ const visualizers = [
     path: '/pages/visualizers/zellers-congruence-visualizer/zellers-congruence-visualizer.html',
     category: 'Math & Geometry',
     icon: 'fa-calendar-day',
-    desc: 'Compute any day of the week instantly using modular arithmetic or Conway\'s mental-math method.',
+    desc: "Compute any day of the week instantly using modular arithmetic or Conway's mental-math method.",
   },
   {
     name: 'Haar Wavelet Transform',
@@ -1615,13 +1622,7 @@ const visualizers = [
     icon: 'fa-tree',
     desc: 'Watch a kinetic heap track the maximum-priority moving object over continuous time using certificates instead of re-sorting every frame.',
   },
-  {
-    name: 'Link-Cut Trees · Algo Infinity Verse',
-    path: '/pages/visualizers/link-cut-tree/link-cut-tree.html',
-    category: 'CPU Scheduling',
-    icon: 'fa-tree',
-    desc: 'A Represented-Tree Engine — watch access(v) splay auxiliary trees, re-link preferred children, and walk path-parent pointers to expose the root-to-v path, backed by a genuine splay-tree implementation.',
-  },
+
   {
     name: "Manacher's Algorithm · Algo Infinity Verse",
     path: '/pages/visualizers/manacher/manacher.html',
