@@ -61,14 +61,20 @@ const languages = [
     isBrandIcon: false,
     langKey: 'rust',
     desc: 'Fearless concurrency, memory safety without a garbage collector, and blazingly fast performance.',
-    svgIcon: `<svg viewBox="0 0 106 106" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em">
-  <path d="M94 53c0-3.6-.3-7.1-.9-10.5l-10.2-.8c-1-3.4-2.4-6.6-4.1-9.5l5.5-8.5c-3.7-4.2-8-7.8-12.8-10.6l-7.9 6.4c-2.7-1.8-5.7-3.3-8.9-4.4L53 5.1c-4.5-.7-9.1-.7-13.6 0l-1.7 10.2c-3.2 1-6.1 2.5-8.8 4.2l-8-6.3c-4.8 2.8-9.2 6.4-12.9 10.6l5.7 8.6c-1.7 2.9-3 6-4 9.4L5.1 44c-.7 4.5-.7 9.1 0 13.6l9.9 1.6c.9 3.4 2.3 6.6 4 9.5l-5.6 8.6c3.7 4.2 8 7.8 12.8 10.6l8-6.4c2.7 1.8 5.7 3.3 8.9 4.4l1.7 10.1c4.5.7 9.1.7 13.6 0l1.7-10.1c3.2-1.1 6.1-2.6 8.8-4.4l8 6.4c4.8-2.8 9.1-6.4 12.8-10.6l-5.6-8.6c1.7-2.9 3.1-6.1 4-9.5l10-1.6c.6-4.5.9-9 .9-13.6z"/>
-  <path d="M53 83.6c-16.9 0-30.6-13.7-30.6-30.6S36.1 22.4 53 22.4 83.6 36.1 83.6 53 69.9 83.6 53 83.6z" fill="none" stroke="currentColor" stroke-width="4"/>
-  <path d="M39.8 68.5v-31h12.7c4.5 0 8 1 10.3 3.1 2.3 2.1 3.5 4.9 3.5 8.6 0 2.5-.7 4.7-2 6.5-1.3 1.8-3.2 3.1-5.6 3.9l9.3 8.9H62.5l-8.4-8.7h-5.9v8.7h-8.4zm8.4-16h3.5c2 0 3.6-.5 4.6-1.6s1.5-2.5 1.5-4.3-.5-3.2-1.5-4.2c-1-1-2.5-1.5-4.7-1.5h-3.4v11.6z"/>
-</svg>`
+    svgIcon: `<img src="https://cdn.simpleicons.org/rust/dea584" alt="Rust" style="width:1em;height:1em;display:block;">`
   },
 
   // ── Web ──
+  {
+    name: 'TypeScript',
+    path: '/pages/learning/typescript-learning/typescript-learning.html',
+    category: 'Web',
+    icon: 'fa-typescript',
+    isBrandIcon: true,
+    langKey: 'typescript',
+    desc: 'A typed superset of JavaScript that compiles to plain JS — scale your code with confidence.',
+    svgIcon: `<img src="https://cdn.simpleicons.org/typescript/3178C6" alt="TypeScript" style="width:1em;height:1em;display:block;">`
+  },
   {
     name: 'PHP',
     path: '/pages/learning/php-learning/php-learning.html',
@@ -88,14 +94,7 @@ const languages = [
     isBrandIcon: false,
     langKey: 'solidity',
     desc: 'The language of Ethereum smart contracts. Statically typed, contract-oriented, and designed for the EVM.',
-    svgIcon: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em">
-  <path d="M12 2L3 9v6l9 7 9-7V9l-9-7z" fill="currentColor" opacity="0.2"/>
-  <path d="M12 2L3 9v6l9 7 9-7V9l-9-7z" fill="none" stroke="currentColor" stroke-width="1.5"/>
-  <path d="M12 22V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-  <path d="M3 9l9 3 9-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-  <path d="M12 12l-9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-  <path d="M12 12l9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-</svg>`
+    svgIcon: `<img src="https://cdn.simpleicons.org/solidity/fbc4ab" alt="Solidity" style="width:1em;height:1em;display:block;">`
   },
 ];
 
@@ -106,6 +105,7 @@ const categories = ['All', 'General Purpose', 'Systems', 'Web', 'Enterprise'];
 const langColors = {
   python: '#3572A5',
   javascript: '#f7df1e',
+  typescript: '#3178C6',
   java: '#b07219',
   cplusplus: '#f34b7d',
   c: '#888888',
