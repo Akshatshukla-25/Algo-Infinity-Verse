@@ -495,7 +495,8 @@ function initChart() {
           backgroundColor: 'rgba(14, 165, 233, 0.1)',
           borderWidth: 2,
           fill: true,
-          tension: 0.1,
+          stepped: true,
+          tension: 0,
           pointRadius: 3,
           pointBackgroundColor: '#0284c7',
         },
@@ -545,8 +546,8 @@ function initChart() {
   });
   }
 
-  if (typeof lazyVisualizer !== 'undefined') {
-    lazyVisualizer.lazyLoadChartJS(canvas, createChart);
+  if (window.lazyVisualizer) {
+    window.lazyVisualizer.lazyLoadChartJS(canvas, createChart);
   } else {
     createChart();
   }
@@ -627,7 +628,7 @@ function spawnPackets(hasLoss, lossType) {
       y: yOffset,
       targetX: receiverX,
       progress: 0, // 0.0 to 1.0 (DATA) then 1.0 to 2.0 (ACK)
-      speed: speed,
+      speed: speed * (0.9 + Math.random() * 0.2), // Jitter for realism
       type: type,
       failAt: failAt,
     });
@@ -743,6 +744,13 @@ function drawExplosion(x, y) {
   ctx.moveTo(x + 5, y - 5);
   ctx.lineTo(x - 5, y + 5);
   ctx.stroke();
+
+  // Draw particle fragments
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(x - 12, y - 12, 3, 3);
+  ctx.fillRect(x + 10, y - 8, 2, 2);
+  ctx.fillRect(x - 10, y + 10, 3, 3);
+  ctx.fillRect(x + 12, y + 12, 2, 2);
 
   ctx.shadowBlur = 0;
 }
