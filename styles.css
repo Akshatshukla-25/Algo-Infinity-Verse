@@ -3471,15 +3471,54 @@ html.auth-unverified [data-auth-required] {
   }
 
   .settings-dropdown-menu {
+    position: fixed !important;
+    top: 68px !important;
     left: auto !important;
     right: 0.5rem !important;
-    position: fixed !important;
-    top: auto !important;
-    max-width: calc(100vw - 32px) !important;
+    width: calc(100% - 1rem) !important;
+    max-width: 340px !important;
+    min-width: auto !important;
+    max-height: calc(100vh - 68px);
+    overflow-y: auto;
+    z-index: 10001 !important;
     transform: none !important;
-    width: 300px;
+    background: rgba(12, 12, 30, 0.98);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow:
+      0 25px 60px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(148, 163, 184, 0.03);
+  }
+
+  /* When signed in, give the panel more room for extra items */
+  html.auth-verified .settings-dropdown-menu {
+    max-width: 380px !important;
+  }
+
+  /* Reduce font sizes inside the fixed settings panel on mobile/tablet */
+  .settings-dropdown-menu .dropdown-item {
+    font-size: 0.8rem;
+  }
+  .settings-dropdown-menu .dropdown-item i {
+    font-size: 0.78rem;
+    width: 16px;
+  }
+  .settings-dropdown-menu .settings-profile-header {
+    padding: 0.7rem;
+  }
+  .settings-dropdown-menu .settings-avatar-wrapper {
+    width: 34px;
+    height: 34px;
+  }
+  .settings-dropdown-menu .settings-avatar-fallback {
+    font-size: 2rem;
+  }
+  .settings-dropdown-menu .settings-user-name {
+    font-size: 0.82rem;
+  }
+  .settings-dropdown-menu .settings-user-email {
+    font-size: 0.65rem;
   }
 
   .dropdown-group-label {
@@ -3489,15 +3528,6 @@ html.auth-unverified [data-auth-required] {
 
   .nav-settings-dropdown {
     position: static;
-  }
-
-  .nav-settings-dropdown .dropdown-menu-end {
-    position: fixed;
-    top: auto;
-    right: 0.5rem;
-    left: 0.5rem;
-    max-height: 70vh;
-    overflow-y: auto;
   }
 }
 
@@ -3536,8 +3566,41 @@ html.auth-unverified [data-auth-required] {
   }
 
   .settings-dropdown-menu {
-    width: calc(100vw - 32px) !important;
+    top: 60px !important;
+    left: auto !important;
+    max-width: 290px !important;
     min-width: auto !important;
+    max-height: calc(100vh - 60px);
+  }
+  /* When signed in on phone, give more room */
+  html.auth-verified .settings-dropdown-menu {
+    max-width: 320px !important;
+  }
+
+  /* Compact fonts for phone-sized settings panel */
+  .settings-dropdown-menu .dropdown-item {
+    font-size: 0.76rem;
+    padding: 0.4rem 0.6rem;
+  }
+  .settings-dropdown-menu .dropdown-item i {
+    font-size: 0.7rem;
+    width: 14px;
+  }
+  .settings-dropdown-menu .settings-profile-header {
+    padding: 0.5rem 0.6rem;
+  }
+  .settings-dropdown-menu .settings-avatar-wrapper {
+    width: 28px;
+    height: 28px;
+  }
+  .settings-dropdown-menu .settings-avatar-fallback {
+    font-size: 1.5rem;
+  }
+  .settings-dropdown-menu .settings-user-name {
+    font-size: 0.75rem;
+  }
+  .settings-dropdown-menu .settings-user-email {
+    font-size: 0.6rem;
   }
 }
 
