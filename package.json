@@ -9,6 +9,7 @@
     "dev": "node server.js",
     "dev:api": "node dev-server.js",
     "generate-sitemap": "node scripts/generate-sitemap.js",
+    "generate:viz": "node scripts/generate-visualizer.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
