@@ -108,53 +108,44 @@ for skill in person['skills']:
     print(f"- {skill}")`
 };
 
-/* ─── Piston API Executor ─── */
+/* ─── WebAssembly (Pyodide) Executor ─── */
+let pyodideReadyPromise = null;
+
+async function initPyodide() {
+  if (!pyodideReadyPromise) {
+    pyodideReadyPromise = loadPyodide({
+      indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/"
+    });
+  }
+  return pyodideReadyPromise;
+}
+
 async function executePython(code) {
   if (!code.trim()) {
     return { output: [], errors: ["No code to execute."] };
   }
 
+  const output = [];
+  const errors = [];
+
   try {
-    const response = await fetch("https://emkc.org/api/v2/piston/execute", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        language: "python",
-        version: "3.10.0",
-        files: [{ name: "main.py", content: code }],
-        stdin: "",
-        args: [],
-        compile_timeout: 10000,
-        run_timeout: 3000,
-        compile_memory_limit: -1,
-        run_memory_limit: -1
-      })
-    });
+    const pyodide = await initPyodide();
+    
+    // Redirect stdout to our output array
+    pyodide.setStdout({ batched: (msg) => output.push(msg) });
+    pyodide.setStderr({ batched: (msg) => errors.push(msg) });
 
-    if (!response.ok) {
-      throw new Error("API request failed with status " + response.status);
-    }
-
-    const data = await response.json();
-    const output = [];
-    const errors = [];
-
-    if (data.run && data.run.stderr) {
-      errors.push(...data.run.stderr.split("\n").filter(l => l.trim()));
-    }
-
-    if (data.run && data.run.stdout) {
-      output.push(...data.run.stdout.split("\n").filter(l => l.trim()));
-    }
+    await pyodide.runPythonAsync(code);
 
     if (output.length === 0 && errors.length === 0) {
-      output.push("Process finished with no output.");
+      output.push("Execution completed with no output.");
     }
 
     return { output, errors };
-
-  } catch (error) {
-    return { output: [], errors: ["Execution Error: " + error.message] };
+  } catch (e) {
+    console.error("Pyodide Error:", e);
+    errors.push(e.message || String(e));
+    return { output, errors };
   }
 }
 
