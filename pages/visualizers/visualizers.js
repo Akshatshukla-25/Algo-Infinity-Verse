@@ -287,12 +287,13 @@ const visualizers = [
     desc: 'Interactive versioned segment tree with K-th smallest queries.',
   },
   {
-    name: 'Link-Cut Tree Visualizer',
-    path: '/pages/visualizers/link-cut-tree/link-cut-tree.html',
+    name: 'R-Tree Visualizer',
+    path: '/pages/visualizers/r-tree/r-tree.html',
     category: 'Trees & BSTs',
-    icon: 'fa-project-diagram',
-    desc: 'Dynamic graph connectivity on forest trees using auxiliary Splay Trees.',
+    icon: 'fa-map',
+    desc: 'Interactive 2D spatial index with range searches and nearest-neighbor (k-NN) queries.',
   },
+  
   {
     name: 'Heap Percolation Visualizer',
     path: '/pages/visualizers/heap-percolation-visualizer/heap-percolation-visualizer.html',
