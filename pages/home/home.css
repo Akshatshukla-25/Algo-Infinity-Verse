@@ -1694,4 +1694,11 @@ body.shortcuts-modal-open .navbar {
   .hp-facts-card { padding: 24px; }
   .hp-cta-band { padding: 60px 16px; }
   .hp-progress-inner { flex-direction: column; align-items: flex-start; }
+
+  /* ── Hide floating utility buttons on mobile ── */
+  .scroll-top-btn,
+  .shortcuts-toggle-btn,
+  #pwa-storage-usage {
+    display: none !important;
+  }
 }
