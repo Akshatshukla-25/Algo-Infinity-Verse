@@ -1,3 +1,4 @@
+/* global acorn */
 /* ==========================================================================
    RECURSION TREE VISUALIZER
    Interactive tree of recursive calls with expand/collapse, stack tracking,
@@ -256,6 +257,126 @@ const ALGORITHMS = {
       }
       return result.concat(left.slice(i)).concat(right.slice(j));
     },
+  },
+
+  custom: {
+    name: 'Custom Code',
+    description: 'Dynamic AST-Based Execution. Write your own recursive function named custom(n).',
+    code: `function custom(n) {
+  if (n <= 0) return 0;
+  return custom(n - 1) + 1;
+}`,
+    defaultInput: 5,
+    inputLabel: 'Input n',
+    inputMin: -100,
+    inputMax: 100,
+
+    buildTree(n) {
+      const codeInput = document.getElementById('rtv-custom-code');
+      const userCode = codeInput ? codeInput.value : this.code;
+      
+      // Parse with Acorn to ensure valid JS and find the function 'custom'
+      let ast;
+      try {
+        ast = acorn.parse(userCode, { ecmaVersion: 2020 });
+      } catch (err) {
+        alert('Syntax Error in custom code: ' + err.message);
+        return createPrunedNode(0, null);
+      }
+
+      // Find the FunctionDeclaration for 'custom'
+      let customFuncNode = null;
+      for (const node of ast.body) {
+        if (node.type === 'FunctionDeclaration' && node.id && node.id.name === 'custom') {
+          customFuncNode = node;
+          break;
+        }
+      }
+
+      if (!customFuncNode) {
+        alert('Could not find a function named "custom" in your code.');
+        return createPrunedNode(0, null);
+      }
+
+      // Rename the function declaration to '__userCustom' by slicing the string
+      // e.g. function custom(n) -> function __userCustom(n)
+      const start = customFuncNode.id.start;
+      const end = customFuncNode.id.end;
+      const transformedCode = userCode.slice(0, start) + '__userCustom' + userCode.slice(end);
+
+      let rootNode = null;
+      let currentParentId = null;
+      let currentDepth = 0;
+      let nodeStack = [];
+      
+      totalNodeCount = 0; // Reset global limit
+
+      // This wrapper captures the recursive calls and builds the tree synchronously
+      function custom(...args) {
+        totalNodeCount++;
+        const depth = currentDepth;
+        const parentId = currentParentId;
+        
+        if (depth > MAX_TREE_DEPTH || totalNodeCount > MAX_TREE_NODES) {
+            return 'pruned';
+        }
+
+        // Format args for display
+        const argsObj = {};
+        args.forEach((a, i) => argsObj[`arg${i}`] = a);
+
+        const node = new RecursionNode({
+          name: 'custom',
+          args: args.length === 1 ? { n: args[0] } : argsObj,
+          depth,
+          parentId,
+          computeFn: () => node.returnValue // Return value is pre-computed during eval
+        });
+        
+        if (!rootNode) rootNode = node;
+        
+        if (nodeStack.length > 0) {
+            nodeStack[nodeStack.length - 1].children.push(node);
+        }
+        
+        nodeStack.push(node);
+        currentParentId = node.id;
+        currentDepth++;
+        
+        // Execute user's code
+        let res;
+        try {
+          res = __userCustom(...args);
+        } catch (err) {
+          res = 'Error';
+        }
+        
+        node.returnValue = res;
+        
+        currentDepth--;
+        nodeStack.pop();
+        currentParentId = nodeStack.length > 0 ? nodeStack[nodeStack.length - 1].id : null;
+        
+        return res;
+      }
+
+      // Evaluate the transformed code in the current scope so __userCustom is defined
+      // and it calls our 'custom' wrapper above.
+      let __userCustom;
+      try {
+        // We use a new Function to create a clean closure that has access to our 'custom' wrapper
+        const factory = new Function('custom', transformedCode + '\\nreturn __userCustom;');
+        __userCustom = factory(custom);
+      } catch (err) {
+        alert('Execution Error: ' + err.message);
+        return createPrunedNode(0, null);
+      }
+
+      // Kick off the execution
+      custom(n);
+
+      return rootNode || createPrunedNode(0, null);
+    }
   },
 
 };
@@ -739,6 +860,11 @@ const Controller = {
 
     inputVal.addEventListener('change', () => this.buildTree());
 
+    const customCodeInput = document.getElementById('rtv-custom-code');
+    if (customCodeInput) {
+      customCodeInput.addEventListener('change', () => this.buildTree());
+    }
+
     speedRange.addEventListener('input', () => {
       const val = parseInt(speedRange.value);
       const ms = Math.round(this.engine.getSpeed());
@@ -785,10 +911,19 @@ const Controller = {
     const labelSpan = document.getElementById('rtv-input-label');
     if (labelSpan) labelSpan.textContent = algo.inputLabel;
 
+    const customCodeGroup = document.getElementById('rtv-custom-code-group');
+    if (customCodeGroup) {
+      if (key === 'custom') {
+        customCodeGroup.style.display = 'block';
+      } else {
+        customCodeGroup.style.display = 'none';
+      }
+    }
+
     algoInfo.innerHTML = `
       <strong style="color:var(--text-primary);font-size:0.9rem;">${algo.name}</strong>
       <p style="margin:0.25rem 0 0.5rem;font-size:0.8rem;color:var(--text-secondary);">${algo.description}</p>
-      <pre style="background:rgba(0,0,0,0.3);padding:0.5rem 0.65rem;border-radius:6px;font-size:0.72rem;line-height:1.5;overflow-x:auto;color:#e6edf3;font-family:'Fira Code',monospace;border:1px solid var(--glass-border);">${algo.code}</pre>
+      ${key !== 'custom' ? `<pre style="background:rgba(0,0,0,0.3);padding:0.5rem 0.65rem;border-radius:6px;font-size:0.72rem;line-height:1.5;overflow-x:auto;color:#e6edf3;font-family:'Fira Code',monospace;border:1px solid var(--glass-border);">${algo.code}</pre>` : ''}
     `;
   },
 
