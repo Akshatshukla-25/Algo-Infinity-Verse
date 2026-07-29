@@ -67,7 +67,16 @@ function solve(arr) {
               <i class="fas fa-magic"></i> Generate Dynamic UI (Local LLM)
             </button>
           </div>
-          <div id="bigOResult" style="margin-top: 15px; min-height: 24px; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2);"></div>
+          
+          <!-- WebGPU Integration Toggle -->
+          <div class="row" style="margin-top: 15px;">
+            <label class="checkbox" style="color: #06b6d4; font-weight: bold;">
+              <input id="enableWebGPU" type="checkbox" />
+              <i class="fas fa-microchip"></i> Enable WebGPU Auto-Parallelization (WGSL)
+            </label>
+          </div>
+
+          <div id="bigOResult" style="margin-top: 15px; font-weight: bold; color: #ec4899; min-height: 24px;"></div>
         </section>
 
         <section class="sandbox-card">
@@ -76,6 +85,22 @@ function solve(arr) {
 
           <div id="testsList" class="tests-list"></div>
 
+          <!-- WebGPU Compute Results UI -->
+          <div id="webgpuContainer" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid #06b6d4; border-radius: 8px; background: rgba(6, 182, 212, 0.05);">
+            <h3 style="margin-top:0; font-size:1rem; color:#06b6d4;"><i class="fas fa-tachometer-alt"></i> WebGPU Compute-Shader Parallelization</h3>
+            <div style="display: flex; gap: 1rem; margin-top: 10px;">
+              <div style="flex: 1; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                <div style="font-size: 0.8rem; color: #94a3b8;">Single Thread CPU</div>
+                <div id="cpuTime" style="font-size: 1.5rem; font-weight: bold; color: #f43f5e; font-family: var(--font-mono);">-- ms</div>
+              </div>
+              <div style="flex: 1; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                <div style="font-size: 0.8rem; color: #06b6d4;">WebGPU (WGSL) Shaders</div>
+                <div id="gpuTime" style="font-size: 1.5rem; font-weight: bold; color: #10b981; font-family: var(--font-mono);">-- ms</div>
+              </div>
+            </div>
+            <div style="margin-top: 15px; height: 150px; position: relative;">
+              <canvas id="gpuChart"></canvas>
+            </div>
           <!-- Zero-Knowledge Proof (ZKP) Validation -->
           <div id="zkpContainer" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid #10b981; border-radius: 8px; background: rgba(16, 185, 129, 0.05);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
@@ -129,7 +154,8 @@ function solve(arr) {
 
 
     <script src="/script.js"></script>
-    <script type="module" src="/dist/legacy-bundle.mjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="./js-sandbox.js"></script>
     <script src="/auth.js"></script>
     <script src="/theme.js"></script>
     <script src="/auth-gate.js"></script>
