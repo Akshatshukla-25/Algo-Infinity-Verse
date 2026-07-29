@@ -293,7 +293,7 @@ const visualizers = [
     icon: 'fa-map',
     desc: 'Interactive 2D spatial index with range searches and nearest-neighbor (k-NN) queries.',
   },
-  
+
   {
     name: 'Heap Percolation Visualizer',
     path: '/pages/visualizers/heap-percolation-visualizer/heap-percolation-visualizer.html',
@@ -2215,8 +2215,7 @@ function render() {
   const start = (vizCurrentPage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
 
-  // Build HTML — insert a category section header before the first card of
-  // each new category when viewing all.
+  // Build HTML
   let lastCategory = '';
   let animIndex = 0;
   const cardHtml = pageItems
@@ -2228,7 +2227,7 @@ function render() {
         </div>`;
         lastCategory = v.category;
       }
-      html += `<a href="${v.path}" target="_blank" rel="noopener noreferrer" class="viz-card" role="listitem" style="animation-delay:${reducedMotion ? '0s' : Math.min(animIndex * 0.025, 0.8)}s">
+      html += `<a href="${v.path}" target="_blank" rel="noopener noreferrer" class="viz-card lazy-card" role="listitem" data-delay="${reducedMotion ? '0s' : Math.min(animIndex * 0.025, 0.8)}s">
       <span class="viz-card-icon" style="color:${categoryColors[v.category.toLowerCase().replace(/[^a-z0-9]+/g, '-')] || 'var(--viz-cyan)'}"><i class="fas ${v.icon}"></i></span>
       <span class="viz-card-title">${escHtml(v.name)}</span>
       <span class="viz-card-desc">${escHtml(v.desc)}</span>
@@ -2243,6 +2242,33 @@ function render() {
     .join('');
 
   grid.innerHTML = cardHtml;
+
+  // Initialize IntersectionObserver for lazy loading
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const card = entry.target;
+            card.style.animationDelay = card.dataset.delay || '0s';
+            card.classList.add('visible');
+            obs.unobserve(card);
+          }
+        });
+      },
+      { rootMargin: '50px' }
+    );
+
+    grid.querySelectorAll('.lazy-card').forEach((card) => {
+      observer.observe(card);
+    });
+  } else {
+    // Fallback for older browsers
+    grid.querySelectorAll('.lazy-card').forEach((card) => {
+      card.style.animationDelay = card.dataset.delay || '0s';
+      card.classList.add('visible');
+    });
+  }
 
   renderPagination(filtered.length, totalPages);
 }
