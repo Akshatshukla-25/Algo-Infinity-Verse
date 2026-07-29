@@ -346,6 +346,13 @@ const visualizers = [
     desc: 'Visualize Level Graphs, Blocking Flows, and Pointer Advancement in O(V²E) time.',
   },
   {
+    name: 'Stoer-Wagner Minimum Cut Visualizer',
+    path: '/pages/visualizers/stoer-wagner/stoer-wagner.html',
+    category: 'Graph Algorithms',
+    icon: 'fa-scissors',
+    desc: 'Animate undirected global min-cut partitioning without flow source-sink specification.',
+  },
+  {
     name: 'Bitmask DP: TSP',
     path: '/pages/visualizers/bitmask-dp-visualizer/bitmask-dp-visualizer.html',
     category: 'Graph Algorithms',
