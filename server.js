@@ -22,11 +22,11 @@ import {
 import { getSuggestions } from './backend/resume-analyzer/suggestions.js';
 import { analyzeRepository } from './backend/repository-analyzer/repoAnalyzer.js';
 import { VCSFactory } from './backend/vcs/VCSFactory.js';
+import {
   enqueueBulkAudit,
   getBatchProgress,
   MAX_BULK_AUDIT_URLS,
   getReportStatus,
-  enqueueDsaBattleJob,
 } from './backend/jobs/queue.js';
 import './backend/jobs/worker.js'; // Initialize worker
 
@@ -3312,133 +3312,6 @@ function getSummary(score) {
 // --- PHASE 1 ADDITION: SOCKET.IO LOGIC ---
 const io = new SocketIOServer(server);
 
-// Helper for completing battles and applying Elo (used by both pub/sub and fallback)
-async function handleBattleCompletion(battleId, userId, results, socketId) {
-  const battle = activeBattles.get(battleId);
-  if (!battle || battle.status !== 'active') return;
-
-  const passed = results.length > 0 && results.every((r) => r === true);
-  if (!passed) {
-    if (socketId) {
-      io.to(socketId).emit('battle-submit-result', {
-        success: false,
-        message: 'Tests failed. Keep trying!',
-        results: results,
-      });
-    }
-    return;
-  }
-
-  // If passed
-  battle.status = 'completed';
-  battle.winner = userId;
-  delete battle.updates;
-
-  // Persist Elo rating updates
-  try {
-    const { applyElo } = await import('./backend/utils/eloRating.js');
-    const participants = Object.keys(battle.participants || {});
-    const loserId = participants.find((id) => id !== userId) || null;
-
-    if (loserId) {
-      const users = await readUsers();
-      const winnerIdx = users.findIndex((u) => u.id === userId);
-      const loserIdx = users.findIndex((u) => u.id === loserId);
-
-      if (winnerIdx !== -1 && loserIdx !== -1) {
-        users[winnerIdx].rating = Number(users[winnerIdx].rating ?? 1200);
-        users[winnerIdx].ratingHistory = Array.isArray(users[winnerIdx].ratingHistory) ? users[winnerIdx].ratingHistory : [];
-
-        users[loserIdx].rating = Number(users[loserIdx].rating ?? 1200);
-        users[loserIdx].ratingHistory = Array.isArray(users[loserIdx].ratingHistory) ? users[loserIdx].ratingHistory : [];
-
-        const winnerBefore = users[winnerIdx].rating;
-        const loserBefore = users[loserIdx].rating;
-
-        const kFactor = 32;
-        const winnerRes = applyElo({ playerRating: winnerBefore, opponentRating: loserBefore, score: 1, kFactor });
-        const loserRes = applyElo({ playerRating: loserBefore, opponentRating: winnerBefore, score: 0, kFactor });
-
-        users[winnerIdx].rating = winnerRes.newRating;
-        users[loserIdx].rating = loserRes.newRating;
-
-        const timestamp = new Date().toISOString();
-        users[winnerIdx].ratingHistory.push({
-          battleId: battle.id || battleId,
-          opponentId: loserId,
-          outcome: 'win',
-          before: winnerBefore,
-          after: users[winnerIdx].rating,
-          delta: users[winnerIdx].rating - winnerBefore,
-          expected: winnerRes.expected,
-          kFactor,
-          timestamp,
-          opponentExpected: loserRes.expected,
-        });
-
-        users[loserIdx].ratingHistory.push({
-          battleId: battle.id || battleId,
-          opponentId: userId,
-          outcome: 'loss',
-          before: loserBefore,
-          after: users[loserIdx].rating,
-          delta: users[loserIdx].rating - loserBefore,
-          expected: loserRes.expected,
-          kFactor,
-          timestamp,
-          opponentExpected: winnerRes.expected,
-        });
-
-        const MAX_HISTORY = 2000;
-        if (users[winnerIdx].ratingHistory.length > MAX_HISTORY) {
-          users[winnerIdx].ratingHistory.splice(0, users[winnerIdx].ratingHistory.length - MAX_HISTORY);
-        }
-        if (users[loserIdx].ratingHistory.length > MAX_HISTORY) {
-          users[loserIdx].ratingHistory.splice(0, users[loserIdx].ratingHistory.length - MAX_HISTORY);
-        }
-        await writeUsers(users);
-      }
-    }
-  } catch (e) {
-    console.error('Elo update failed:', e);
-  }
-
-  io.to(`battle_${battleId}`).emit('battle-over', {
-    winnerId: userId,
-    winnerName: battle.participants[userId].name,
-    badge: 'Speed Demon',
-    xpAwarded: 100,
-  });
-}
-
-import IORedis from 'ioredis';
-const redisSub = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379');
-redisSub.subscribe('dsa-battle-results', (err, count) => {
-  if (err) console.error('Failed to subscribe to dsa-battle-results:', err);
-});
-redisSub.on('message', async (channel, message) => {
-  if (channel === 'dsa-battle-results') {
-    try {
-      const result = JSON.parse(message);
-      if (result.socketId) {
-        // Emit raw test results
-        io.to(result.socketId).emit('battle-execution-result', result);
-        
-        // Broadcast to opponent for their UI tracking
-        io.to(`battle_${result.battleId}`).emit('opponent:test-run', {
-          userId: result.userId,
-          results: result.results,
-        });
-        
-        // Process completion and Elo if passed
-        await handleBattleCompletion(result.battleId, result.userId, result.results, result.socketId);
-      }
-    } catch (err) {
-      console.error('Error parsing battle result:', err);
-    }
-  }
-});
-
 // --- BATTLE MODE STATE ---
 const matchmakingQueue = { Easy: [], Medium: [], Hard: [] };
 const activeBattles = new Map();
@@ -3847,38 +3720,7 @@ io.on('connection', (socket) => {
 
     let results = [];
     try {
-      // PHASE 2 ADDITION: Dispatch job to Distributed Judger using BullMQ
-      const jobId = `${valid.battleId}-${valid.userId}-${Date.now()}`;
-      socket.emit('battle-judging', { message: 'Code submitted to distributed judger...' });
-      
-      const enqueued = await enqueueDsaBattleJob(jobId, {
-        code: valid.code,
-        title: battle.problemTitle,
-        socketId: socket.id,
-        userId: valid.userId,
-        battleId: valid.battleId
-      });
-      
-      if (!enqueued) {
-        // Fallback to synchronous if Redis is down
-        console.warn('Redis unavailable, falling back to synchronous local judger.');
-        const { runDetailedTestCases } = await import('./pages/Dsa-Battle/Battleservice.js');
-        results = runDetailedTestCases(battle.problemTitle, valid.code);
-        const passed = results.length > 0 && results.every((r) => r === true);
-        
-        socket.to(`battle_${valid.battleId}`).emit('opponent:test-run', {
-          userId: valid.userId,
-          results: results,
-        });
-        
-        if (passed) {
-          // Trigger completion logic...
-          socket.emit('battle-execution-result', { passed: results.length, total: results.length, results, socketId: socket.id, userId: valid.userId, battleId: valid.battleId, title: battle.problemTitle });
-        }
-      } else {
-        // Redis execution in progress. The PubSub listener handles completion.
-        return;
-      }
+      results = runDetailedTestCases(battle.problemTitle, valid.code);
     } catch (e) {
       results = [false];
     }
@@ -3890,7 +3732,124 @@ io.on('connection', (socket) => {
       results: results,
     });
 
-    await handleBattleCompletion(valid.battleId, valid.userId, results, socket.id);
+    if (passed) {
+      battle.status = 'completed';
+      battle.winner = valid.userId;
+      delete battle.updates;
+
+      // Persist Elo rating updates
+      try {
+        const { applyElo } = await import('./backend/utils/eloRating.js');
+
+        const participants = Object.keys(battle.participants || {});
+        const winnerId = valid.userId;
+        const loserId = participants.find((id) => id !== winnerId) || null;
+
+        if (loserId) {
+          const users = await readUsers();
+          const winnerIdx = users.findIndex((u) => u.id === winnerId);
+          const loserIdx = users.findIndex((u) => u.id === loserId);
+
+          if (winnerIdx !== -1 && loserIdx !== -1) {
+            users[winnerIdx].rating = Number(users[winnerIdx].rating ?? 1200);
+            users[winnerIdx].ratingHistory = Array.isArray(users[winnerIdx].ratingHistory)
+              ? users[winnerIdx].ratingHistory
+              : [];
+
+            users[loserIdx].rating = Number(users[loserIdx].rating ?? 1200);
+            users[loserIdx].ratingHistory = Array.isArray(users[loserIdx].ratingHistory)
+              ? users[loserIdx].ratingHistory
+              : [];
+
+            const winnerBefore = users[winnerIdx].rating;
+            const loserBefore = users[loserIdx].rating;
+
+            // Elo outcomes (no draws in current battle flow)
+            const kFactor = 32;
+            const winnerRes = applyElo({
+              playerRating: winnerBefore,
+              opponentRating: loserBefore,
+              score: 1,
+              kFactor,
+            });
+            const loserRes = applyElo({
+              playerRating: loserBefore,
+              opponentRating: winnerBefore,
+              score: 0,
+              kFactor,
+            });
+
+            users[winnerIdx].rating = winnerRes.newRating;
+            users[loserIdx].rating = loserRes.newRating;
+
+            const timestamp = new Date().toISOString();
+            const battleId = battle.id || valid.battleId;
+
+            const winnerEntry = {
+              battleId,
+              opponentId: loserId,
+              outcome: 'win',
+              before: winnerBefore,
+              after: users[winnerIdx].rating,
+              delta: users[winnerIdx].rating - winnerBefore,
+              expected: winnerRes.expected,
+              kFactor,
+              timestamp,
+              opponentExpected: loserRes.expected,
+            };
+
+            const loserEntry = {
+              battleId,
+              opponentId: winnerId,
+              outcome: 'loss',
+              before: loserBefore,
+              after: users[loserIdx].rating,
+              delta: users[loserIdx].rating - loserBefore,
+              expected: loserRes.expected,
+              kFactor,
+              timestamp,
+              opponentExpected: winnerRes.expected,
+            };
+
+            users[winnerIdx].ratingHistory.push(winnerEntry);
+            users[loserIdx].ratingHistory.push(loserEntry);
+
+            // Cap history to prevent unbounded growth
+            const MAX_HISTORY = 2000;
+            if (users[winnerIdx].ratingHistory.length > MAX_HISTORY) {
+              users[winnerIdx].ratingHistory.splice(
+                0,
+                users[winnerIdx].ratingHistory.length - MAX_HISTORY
+              );
+            }
+            if (users[loserIdx].ratingHistory.length > MAX_HISTORY) {
+              users[loserIdx].ratingHistory.splice(
+                0,
+                users[loserIdx].ratingHistory.length - MAX_HISTORY
+              );
+            }
+
+            await writeUsers(users);
+          }
+        }
+      } catch (e) {
+        // Elo updates should never break battle completion.
+        console.error('Elo update failed:', e);
+      }
+
+      io.to(`battle_${valid.battleId}`).emit('battle-over', {
+        winnerId: valid.userId,
+        winnerName: battle.participants[valid.userId].name,
+        badge: 'Speed Demon',
+        xpAwarded: 100, // Mock XP
+      });
+    } else {
+      socket.emit('battle-submit-result', {
+        success: false,
+        message: 'Tests failed. Keep trying!',
+        results: results,
+      });
+    }
   });
 
   // ── ESCAPE ROOM MODE ──
