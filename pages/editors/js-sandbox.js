@@ -317,19 +317,32 @@ document.addEventListener("DOMContentLoaded", () => {
           generator = await pipeline('text2text-generation', 'Xenova/flan-t5-small');
         }
 
-        resultDiv.textContent = "Analyzing Big-O complexity...";
+        resultDiv.innerHTML = "<span style='color: #f59e0b;'><i class='fas fa-spinner fa-spin'></i> AI is generating a dynamic UI for this code...</span>";
         
-        const prompt = `Analyze the time complexity of the following JavaScript function and reply with ONLY the Big O notation (e.g. O(1), O(N), O(N^2)). Code: ${code}`;
+        const prompt = `Based on this code, generate a minimal HTML string (just tags like <div>, <b>, <span>) representing a visual summary dashboard of the function's capabilities. Code: ${code}`;
         
         const output = await generator(prompt, {
-          max_new_tokens: 10,
-          temperature: 0.1
+          max_new_tokens: 60,
+          temperature: 0.7
         });
         
         if (output && output.length > 0) {
-          resultDiv.innerHTML = `Estimated Time Complexity: <span style="color:#10b981;">${escapeHtml(output[0].generated_text)}</span> (Computed Locally!)`;
+          const generatedHTML = output[0].generated_text;
+          // Simple sanitization to prevent breakage
+          const safeHTML = generatedHTML.replace(/<script\\b[^<]*(?:(?!<\\/script>)<[^<]*)*<\\/script>/gi, "");
+          
+          resultDiv.innerHTML = `
+            <div style="border-left: 3px solid #8b5cf6; padding-left: 10px; margin-top: 10px;">
+              <div style="font-size: 0.8rem; color: #a78bfa; margin-bottom: 5px;">
+                <i class="fas fa-magic"></i> LLM Generated Interface:
+              </div>
+              <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px;">
+                ${safeHTML || "<i>(Generated generic dashboard)</i>"}
+              </div>
+            </div>
+          `;
         } else {
-          resultDiv.textContent = "Could not determine complexity.";
+          resultDiv.textContent = "Could not generate UI.";
         }
       } catch (err) {
         console.error("Local LLM Error:", err);
