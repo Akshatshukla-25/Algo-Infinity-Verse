@@ -80,6 +80,31 @@ function solve(arr) {
         </section>
       </section>
 
+      <!-- Time-Travel Debugger UI -->
+      <section class="sandbox-card" style="margin-top: 1rem; border: 2px solid var(--accent); background: rgba(139, 92, 246, 0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 style="margin: 0;"><i class="fas fa-history" style="color: var(--accent); margin-right: 8px;"></i>Time-Travel Debugger</h2>
+          <span id="ttdStatus" style="font-size: 0.85rem; color: var(--text-secondary);">Run code to capture snapshots</span>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <button id="ttdPlayBtn" class="btn btn-secondary" disabled><i class="fas fa-play"></i></button>
+          <input type="range" id="ttdScrubBar" min="0" max="0" value="0" style="flex: 1;" disabled>
+          <span id="ttdStepDisplay" style="font-family: var(--font-mono); font-size: 0.9rem; min-width: 60px; text-align: right;">Step 0/0</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Local Variables</h4>
+            <pre id="ttdVariables" class="transcript" style="min-height: 150px; margin: 0; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);">(Scrub timeline to view variables)</pre>
+          </div>
+          <div>
+            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Call Stack</h4>
+            <pre id="ttdCallStack" class="transcript" style="min-height: 150px; margin: 0; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);">(Scrub timeline to view call stack)</pre>
+          </div>
+        </div>
+      </section>
+
       <section class="sandbox-card sandbox-transcript-card">
         <h2>Debug transcript</h2>
         <pre id="transcript" class="transcript">(toggle “Show my steps” to enable)</pre>
@@ -96,6 +121,8 @@ function solve(arr) {
     <script src="/auth.js"></script>
     <script src="/theme.js"></script>
     <script src="/auth-gate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/8.8.2/acorn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/escodegen/2.0.0/escodegen.browser.min.js"></script>
     <script type="module" src="./js-sandbox.js"></script>
 
     <script>

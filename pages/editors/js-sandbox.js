@@ -78,7 +78,6 @@ async function run({ hidden }) {
   const userCode = $("userCode").value;
   const exportName = $("exportName").value || "solve";
   
-  // In a real sandbox, you would run this. Since jsSandboxRunner.js might be a stub, we will mock it here or use it.
   try {
     const data = await executeJavaScriptSandbox({
       code: userCode,
@@ -86,11 +85,158 @@ async function run({ hidden }) {
       tests: hidden ? [] : SAMPLE_TESTS
     });
     renderResults(data);
+    
+    // Also run Time-Travel Debugger on the first test case
+    if (!hidden) {
+      runTimeTravelDebugger(userCode, exportName, SAMPLE_TESTS[0].input);
+    }
   } catch (err) {
     console.error(err);
     renderResults({ tests: [] });
   }
 }
+
+// --- Time-Travel Debugger (AST Instrumentation) ---
+let ttdSnapshots = [];
+
+function instrumentCode(code) {
+  try {
+    const ast = window.acorn.parse(code, { ecmaVersion: 2020 });
+    
+    // A simple recursive AST walker to inject snapshot captures
+    function walk(node) {
+      if (!node) return;
+      
+      // Inject snapshot after variable declarations or assignments
+      if (node.type === 'BlockStatement') {
+        const newBody = [];
+        for (let i = 0; i < node.body.length; i++) {
+          const stmt = node.body[i];
+          newBody.push(stmt);
+          if (stmt.type === 'VariableDeclaration' || stmt.type === 'ExpressionStatement' || stmt.type === 'ReturnStatement') {
+            newBody.push({
+              type: 'ExpressionStatement',
+              expression: {
+                type: 'CallExpression',
+                callee: { type: 'Identifier', name: '_captureSnapshot' },
+                arguments: [
+                  { type: 'Literal', value: stmt.loc ? stmt.loc.start.line : 0 },
+                  { type: 'Identifier', name: 'arguments' }
+                ]
+              }
+            });
+          }
+        }
+        node.body = newBody;
+      }
+      
+      for (const key in node) {
+        if (node[key] && typeof node[key] === 'object') {
+          walk(node[key]);
+        }
+      }
+    }
+    
+    walk(ast);
+    return window.escodegen.generate(ast);
+  } catch (e) {
+    console.error("AST Instrumentation failed:", e);
+    // Fallback: very basic manual injection or just return code if parsing fails
+    return code;
+  }
+}
+
+function runTimeTravelDebugger(code, funcName, inputArgs) {
+  ttdSnapshots = [];
+  const status = $("ttdStatus");
+  const scrubBar = $("ttdScrubBar");
+  const playBtn = $("ttdPlayBtn");
+  const stepDisplay = $("ttdStepDisplay");
+  
+  status.textContent = "Instrumenting AST...";
+  
+  // We use a mock instrumentation here that captures arguments and local state if possible
+  // For the sake of the MVP, we will evaluate the code in a sandbox function wrapper
+  
+  window._captureSnapshot = function(line, args) {
+    // Attempt to clone local state
+    let state = {};
+    try {
+      state = { ...args };
+    } catch(e) {}
+    
+    ttdSnapshots.push({
+      line,
+      state: JSON.stringify(state, null, 2),
+      stack: (new Error().stack || "").split('\\n').slice(2, 5).join('\\n')
+    });
+  };
+
+  try {
+    const instrumented = instrumentCode(code);
+    const runFunc = new Function(`
+      ${instrumented};
+      if (typeof ${funcName} === 'function') {
+        return ${funcName}.apply(null, arguments[0]);
+      }
+    `);
+    
+    runFunc(inputArgs);
+    
+    if (ttdSnapshots.length > 0) {
+      status.textContent = `Captured ${ttdSnapshots.length} snapshots!`;
+      scrubBar.max = ttdSnapshots.length - 1;
+      scrubBar.value = 0;
+      scrubBar.disabled = false;
+      playBtn.disabled = false;
+      updateTTDUI(0);
+    } else {
+      status.textContent = "No snapshots captured (did the function run?)";
+    }
+  } catch (e) {
+    status.textContent = "Time-travel execution failed.";
+    console.error(e);
+  }
+}
+
+function updateTTDUI(index) {
+  if (!ttdSnapshots[index]) return;
+  const snap = ttdSnapshots[index];
+  $("ttdStepDisplay").textContent = `Step ${index + 1}/${ttdSnapshots.length}`;
+  $("ttdVariables").textContent = snap.state || "(Empty)";
+  $("ttdCallStack").textContent = snap.stack || "(Empty)";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  $("ttdScrubBar")?.addEventListener("input", (e) => {
+    updateTTDUI(parseInt(e.target.value));
+  });
+  
+  let playing = false;
+  let playInterval;
+  $("ttdPlayBtn")?.addEventListener("click", () => {
+    const btn = $("ttdPlayBtn");
+    const scrub = $("ttdScrubBar");
+    playing = !playing;
+    
+    if (playing) {
+      btn.innerHTML = '<i class="fas fa-pause"></i>';
+      playInterval = setInterval(() => {
+        let val = parseInt(scrub.value);
+        if (val >= parseInt(scrub.max)) {
+          clearInterval(playInterval);
+          playing = false;
+          btn.innerHTML = '<i class="fas fa-play"></i>';
+          return;
+        }
+        scrub.value = val + 1;
+        updateTTDUI(val + 1);
+      }, 500);
+    } else {
+      btn.innerHTML = '<i class="fas fa-play"></i>';
+      clearInterval(playInterval);
+    }
+  });
 
 document.addEventListener("DOMContentLoaded", () => {
   $("runSample")?.addEventListener("click", () => run({ hidden: false }));
