@@ -1,3 +1,8 @@
+// Import CRDT Mesh Dependencies
+import * as Y from 'https://esm.sh/yjs';
+import { WebrtcProvider } from 'https://esm.sh/y-webrtc';
+import { CodemirrorBinding } from 'https://esm.sh/y-codemirror';
+
 document.addEventListener("DOMContentLoaded", () => {
   // Establish Socket connection
   const socket = typeof io !== "undefined" ? io("/") : null;
@@ -26,6 +31,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const recapView = document.getElementById("recapView");
 
   const activeRoomsList = document.getElementById("activeRoomsList");
+  // Modals & UI
+  const createRoomModal = document.getElementById("createRoomModal");
+  const joinRoomModal = document.getElementById("joinRoomModal");
+
+  // CRDT Mesh Globals
+  let yDoc = null;
+  let yProvider = null;
+  let yBinding = null;
   const createRoomForm = document.getElementById("createRoomForm");
   const topicSelect = document.getElementById("topicSelect");
   const difficultySelect = document.getElementById("difficultySelect");
@@ -262,6 +275,29 @@ function ${problem.functionName || "solve"}(${(problem.params || []).join(", ")}
       indentUnit: 4,
       matchBrackets: true,
       autoCloseBrackets: true
+    });
+
+    // --- Initialize Yjs CRDT P2P Mesh ---
+    // Cleanup previous Yjs instances if any
+    if (yBinding) { yBinding.destroy(); yBinding = null; }
+    if (yProvider) { yProvider.destroy(); yProvider = null; }
+    if (yDoc) { yDoc.destroy(); yDoc = null; }
+
+    yDoc = new Y.Doc();
+    
+    // Connect to WebRTC P2P Mesh (using public signaling servers for zero-backend config)
+    yProvider = new WebrtcProvider(`algo-verse-room-${activeRoom.id}-prob-${problem.id}`, yDoc, {
+      signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com']
+    });
+
+    const yText = yDoc.getText('codemirror');
+    yBinding = new CodemirrorBinding(yText, editor, yProvider.awareness);
+
+    // Setup Awareness (cursor color and name)
+    const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+    yProvider.awareness.setLocalStateField('user', {
+      name: myUserName || 'Anonymous',
+      color: randomColor
     });
 
     btnSubmitSolution.style.display = "block";
