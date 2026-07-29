@@ -4438,7 +4438,7 @@ function renderActivityHeatmap() {
   const WEEKS_TO_SHOW = 52;
   const dayOfWeek = today.getDay();
   const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - (WEEKS_TO_SHOW * 7 - 1) - dayOfWeek);
+  startDate.setDate(startDate.getDate() - ((WEEKS_TO_SHOW * 7 - 1) - dayOfWeek));
   startDate.setHours(0, 0, 0, 0);
   const weeks = [];
   const monthLabels = [];
@@ -5209,7 +5209,6 @@ async function submitQuizCode() {
       const difficulty = problem.difficulty;
       addXP(getXPForDifficulty(difficulty));
       updateStreak();
-      recordDailyActivity(1);
       saveUserData();
       updateDashboard();
       updateGamification();
@@ -5248,6 +5247,7 @@ async function submitQuizCode() {
       );
       showNotification(failures.length + ' test(s) failed. Keep trying!', 'error');
     }
+    recordDailyActivity(1);
   } catch (e) {
     renderTestCases(testCases);
     setOutput(e.message || 'Execution failed', 'error');

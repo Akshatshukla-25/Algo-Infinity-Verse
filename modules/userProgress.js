@@ -235,18 +235,31 @@ function queueProgressSync() {
 async function syncUserProgress() {
   const session = await getAuthenticatedSession();
   if (!session?.authenticated) return;
+
+  const payload = {
+    name: userProgress.name || 'Learner',
+    xp: userProgress.xp || 0,
+    level: userProgress.level || 1,
+  };
+
+  if (userProgress.avatar) {
+    if (typeof userProgress.avatar === 'string' && userProgress.avatar.startsWith('data:image')) {
+      payload.avatar = { initial: (userProgress.name || 'Learner')[0] || 'L', bg: '#7c3aed' };
+    } else {
+      payload.avatar = userProgress.avatar;
+    }
+  }
+
+  if (userProgress.activityData) {
+    payload.activityData = userProgress.activityData;
+  }
+
   try {
     await fetch('/api/progress', {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: userProgress.name,
-        xp: userProgress.xp,
-        level: userProgress.level,
-        avatar: userProgress.avatar,
-        bookmarkCollections: userProgress.bookmarkCollections || [],
-      }),
+      body: JSON.stringify(payload),
     });
   } catch (e) {
     void 0;
@@ -325,10 +338,53 @@ function logStudyTime(minutes) {
   if (typeof saveUserData === 'function') saveUserData();
 }
 
+function updateStreak() {
+  const today = new Date();
+  const lastActive = userProgress.lastActive ? new Date(userProgress.lastActive) : null;
+  if (lastActive) {
+    const diffDays = getDaysDifference(lastActive, today);
+    if (diffDays > 1) userProgress.streak = 1;
+    else if (diffDays === 0) {
+      // already active today
+    } else {
+      let daysMissed = diffDays > 0 ? diffDays - 1 : 0;
+      while (daysMissed > 0 && userProgress.freezes > 0) {
+        userProgress.freezes -= 1;
+        daysMissed -= 1;
+        userProgress.freezeHistory.push({
+          date: new Date(today.getTime() - (daysMissed + 1) * 24 * 60 * 60 * 1000).toISOString(),
+          reason: 'Missed day automatically frozen',
+        });
+      }
+      if (daysMissed > 0) userProgress.streak = 1;
+      else {
+        userProgress.streak += 1;
+        if (userProgress.streak > 0 && userProgress.streak % 7 === 0) {
+          userProgress.freezes += 1;
+          if (typeof showNotification === 'function')
+            showNotification('Milestone reached! You earned a Streak Freeze!', 'success');
+        }
+      }
+    }
+  } else userProgress.streak = 1;
+  userProgress.lastActive = today.toISOString();
+}
+
+function getDaysDifference(date1, date2) {
+  const d1 = new Date(date1);
+  d1.setHours(0, 0, 0, 0);
+  const d2 = new Date(date2);
+  d2.setHours(0, 0, 0, 0);
+  return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+}
+
 if (typeof window !== 'undefined') {
   window.updateProfile = updateProfile;
   window.backfillActivityData = backfillActivityData;
   window.getStreakMultiplier = getStreakMultiplier;
   window.useStreakFreeze = useStreakFreeze;
   window.logStudyTime = logStudyTime;
+  window.updateStreak = updateStreak;
+  window.recordDailyActivity = recordDailyActivity;
+  window.recordAnalyticsEvent = recordAnalyticsEvent;
 }

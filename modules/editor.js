@@ -768,7 +768,10 @@ async function runQuizCode() {
   } catch (e) {
     renderTestCases(testCases);
     setOutput(e.message || "Execution failed", "error");
-  } finally { _running = false; }
+  } finally {
+    if (typeof recordDailyActivity === 'function') recordDailyActivity(1);
+    _running = false;
+  }
 }
 
 async function submitQuizCode() {
@@ -800,7 +803,6 @@ async function submitQuizCode() {
       const difficulty = problem.difficulty;
       if (typeof addXP === 'function') addXP(getXPForDifficulty(difficulty));
       if (typeof updateStreak === 'function') updateStreak();
-      if (typeof recordDailyActivity === 'function') recordDailyActivity(1);
       if (typeof saveUserData === 'function') saveUserData();
       if (typeof updateDashboard === 'function') updateDashboard();
       if (typeof updateGamification === 'function') updateGamification();
@@ -817,6 +819,7 @@ async function submitQuizCode() {
       setOutput(failures.length + " / " + result.testResults.length + " tests failed. Fix the issues and try again.", "error");
       if (typeof showNotification === 'function') showNotification(failures.length + " test(s) failed. Keep trying!", "error");
     }
+    if (typeof recordDailyActivity === 'function') recordDailyActivity(1);
   } catch (e) {
     renderTestCases(testCases);
     setOutput(e.message || "Execution failed", "error");

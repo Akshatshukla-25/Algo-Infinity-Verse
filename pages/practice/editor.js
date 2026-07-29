@@ -87,6 +87,19 @@ document.addEventListener('DOMContentLoaded', init);
 async function init() {
   cacheDOM();
 
+  // Load saved progress from localStorage into window.userProgress
+  try {
+    const saved = localStorage.getItem('algoInfinityVerse');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data && typeof data === 'object' && typeof window.userProgress === 'object') {
+        Object.assign(window.userProgress, data);
+      }
+    }
+  } catch (e) {
+    // localStorage read failed, use defaults
+  }
+
   // Parse URL params
   const params = new URLSearchParams(window.location.search);
   const problemId = params.get('problemId');
@@ -431,6 +444,7 @@ async function handleRun(problem) {
     dom.outputContent.innerHTML = `<pre class="output-error"><i class="fas fa-times-circle"></i> Error:\n${escapeHtml(err.message)}</pre>`;
     showToast('Execution error: ' + err.message, 'error');
   } finally {
+    if (typeof window.recordDailyActivity === 'function') window.recordDailyActivity(1);
     state.running = false;
     dom.runningIndicator.style.display = 'none';
     dom.runBtn.disabled = false;
@@ -500,8 +514,6 @@ async function handleSubmit(problem) {
         window.addXP(xp);
       }
       if (typeof window.updateStreak === 'function') window.updateStreak();
-      if (typeof window.recordDailyActivity === 'function') window.recordDailyActivity(1);
-      if (typeof window.saveUserData === 'function') window.saveUserData();
 
       if (window.userProgress) {
         if (!window.userProgress.completedProblems) window.userProgress.completedProblems = [];
@@ -516,12 +528,15 @@ async function handleSubmit(problem) {
         };
       }
 
+      if (typeof window.saveUserData === 'function') window.saveUserData();
+
       showToast('<i class="fas fa-star"></i> Problem solved! XP earned.', 'success');
     } else {
       const failures = (result.testResults || []).filter((r) => r && !r.passed);
       showToast(`<i class="fas fa-times-circle"></i> ${failures.length} test(s) failed. Keep trying!`, 'error');
       dom.outputBadge.classList.remove('hidden');
     }
+    if (typeof window.recordDailyActivity === 'function') window.recordDailyActivity(1);
   } catch (err) {
     dom.outputContent.innerHTML = `<pre class="output-error"><i class="fas fa-times-circle"></i> Error:\n${escapeHtml(err.message)}</pre>`;
     showToast('Submission error: ' + err.message, 'error');

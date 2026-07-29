@@ -1,7 +1,7 @@
 [
   {
     "id": "1f936e20-4432-4cef-8fd8-ce107e978192",
-    "name": "Aritro Bag",
+    "name": "Learner",
     "email": "aritrobag362@gmail.com",
     "password": {
       "salt": "cd29ffc25c4e1a1c246060611100a5a4",
@@ -14,6 +14,16 @@
     "deactivatedAt": null,
     "emailVerified": true,
     "verifyToken": null,
-    "verifyTokenExpiry": null
+    "verifyTokenExpiry": null,
+    "xp": 988519,
+    "level": 8,
+    "avatar": {
+      "initial": "L",
+      "bg": "#7c3aed"
+    },
+    "activityData": {
+      "2026-07-19": 3,
+      "2026-07-29": 3
+    }
   }
 ]
