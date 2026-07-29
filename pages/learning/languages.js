@@ -78,6 +78,25 @@ const languages = [
     langKey: 'php',
     desc: 'Server-side scripting that powers over 75% of the web — from WordPress to Laravel.',
   },
+
+  // ── Blockchain ──
+  {
+    name: 'Solidity',
+    path: '/pages/learning/solidity-learning/solidity-learning.html',
+    category: 'Systems',
+    icon: 'fa-link',
+    isBrandIcon: false,
+    langKey: 'solidity',
+    desc: 'The language of Ethereum smart contracts. Statically typed, contract-oriented, and designed for the EVM.',
+    svgIcon: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em">
+  <path d="M12 2L3 9v6l9 7 9-7V9l-9-7z" fill="currentColor" opacity="0.2"/>
+  <path d="M12 2L3 9v6l9 7 9-7V9l-9-7z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <path d="M12 22V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M3 9l9 3 9-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <path d="M12 12l-9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M12 12l9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`
+  },
 ];
 
 /* ─── Categories ─── */
@@ -92,6 +111,7 @@ const langColors = {
   c: '#888888',
   php: '#777BB4',
   rust: '#dea584',
+  solidity: '#fbc4ab',
 };
 
 /* ─── DOM refs ─── */
