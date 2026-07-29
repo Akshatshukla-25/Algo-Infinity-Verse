@@ -67,23 +67,24 @@ export async function executeProblem({ code, lang, problem, timeoutMs = DEFAULT_
   }
 
   try {
+    let result;
     if (BROWSER_EXECUTABLE_LANGUAGES.includes(normalLang)) {
-      return await executeInBrowser(harnessCode, normalLang, testCount, timeoutMs, signal);
-    }
-
-    if (SERVER_EXECUTABLE_LANGUAGES.includes(normalLang)) {
-      return await executeOnServer(
+      result = await executeInBrowser(harnessCode, normalLang, testCount, timeoutMs, signal);
+    } else if (SERVER_EXECUTABLE_LANGUAGES.includes(normalLang)) {
+      result = await executeOnServer(
         { harnessCode, originalCode: code, lang: normalLang, problemId: problem.id },
         testCount,
         signal
       );
+    } else {
+      return {
+        allPassed: false,
+        testResults: [],
+        rawOutput: `Unsupported language: ${lang}. Supported languages: javascript, python, java, cpp, c, swift.`,
+      };
     }
-
-    return {
-      allPassed: false,
-      testResults: [],
-      rawOutput: `Unsupported language: ${lang}. Supported languages: javascript, python, java, cpp, c, swift.`,
-    };
+    result.harnessCode = harnessCode;
+    return result;
   } catch (err) {
     if (err.name === 'AbortError') {
       return {
@@ -314,4 +315,44 @@ export function clearDraft(problemId, lang) {
   } catch {
     // noop
   }
+}
+
+/**
+ * Persist an execution record to the server-side history store.
+ * Fire-and-forget — failures are logged but never propagated so they
+ * never block the UI after a code run.
+ *
+ * @param {object} params
+ * @param {string} params.sourceCode - Full code that was executed (with harness)
+ * @param {string} [params.originalCode] - User's original (unwrapped) code
+ * @param {string} params.language - Language key
+ * @param {string} [params.stdout] - Captured stdout
+ * @param {string} [params.stderr] - Captured stderr
+ * @param {number} [params.exitCode] - Process exit code
+ * @param {string|number} [params.cpuTime] - CPU time or execution time
+ * @param {number} [params.memory] - Memory usage in KB
+ * @param {string|null} [params.error] - Error message if execution failed
+ * @param {string|number|null} [params.problemId] - Problem identifier
+ */
+export function saveExecution({ sourceCode, originalCode, language, stdout, stderr, exitCode, cpuTime, memory, error, problemId }) {
+  fetch('/api/executions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      sourceCode,
+      originalCode: originalCode || '',
+      language,
+      stdin: '',
+      stdout: stdout || '',
+      stderr: stderr || '',
+      exitCode: typeof exitCode === 'number' ? exitCode : 0,
+      cpuTime: cpuTime !== undefined ? String(cpuTime) : '',
+      memory: memory !== undefined ? Number(memory) : 0,
+      error: error || null,
+      problemId: problemId !== undefined && problemId !== null ? String(problemId) : null,
+    }),
+  }).catch((err) => {
+    console.warn('Failed to save execution:', err.message);
+  });
 }

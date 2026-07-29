@@ -9,7 +9,7 @@
 import { loadMonaco, getMonacoLanguage, preloadMonaco, setMonacoTheme } from '../../modules/monaco-loader.js';
 import { getProblem, waitForData, migrateLegacyDraft } from '../../modules/problem-store.js';
 import { getStarterCode, buildHarness, parseTestResults, getProblemSignature } from '../../modules/problem-templates.js';
-import { executeProblem, getSupportedLanguages, saveDraft, clearDraft } from '../../modules/execution-client.js';
+import { executeProblem, getSupportedLanguages, saveDraft, clearDraft, saveExecution } from '../../modules/execution-client.js';
 
 // ─── State ───
 const state = {
@@ -407,6 +407,19 @@ async function handleRun(problem) {
     renderTestResults(result);
     renderOutput(result);
 
+    saveExecution({
+      sourceCode: result.harnessCode || code,
+      originalCode: code,
+      language: state.lang,
+      stdout: result.rawOutput || '',
+      stderr: '',
+      exitCode: result.allPassed ? 0 : 1,
+      cpuTime: result.metrics?.cpuTime || result.metrics?.executionTime || '',
+      memory: result.metrics?.memory || 0,
+      error: null,
+      problemId: problem.id,
+    });
+
     if (result.allPassed) {
       showToast('<i class="fas fa-check-circle"></i> All tests passed!', 'success');
     } else {
@@ -465,6 +478,19 @@ async function handleSubmit(problem) {
     state.results = result;
     renderTestResults(result);
     renderOutput(result);
+
+    saveExecution({
+      sourceCode: result.harnessCode || code,
+      originalCode: code,
+      language: state.lang,
+      stdout: result.rawOutput || '',
+      stderr: '',
+      exitCode: result.allPassed ? 0 : 1,
+      cpuTime: result.metrics?.cpuTime || result.metrics?.executionTime || '',
+      memory: result.metrics?.memory || 0,
+      error: null,
+      problemId: problem.id,
+    });
 
     if (result.allPassed) {
       // Record completion

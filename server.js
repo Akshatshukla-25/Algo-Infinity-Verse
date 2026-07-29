@@ -2337,6 +2337,47 @@ async function handleApi(req, res, pathname) {
 
   // ── Execution History Endpoints ─────────────────────────────────────────
 
+  if (pathname === '/api/executions' && req.method === 'POST') {
+    const session = getSession(req);
+    if (!session) return sendJson(res, 401, { error: 'Login required.' });
+
+    try {
+      const payload = await readJsonBody(req);
+      const { sourceCode, originalCode, language, stdin, stdout, stderr, exitCode, cpuTime, memory, error, problemId } = payload;
+
+      if (!sourceCode || !language) {
+        return sendJson(res, 400, { error: 'sourceCode and language are required.' });
+      }
+
+      const execution = {
+        id: crypto.randomUUID(),
+        userId: session.sub,
+        sourceCode,
+        originalCode: originalCode || '',
+        language: language.toLowerCase(),
+        stdin: stdin || '',
+        stdout: stdout || '',
+        stderr: stderr || '',
+        exitCode: typeof exitCode === 'number' ? exitCode : 0,
+        cpuTime: cpuTime !== undefined ? String(cpuTime) : '',
+        memory: memory !== undefined ? Number(memory) : 0,
+        error: error || null,
+        problemId: problemId !== undefined && problemId !== null ? String(problemId) : null,
+        createdAt: new Date().toISOString(),
+        variableSnapshots: [],
+      };
+
+      await updateExecutionStore((store) => {
+        store.push(execution);
+      });
+
+      return sendJson(res, 201, { success: true, execution });
+    } catch (err) {
+      console.error('Error saving execution:', err);
+      return sendJson(res, 500, { error: 'Failed to save execution.' });
+    }
+  }
+
   if (pathname === '/api/executions' && req.method === 'GET') {
     const session = getSession(req);
     if (!session) return sendJson(res, 401, { error: 'Login required.' });
