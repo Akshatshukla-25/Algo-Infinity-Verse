@@ -203,6 +203,13 @@ const visualizers = [
 
   // ── Trees & BSTs ──
   {
+    name: 'Augmented AVL Interval Tree',
+    path: '/pages/visualizers/augmented-avl-interval-tree/augmented-avl-interval-tree.html',
+    category: 'Trees & BSTs',
+    icon: 'fa-sitemap',
+    desc: 'Watch an Interval Tree maintain balance through AVL rotations while simultaneously preserving its max-endpoint augmentation for fast overlap queries.',
+  },
+  {
     name: 'Tree Visualizer',
     path: '/pages/visualizers/tree-visualizer/tree-visualizer.html',
     category: 'Trees & BSTs',
