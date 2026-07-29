@@ -219,6 +219,10 @@ async function bubbleSort(runId) {
       await checkPause(runId);
       if (runId !== currentRunId || !isSorting) return;
 
+      if (typeof window.announceStep === 'function') {
+        window.announceStep(`Comparing ${array[j]} and ${array[j + 1]}`);
+      }
+
       highlight(j, "comparing");
       highlight(j + 1, "comparing");
       playTone(array[j], 'compare');
@@ -226,6 +230,9 @@ async function bubbleSort(runId) {
       if (runId !== currentRunId || !isSorting) return;
 
       if (array[j] > array[j + 1]) {
+        if (typeof window.announceStep === 'function') {
+          window.announceStep(`Swapping ${array[j]} and ${array[j + 1]}`);
+        }
         highlight(j, "swapping");
         highlight(j + 1, "swapping");
         playTone(array[j], 'swap');
@@ -247,8 +254,14 @@ async function bubbleSort(runId) {
       unhighlight(j + 1);
     }
     if (runId !== currentRunId) return;
+    if (typeof window.announceStep === 'function') {
+      window.announceStep(`${array[n - i - 1]} is now sorted.`);
+    }
     markSorted(n - i - 1);
     playTone(array[n - i - 1], 'sorted');
+  }
+  if (typeof window.announceStep === 'function') {
+    window.announceStep('Bubble sort complete.');
   }
   markAllSorted(runId);
 }

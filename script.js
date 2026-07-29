@@ -70,7 +70,43 @@ window.addEventListener('load', () => {
       }
     }
   });
+  setupAriaAnnouncer();
 });
+
+// ============================================
+// ACCESSIBILITY: ARIA LIVE ANNOUNCER
+// ============================================
+function setupAriaAnnouncer() {
+  let announcer = document.getElementById('global-a11y-announcer');
+  if (!announcer) {
+    announcer = document.createElement('div');
+    announcer.id = 'global-a11y-announcer';
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.className = 'sr-only'; // Ensure this class exists in global css or hide it inline
+    announcer.style.position = 'absolute';
+    announcer.style.width = '1px';
+    announcer.style.height = '1px';
+    announcer.style.padding = '0';
+    announcer.style.margin = '-1px';
+    announcer.style.overflow = 'hidden';
+    announcer.style.clip = 'rect(0, 0, 0, 0)';
+    announcer.style.whiteSpace = 'nowrap';
+    announcer.style.border = '0';
+    document.body.appendChild(announcer);
+  }
+}
+
+window.announceStep = function(message) {
+  const announcer = document.getElementById('global-a11y-announcer');
+  if (announcer) {
+    // Clear first to force screen reader to read repeated text if identical consecutive steps
+    announcer.textContent = '';
+    setTimeout(() => {
+      announcer.textContent = message;
+    }, 50);
+  }
+};
 
 // ============================================
 // QUIZ DATA
