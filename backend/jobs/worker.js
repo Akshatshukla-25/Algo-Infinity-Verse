@@ -7,6 +7,7 @@ import { batchStore, redisAvailable, redisReady, redisClient } from './queue.js'
 let auditWorker = null;
 let reportWorker = null;
 let leaderboardWorker = null;
+let dsaBattleWorker = null;
 
 // The Redis availability probe in queue.js runs asynchronously, so `redisAvailable`
 // is still `false` at module-evaluation time. Reading it synchronously here would
@@ -204,8 +205,62 @@ async function startWorker() {
     }
   });
 
+  dsaBattleWorker = new Worker(
+    'dsa-battle-queue',
+    async (job) => {
+      // Lazy load to avoid circular dependencies
+      const { TEST_CASES } = await import('../../pages/Dsa-Battle/Battleservice.js');
+      const vm = (await import('vm')).default;
+      
+      const { code, title, socketId, userId, battleId } = job.data;
+      const problem = TEST_CASES[title];
+      
+      if (!problem) throw new Error(`Unsupported problem: ${title}`);
+      
+      const sandbox = { console, result: null };
+      const context = vm.createContext(sandbox);
+      
+      try {
+        // Evaluate the user's code first
+        vm.runInContext(code, context, { timeout: 1000 });
+        
+        let passed = 0;
+        const results = [];
+        for (const test of problem.cases) {
+          const argsStr = JSON.stringify(test.args).slice(1, -1);
+          try {
+            vm.runInContext(`result = ${problem.func}(${argsStr});`, context, { timeout: 1000 });
+            const isPass = JSON.stringify(sandbox.result) === JSON.stringify(test.expected);
+            results.push(isPass);
+            if (isPass) passed++;
+          } catch (err) {
+            results.push(false);
+          }
+        }
+        return { passed, total: problem.cases.length, results, socketId, userId, battleId, title };
+      } catch (err) {
+        return { passed: 0, total: problem.cases.length, results: problem.cases.map(() => false), error: err.message, socketId, userId, battleId, title };
+      }
+    },
+    {
+      connection: conn,
+      concurrency: 10,
+    }
+  );
+
+  dsaBattleWorker.on('completed', async (job, result) => {
+    // Publish result to redis so the web server can pick it up and emit via socket.io
+    if (redisClient) {
+      await redisClient.publish('dsa-battle-results', JSON.stringify(result));
+    }
+  });
+
+  dsaBattleWorker.on('error', (_err) => {
+    void 0;
+  });
+
   void 0;
-  return { auditWorker, reportWorker, leaderboardWorker };
+  return { auditWorker, reportWorker, leaderboardWorker, dsaBattleWorker };
 }
 
 // Kick off worker startup as a module side effect. Errors are swallowed so a

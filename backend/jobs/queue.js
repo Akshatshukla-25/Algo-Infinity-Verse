@@ -11,6 +11,7 @@ export const reportStore = new Map();
 let bulkAuditQueue = null;
 let reportQueue = null;
 let leaderboardQueue = null;
+let dsaBattleQueue = null;
 let redisAvailable = false;
 export let redisClient = null;
 
@@ -42,6 +43,11 @@ async function checkRedis() {
 
     leaderboardQueue = new Queue('leaderboard-queue', { connection: redisClient });
     leaderboardQueue.on('error', (_err) => {
+      void 0;
+    });
+
+    dsaBattleQueue = new Queue('dsa-battle-queue', { connection: redisClient });
+    dsaBattleQueue.on('error', (_err) => {
       void 0;
     });
   } catch {
