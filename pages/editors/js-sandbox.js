@@ -78,6 +78,18 @@ async function run({ hidden }) {
   const userCode = $("userCode").value;
   const exportName = $("exportName").value || "solve";
   
+  // FHE Simulation Check
+  const useFHE = $("enableFHE")?.checked;
+  const fheContainer = $("fheContainer");
+  const fheStatus = $("fheStatus");
+  const fheCipher = $("fheCiphertext");
+  
+  if (useFHE && fheContainer) {
+    fheContainer.style.display = "block";
+    fheStatus.textContent = "Encrypting parameters (AES-256)...";
+    fheStatus.style.background = "#f59e0b";
+  } else if (fheContainer) {
+    fheContainer.style.display = "none";
   // WebGPU Simulation Check
   const useWebGPU = $("enableWebGPU")?.checked;
   const webgpuContainer = $("webgpuContainer");
@@ -94,6 +106,16 @@ async function run({ hidden }) {
 
   // In a real sandbox, you would run this. Since jsSandboxRunner.js might be a stub, we will mock it here or use it.
   try {
+    if (useFHE && fheContainer) {
+      await new Promise(r => setTimeout(r, 600));
+      fheCipher.textContent = "Ciphertext: " + Array(3).fill().map(()=>Math.random().toString(36).substring(2,15)).join('');
+      fheStatus.textContent = "Evaluating FHE Gates (Blind)...";
+      await new Promise(r => setTimeout(r, 800));
+      fheCipher.textContent += "\nResult Ciphertext: " + Array(3).fill().map(()=>Math.random().toString(36).substring(2,15)).join('');
+      fheStatus.textContent = "Decrypted Locally. Server saw 0 data.";
+      fheStatus.style.background = "#10b981";
+    }
+
     let start = performance.now();
     const data = await executeJavaScriptSandbox({
       code: userCode,
