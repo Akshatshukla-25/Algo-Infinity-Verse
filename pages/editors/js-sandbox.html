@@ -61,9 +61,13 @@ function solve(arr) {
             </label>
           </div>
 
-          <div class="row">
+          <div class="row" style="display:flex; justify-content:space-between; align-items:center;">
             <button type="button" id="runHidden" class="btn btn-secondary">Run hidden tests (practice)</button>
+            <button type="button" id="analyzeBigO" class="btn btn-primary" style="background:linear-gradient(90deg, #8b5cf6, #ec4899); border:none; color:white;">
+              <i class="fas fa-brain"></i> AI Big-O Analyzer (Local)
+            </button>
           </div>
+          <div id="bigOResult" style="margin-top: 15px; font-weight: bold; color: #ec4899; min-height: 24px;"></div>
         </section>
 
         <section class="sandbox-card">
