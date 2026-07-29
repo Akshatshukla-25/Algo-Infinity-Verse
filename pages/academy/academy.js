@@ -168,6 +168,15 @@ const academies = [
     difficulty: 'Beginner',
     desc: 'Learn server-side JavaScript with Node.js, event-driven architecture, and npm ecosystem.',
   },
+  {
+    id: 'websocket-academy',
+    name: 'WebSocket & SSE Academy',
+    path: '/pages/websocket-academy/websocket-academy.html',
+    category: 'Backend',
+    icon: 'fa-solid fa-wifi',
+    difficulty: 'Intermediate',
+    desc: 'Learn WebSocket and Server-Sent Events for real-time communication -- from protocol fundamentals to Socket.IO, reconnection strategies, and SSE patterns.',
+  },
 
   // ── System Design ──
   {
@@ -292,7 +301,7 @@ const academies = [
 const categoryDefs = [
   { label: 'All', key: 'all', count: academies.length },
   { label: 'Frontend', key: 'frontend', count: 8 },
-  { label: 'Backend', key: 'backend', count: 10 },
+  { label: 'Backend', key: 'backend', count: 11 },
   { label: 'System Design', key: 'system-design', count: 1 },
   { label: 'Cloud & DevOps', key: 'cloud-devops', count: 2 },
   { label: 'Databases', key: 'databases', count: 7 },
@@ -553,6 +562,7 @@ function initFlipAnimation() {
     { name: 'Cassandra', cat: 'databases' },
     { name: 'Git & GitHub', cat: 'devops-ci-cd' },
     { name: 'Fail', cat: 'ai-misc' },
+    { name: 'WebSocket & SSE', cat: 'backend' },
   ];
 
   const inner = document.getElementById('acFlipInner');
