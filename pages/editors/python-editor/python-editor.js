@@ -2,8 +2,55 @@ document.addEventListener("DOMContentLoaded", () => {
   initLoadingScreen();
   initNavbar();
   initScrollTop();
+  initBiometricNavigation();
   try { initPythonEditor(); } catch(e) { console.error("PythonEditor:", e); }
 });
+
+// --- Biometric Predictive Code Navigation (Eye-Tracking) ---
+function initBiometricNavigation() {
+  const toggle = document.getElementById("enableWebGazer");
+  if (!toggle) return;
+  
+  toggle.addEventListener("change", async (e) => {
+    if (e.target.checked) {
+      if (typeof webgazer !== "undefined") {
+        try {
+          await webgazer.setRegression('ridge') 
+            .setGazeListener(function(data, clock) {
+              if (data == null) return;
+              
+              // If user is looking at the top 20% of the screen, scroll up
+              if (data.y < window.innerHeight * 0.2) {
+                window.scrollBy(0, -10);
+              } 
+              // If user is looking at the bottom 20% of the screen, scroll down
+              else if (data.y > window.innerHeight * 0.8) {
+                window.scrollBy(0, 10);
+              }
+            }).begin();
+            
+            webgazer.showVideoPreview(true).showPredictionPoints(true);
+            
+            // Alert user that BCI is active
+            const notif = document.createElement("div");
+            notif.innerHTML = "<i class='fas fa-brain'></i> Biometric Eye-Tracking Active. Gaze at the top/bottom of the screen to auto-scroll.";
+            notif.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#10b981; color:#fff; padding:10px 20px; border-radius:50px; z-index:9999; font-weight:bold;";
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 5000);
+            
+        } catch (err) {
+          console.error("WebGazer failed to initialize:", err);
+          e.target.checked = false;
+        }
+      }
+    } else {
+      if (typeof webgazer !== "undefined") {
+        webgazer.pause();
+        webgazer.showVideoPreview(false).showPredictionPoints(false);
+      }
+    }
+  });
+}
 
 function initLoadingScreen() {
   setTimeout(() => {
