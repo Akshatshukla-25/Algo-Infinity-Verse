@@ -20,7 +20,6 @@ import { redisAvailable, redisClient } from '../jobs/queue.js';
 
 export const activeRefreshFamilies = new Map();
 export const revokedUserSessions = new Map();
-const signupAttempts = new Map();
 
 export async function revokeAllUserSessions(userId) {
   if (!userId) return;
@@ -41,38 +40,6 @@ export async function revokeAllUserSessions(userId) {
     revokedUserSessions.set(userId, nowSeconds);
   }
 }
-const loginAttempts = new Map();
-
-export const _signupSweeper = setInterval(() => {
-  const now = Date.now();
-  for (const [identifier, timestamps] of signupAttempts) {
-    const fresh = timestamps.filter((t) => now - t < SIGNUP_WINDOW_MS);
-    if (fresh.length === 0) {
-      signupAttempts.delete(identifier);
-    } else {
-      signupAttempts.set(identifier, fresh);
-    }
-  }
-}, SIGNUP_WINDOW_MS);
-
-if (_signupSweeper.unref) _signupSweeper.unref();
-
-// Mirrors the signup-rate-limit sweeper above. #2535: isLoginRateLimited /
-// LOGIN_WINDOW_MS were previously imported by authHandlers.js without ever
-// being defined/exported here.
-export const _loginSweeper = setInterval(() => {
-  const now = Date.now();
-  for (const [identifier, timestamps] of loginAttempts) {
-    const fresh = timestamps.filter((t) => now - t < LOGIN_WINDOW_MS);
-    if (fresh.length === 0) {
-      loginAttempts.delete(identifier);
-    } else {
-      loginAttempts.set(identifier, fresh);
-    }
-  }
-}, LOGIN_WINDOW_MS);
-
-if (_loginSweeper.unref) _loginSweeper.unref();
 
 const TRUSTED_PROXIES = new Set(
   (process.env.TRUSTED_PROXIES || '')
@@ -106,38 +73,6 @@ export function getClientIdentifier(req) {
   }
 
   return remoteAddress;
-}
-
-export function isSignupRateLimited(identifier) {
-  const now = Date.now();
-  const attempts = signupAttempts.get(identifier) || [];
-  const recentAttempts = attempts.filter((t) => now - t < SIGNUP_WINDOW_MS);
-  signupAttempts.set(identifier, recentAttempts);
-  return recentAttempts.length >= SIGNUP_RATE_LIMIT;
-}
-
-export function isLoginRateLimited(identifier) {
-  const now = Date.now();
-  const attempts = loginAttempts.get(identifier) || [];
-  const recentAttempts = attempts.filter((t) => now - t < LOGIN_WINDOW_MS);
-  loginAttempts.set(identifier, recentAttempts);
-  return recentAttempts.length >= LOGIN_RATE_LIMIT;
-}
-
-export function recordLoginAttempt(identifier) {
-  const now = Date.now();
-  const attempts = loginAttempts.get(identifier) || [];
-  const recentAttempts = attempts.filter((t) => now - t < LOGIN_WINDOW_MS);
-  recentAttempts.push(now);
-  loginAttempts.set(identifier, recentAttempts);
-}
-
-export function recordSignupAttempt(identifier) {
-  const now = Date.now();
-  const attempts = signupAttempts.get(identifier) || [];
-  const recentAttempts = attempts.filter((t) => now - t < SIGNUP_WINDOW_MS);
-  recentAttempts.push(now);
-  signupAttempts.set(identifier, recentAttempts);
 }
 
 export async function normalizeAuthDelay() {
