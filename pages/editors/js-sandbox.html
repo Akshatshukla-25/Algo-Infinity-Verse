@@ -65,6 +65,14 @@ function solve(arr) {
             <button type="button" id="runHidden" class="btn btn-secondary">Run hidden tests (practice)</button>
           </div>
           
+          <!-- Vector DB Engine Toggle -->
+          <div class="row" style="margin-top: 15px;">
+            <button type="button" id="vectorDbInit" class="btn btn-primary" style="width:100%; background:linear-gradient(90deg, #10b981, #3b82f6); border:none; color:white;">
+              <i class="fas fa-database"></i> Initialize WebGPU Vector DB
+            </button>
+          </div>
+          
+          <button type="button" id="analyzeBigO" class="btn btn-primary" style="background:linear-gradient(90deg, #8b5cf6, #ec4899); border:none; color:white;">
           <!-- BCI Telepathy Engine Toggle -->
           <div class="row" style="margin-top: 15px;">
             <button type="button" id="bciConnect" class="btn btn-primary" style="width:100%; background:linear-gradient(90deg, #ec4899, #8b5cf6); border:none; color:white;">
@@ -111,6 +119,27 @@ function solve(arr) {
           <div id="summary" class="summary">Run tests to see results.</div>
 
           <div id="testsList" class="tests-list"></div>
+
+          <!-- Vector DB UI -->
+          <div id="vectorContainer" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid #10b981; border-radius: 8px; background: rgba(16, 185, 129, 0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+              <h3 style="margin:0; font-size:1rem; color:#10b981;"><i class="fas fa-layer-group"></i> Local Hyper-Dimensional DB</h3>
+              <span id="vectorStatus" class="badge" style="background:#10b981; color:#fff;">Offline</span>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+              <div style="flex: 1; background: rgba(0,0,0,0.5); padding: 5px; text-align: center; border-radius: 5px;">
+                <div style="font-size: 0.7rem; color: #94a3b8;">Stored Vectors</div>
+                <div id="vecCount" style="font-size: 1rem; color: #facc15; font-family: monospace;">0</div>
+              </div>
+              <div style="flex: 1; background: rgba(0,0,0,0.5); padding: 5px; text-align: center; border-radius: 5px;">
+                <div style="font-size: 0.7rem; color: #94a3b8;">Query Latency</div>
+                <div id="vecLatency" style="font-size: 1rem; color: #3b82f6; font-family: monospace;">-- ms</div>
+              </div>
+            </div>
+
+            <pre id="vectorTerminal" class="transcript" style="font-size: 0.75rem; color:#6ee7b7; background:rgba(0,0,0,0.7); max-height: 100px; overflow-y:auto; margin-bottom: 0;">Awaiting boot sequence...</pre>
+          </div>
 
           <!-- P2P UI Container -->
           <div id="p2pContainer" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid #22d3ee; border-radius: 8px; background: rgba(34, 211, 238, 0.05);">
