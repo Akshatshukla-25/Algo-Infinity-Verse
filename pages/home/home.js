@@ -29,6 +29,7 @@
       this.initFacts();
       this.initProgress();
       this.initStatsPolling();
+      this.initWelcomeGreeting();
       this.addReducedMotionSupport();
     },
 
@@ -200,6 +201,59 @@
       }
     },
 
+    /* ── Welcome Back Greeting ── */
+    initWelcomeGreeting() {
+      const greetingEl = document.getElementById('hpHeroGreeting');
+      const greetingName = document.getElementById('hpHeroGreetingName');
+      if (!greetingEl || !greetingName) return;
+
+      /**
+       * Resolve the user's display name from multiple sources:
+       *   1. window.algoAuth.user.name   — JWT session (auth.js)
+       *   2. window.userProgress?.name   — localStorage user data
+       *   3. 'Learner'                   — ultimate fallback
+       */
+      function resolveDisplayName() {
+        // 1. JWT session name — authoritative auth source from auth.js
+        if (window.algoAuth.user.name) return window.algoAuth.user.name;
+
+        // 2. window.userProgress — loaded from localStorage 'algoInfinityVerse'
+        //    (set by modules/init.js and settings page saveProgress())
+        if (window.userProgress && window.userProgress.name) {
+          return window.userProgress.name;
+        }
+
+        return 'Learner';
+      }
+
+      const applyGreeting = () => {
+        if (window.algoAuth && window.algoAuth.authenticated && window.algoAuth.user) {
+          const name = resolveDisplayName();
+          greetingName.textContent = name;
+          greetingEl.hidden = false;
+        } else {
+          greetingEl.hidden = true;
+        }
+      };
+
+      // Try immediately — auth.js may have already set window.algoAuth
+      if (window.algoAuth) {
+        applyGreeting();
+        return;
+      }
+
+      // Auth not loaded yet — poll until ready (up to 5s)
+      let attempts = 0;
+      const maxAttempts = 50;
+      const interval = setInterval(() => {
+        attempts++;
+        if (window.algoAuth || attempts >= maxAttempts) {
+          clearInterval(interval);
+          applyGreeting();
+        }
+      }, 100);
+    },
+
     /* ── Live Stats Polling ── */
     initStatsPolling() {
       // Start with mock data that looks real
@@ -256,6 +310,17 @@
   } else {
     safeBoot();
   }
+
+  // ── Safety net: re-run greeting after partials + auth are fully settled ──
+  // When partials finish loading, auth.js has already set window.algoAuth
+  // and updateProfileNames() has populated the [data-auth-user-name] elements.
+  // This ensures the greeting resolves correctly even if the initial polling
+  // encountered a race condition.
+  document.addEventListener('partialsLoaded', () => {
+    if (document.querySelector('.hp-hero') && window.HP) {
+      window.HP.initWelcomeGreeting();
+    }
+  });
 
   // Expose for debugging
   window.HP = HP;

@@ -248,6 +248,44 @@ html.light-mode {
   75% { transform: translate(40px, 30px) scale(1.02) rotate(4deg); }
 }
 
+/* Hero greeting badge — shown when user is logged in */
+.hp-hero-greeting {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px 8px 16px;
+  background: rgba(var(--hp-lavender-rgb), 0.10);
+  border: 1px solid rgba(var(--hp-lavender-rgb), 0.15);
+  border-radius: 100px;
+  margin-bottom: 24px;
+  animation: hpFadeSlideUp 0.8s ease both 0.2s;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.hp-hero-greeting[hidden] {
+  display: none;
+}
+
+.hp-hero-greeting-icon {
+  font-size: 1rem;
+  color: var(--hp-lavender);
+  opacity: 0.8;
+}
+
+.hp-hero-greeting-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: var(--hp-text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.hp-hero-greeting-text strong {
+  color: var(--hp-text);
+  font-weight: 600;
+}
+
 /* Hero content */
 .hp-hero-content {
   position: relative;
@@ -1643,6 +1681,7 @@ body.shortcuts-modal-open .navbar {
   .hp-shape { animation: none !important; }
   .hp-reveal { opacity: 1; transform: none; transition: none; }
   .hp-hero-badge,
+  .hp-hero-greeting,
   .hp-hero-title,
   .hp-hero-subtitle,
   .hp-hero-actions,
