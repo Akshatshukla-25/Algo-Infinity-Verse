@@ -3844,10 +3844,6 @@ function executeMongoCommand(collectionName, method, args) {
         } else if (stage.$lookup) {
           const from = mockDB[stage.$lookup.from];
           if (from) {
-            currentData = currentData.map((doc) => {
-              const localVal = doc[stage.$lookup.localField];
-              const joined = from.filter((fDoc) => fDoc[stage.$lookup.foreignField] === localVal);
-              return { ...doc, [stage.$lookup.as]: joined };
             // Build an O(1) index on the foreign collection keyed by foreignField
             // to avoid O(N×M) nested-loop joins when $lookup is followed by $unwind
             // over large arrays.
