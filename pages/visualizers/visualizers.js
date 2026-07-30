@@ -672,6 +672,13 @@ const visualizers = [
     desc: 'Visualize TCP handshake, congestion control, and flow control.',
   },
   {
+    name: 'TCP Congestion Window Slow Start & AIMD',
+    path: '/pages/visualizers/tcp-aimd-visualizer/tcp-aimd-visualizer.html',
+    category: 'Networking',
+    icon: 'fa-network-wired',
+    desc: 'Visualize TCP Congestion Window Slow Start & AIMD mechanism with simulated packet drops.',
+  },
+  {
     name: 'Git Visualizer',
     path: '/pages/ai-features/git-visualizer/git-visualizer.html',
     category: 'Systems & OS',
