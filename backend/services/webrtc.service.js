@@ -167,6 +167,7 @@ export class WebRTCService {
     const timeout = setTimeout(() => {
       if (this.rooms.has(roomName) && this.rooms.get(roomName).size === 0) {
         this.rooms.delete(roomName);
+        this.roomOpSequences.delete(roomName);
         console.log(`[WebRTC] Cleaned empty room: ${roomName}`);
       }
       this.roomTimeouts.delete(roomName);
