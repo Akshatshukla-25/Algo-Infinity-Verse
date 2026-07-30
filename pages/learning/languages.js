@@ -25,6 +25,15 @@ const languages = [
 
   // ── Enterprise ──
   {
+    name: 'C#',
+    path: '/pages/learning/csharp-learning/csharp-learning.html',
+    category: 'Enterprise',
+    icon: 'fa-hashtag',
+    isBrandIcon: false,
+    langKey: 'csharp',
+    desc: 'Modern, type-safe, and object-oriented. The heart of the .NET ecosystem — from web APIs to cloud services.',
+  },
+  {
     name: 'Java',
     path: '/pages/learning/java-learning/java-learning.html',
     category: 'Enterprise',
@@ -125,6 +134,7 @@ const langColors = {
   rust: '#dea584',
   solidity: '#fbc4ab',
   kotlin: '#a8c8f0',
+  csharp: '#e8b0b0',
 };
 
 /* ─── DOM refs ─── */

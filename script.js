@@ -5858,6 +5858,9 @@ document.addEventListener('keydown', function (e) {
   // Master execution function
   function runBookmarks() {
     try {
+      // Skip bookmark injection on learning pages with custom bookmark systems
+      var pageData = document.body && document.body.getAttribute('data-page');
+      if (pageData === 'csharp-learning' || pageData === 'php-learning' || pageData === 'solidity-learning' || pageData === 'typescript-learning') return;
       injectHeaderBookmarks();
       injectCardBookmarks();
     } catch (err) {
