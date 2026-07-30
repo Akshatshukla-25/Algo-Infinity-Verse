@@ -5,10 +5,6 @@
   var dom = {
     analyzeBtn: document.getElementById('analyzeBtn'),
     repoUrlInput: document.getElementById('repoUrlInput'),
-    errorBanner: document.getElementById('errorBanner'),
-    errorText: document.getElementById('errorText'),
-    errorDismiss: document.getElementById('errorDismiss'),
-    loadingIndicator: document.getElementById('loadingIndicator'),
     resultsContainer: document.getElementById('resultsContainer'),
     scoreDisplay: document.getElementById('scoreDisplay'),
     scoreCircle: document.getElementById('scoreCircle'),
@@ -75,24 +71,24 @@
   /* ---- Error Banner ---- */
 
   function showError(message) {
-    dom.errorText.textContent = message;
-    dom.errorBanner.classList.add('visible');
+    dom.resultsContainer.classList.add('visible');
+    window.AsyncUIState.showError(dom.resultsContainer, message);
+    dom.analyzeBtn.disabled = false;
   }
 
   function hideError() {
-    dom.errorBanner.classList.remove('visible');
-    dom.errorText.textContent = '';
+    window.AsyncUIState.clear(dom.resultsContainer);
   }
 
   /* ---- Loading State ---- */
 
   function setLoading(loading) {
     if (loading) {
-      dom.loadingIndicator.classList.add('visible');
-      dom.resultsContainer.classList.remove('visible');
+      dom.resultsContainer.classList.add('visible');
+      window.AsyncUIState.showLoading(dom.resultsContainer, 'Scanning workflows, configs, and files...');
       dom.analyzeBtn.disabled = true;
     } else {
-      dom.loadingIndicator.classList.remove('visible');
+      window.AsyncUIState.clear(dom.resultsContainer);
       dom.analyzeBtn.disabled = false;
     }
   }

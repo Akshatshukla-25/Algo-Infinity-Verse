@@ -6329,3 +6329,62 @@ function updateProblemCount(filteredProblems) {
     document.head.appendChild(s);
   }
 })();
+
+// ============================================
+// ASYNC UI STATE MANAGER
+// ============================================
+window.AsyncUIState = {
+  _injectOverlay: function (container, contentHtml) {
+    if (!container) return;
+    this.clear(container);
+    container.classList.add('async-ui-container');
+    const overlay = document.createElement('div');
+    overlay.className = 'async-ui-overlay';
+    overlay.innerHTML = contentHtml;
+    container.appendChild(overlay);
+  },
+  
+  showLoading: function (container, message = 'Loading...') {
+    this._injectOverlay(container, `
+      <i class="fas fa-spinner async-ui-spinner"></i>
+      <div class="async-ui-message">${escapeHtml(message)}</div>
+    `);
+  },
+  
+  showError: function (container, message = 'An error occurred', retryCallback = null) {
+    const retryHtml = typeof retryCallback === 'function' 
+      ? `<button class="async-ui-retry-btn" onclick="this.closest('.async-ui-overlay').dispatchEvent(new CustomEvent('retryAction', {bubbles: true}))"><i class="fas fa-redo"></i> Retry</button>` 
+      : '';
+      
+    this._injectOverlay(container, `
+      <i class="fas fa-exclamation-triangle async-ui-error-icon"></i>
+      <div class="async-ui-message">${escapeHtml(message)}</div>
+      ${retryHtml}
+    `);
+    
+    if (typeof retryCallback === 'function') {
+      const overlay = container.querySelector('.async-ui-overlay');
+      if (overlay) {
+        overlay.addEventListener('retryAction', function(e) {
+          e.stopPropagation();
+          retryCallback();
+        });
+      }
+    }
+  },
+  
+  showEmpty: function (container, message = 'No data available') {
+    this._injectOverlay(container, `
+      <i class="fas fa-folder-open async-ui-empty-icon"></i>
+      <div class="async-ui-message">${escapeHtml(message)}</div>
+    `);
+  },
+  
+  clear: function (container) {
+    if (!container) return;
+    const overlay = container.querySelector('.async-ui-overlay');
+    if (overlay) {
+      container.removeChild(overlay);
+    }
+  }
+};

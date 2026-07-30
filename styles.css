@@ -11038,3 +11038,72 @@ html {
     font-size: 1.75rem !important;
   }
 }
+
+/* --- Async UI States --- */
+.async-ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--card-bg, rgba(15, 23, 42, 0.8));
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  border-radius: inherit;
+  text-align: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.async-ui-container {
+  position: relative;
+  min-height: 150px; /* Ensure space for overlays */
+}
+
+.async-ui-spinner {
+  font-size: 2rem;
+  color: var(--primary, #7c3aed);
+  margin-bottom: 1rem;
+  animation: spin 1s linear infinite;
+}
+
+.async-ui-message {
+  font-size: 1rem;
+  color: var(--text-primary, #ffffff);
+  margin-bottom: 1rem;
+  font-family: var(--ui-font, 'Outfit', sans-serif);
+}
+
+.async-ui-error-icon {
+  font-size: 2rem;
+  color: var(--error-color, #ef4444);
+  margin-bottom: 1rem;
+}
+
+.async-ui-empty-icon {
+  font-size: 2rem;
+  color: var(--text-secondary, #94a3b8);
+  margin-bottom: 1rem;
+}
+
+.async-ui-retry-btn {
+  background: var(--primary, #7c3aed);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.async-ui-retry-btn:hover {
+  background: var(--primary-hover, #6d28d9);
+}
