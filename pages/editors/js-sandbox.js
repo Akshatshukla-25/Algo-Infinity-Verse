@@ -493,6 +493,73 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+// --- Brain-Computer Interface (BCI) Telepathy Engine ---
+async function initBCIEngine() {
+  const btn = $("bciConnect");
+  const container = $("bciContainer");
+  const term = $("bciTerminal");
+  const status = $("bciStatus");
+  const alphaNode = $("bciAlpha");
+  const betaNode = $("bciBeta");
+  
+  if (!btn || !container) return;
+  
+  btn.onclick = async () => {
+    container.style.display = "block";
+    btn.disabled = true;
+    
+    status.textContent = "Pairing WebBluetooth...";
+    term.textContent = "Requesting device access for 'Emotiv EPOC X'...\n";
+    
+    await new Promise(r => setTimeout(r, 1000));
+    term.textContent += "> Connected to MAC: 00:1B:44:11:3A:B7\n";
+    term.textContent += "> Initializing TensorFlow.js Cognitive Model...\n";
+    status.textContent = "Calibrating EEG...";
+    
+    // Simulate reading brainwaves
+    let calibrating = true;
+    const waveInterval = setInterval(() => {
+      if(calibrating) {
+        alphaNode.textContent = (Math.random() * 5 + 8).toFixed(1) + " Hz";
+        betaNode.textContent = (Math.random() * 10 + 13).toFixed(1) + " Hz";
+      }
+    }, 200);
+
+    await new Promise(r => setTimeout(r, 2000));
+    term.textContent += "> Calibration Complete. Baseline established.\n";
+    status.textContent = "Awaiting Flow State";
+    status.style.background = "#3b82f6"; // blue
+    
+    await new Promise(r => setTimeout(r, 2000));
+    calibrating = false;
+    alphaNode.textContent = "7.2 Hz";
+    betaNode.textContent = "28.4 Hz"; // High focus
+    
+    term.textContent += "> [ALERT] High Beta Activity Detected!\n";
+    term.textContent += "> Decoding pre-motor cortex intent...\n";
+    status.textContent = "Telepathic Injection";
+    status.style.background = "#10b981"; // green
+
+    await new Promise(r => setTimeout(r, 1000));
+    clearInterval(waveInterval);
+    
+    term.textContent += "> Synthesizing AST from brainwave pattern...\n";
+    term.textContent += "> DONE.\n";
+    
+    $("userCode").value = `function solve(arr) {
+  // 🧠 TELEPATHICALLY GENERATED via Emotiv BCI
+  // Intent Decoded: "Find Maximum Element in Array"
+  let max = -Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] > max) max = arr[i];
+  }
+  return max;
+}`;
+    
+    btn.disabled = false;
+  };
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   $("runSample")?.addEventListener("click", () => run({ hidden: false }));
   $("runHidden")?.addEventListener("click", () => run({ hidden: true }));

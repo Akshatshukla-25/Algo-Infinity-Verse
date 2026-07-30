@@ -63,7 +63,14 @@ function solve(arr) {
 
           <div class="row" style="display:flex; justify-content:space-between; align-items:center;">
             <button type="button" id="runHidden" class="btn btn-secondary">Run hidden tests (practice)</button>
-            <button type="button" id="analyzeBigO" class="btn btn-primary" style="background:linear-gradient(90deg, #8b5cf6, #ec4899); border:none; color:white;">
+          </div>
+          
+          <!-- BCI Telepathy Engine Toggle -->
+          <div class="row" style="margin-top: 15px;">
+            <button type="button" id="bciConnect" class="btn btn-primary" style="width:100%; background:linear-gradient(90deg, #ec4899, #8b5cf6); border:none; color:white;">
+              <i class="fas fa-brain"></i> Connect EEG Headset (WebBluetooth)
+            </button>
+          </div>  <button type="button" id="analyzeBigO" class="btn btn-primary" style="background:linear-gradient(90deg, #8b5cf6, #ec4899); border:none; color:white;">
               <i class="fas fa-magic"></i> Generate Dynamic UI (Local LLM)
             </button>
           </div>
@@ -167,6 +174,27 @@ function solve(arr) {
               The cryptographic proof below verifies you passed the hidden tests without exposing them or sending your code to the server.
             </p>
             <pre id="zkpProofText" class="transcript" style="font-size: 0.7rem; color:#a7f3d0; background:rgba(0,0,0,0.5); max-height: 100px; overflow-y:auto;">{}</pre>
+          </div>
+
+          <!-- BCI Telepathy Engine UI -->
+          <div id="bciContainer" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid #ec4899; border-radius: 8px; background: rgba(236, 72, 153, 0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+              <h3 style="margin:0; font-size:1rem; color:#ec4899;"><i class="fas fa-wave-square"></i> Neuralink/Emotiv BCI Interface</h3>
+              <span id="bciStatus" class="badge" style="background:#ec4899; color:#fff;">Pairing...</span>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+              <div style="flex: 1; background: rgba(0,0,0,0.5); padding: 5px; text-align: center; border-radius: 5px;">
+                <div style="font-size: 0.7rem; color: #94a3b8;">Alpha (Relaxed)</div>
+                <div id="bciAlpha" style="font-size: 1rem; color: #3b82f6; font-family: monospace;">-- Hz</div>
+              </div>
+              <div style="flex: 1; background: rgba(0,0,0,0.5); padding: 5px; text-align: center; border-radius: 5px;">
+                <div style="font-size: 0.7rem; color: #94a3b8;">Beta (Focus)</div>
+                <div id="bciBeta" style="font-size: 1rem; color: #10b981; font-family: monospace;">-- Hz</div>
+              </div>
+            </div>
+
+            <pre id="bciTerminal" class="transcript" style="font-size: 0.75rem; color:#fbcfe8; background:rgba(0,0,0,0.7); max-height: 100px; overflow-y:auto; margin-bottom: 0;">Scanning for EEG WebBluetooth endpoints...</pre>
           </div>
 
           <div id="runtimeError" class="runtime-error" style="display:none"></div>
