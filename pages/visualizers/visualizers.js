@@ -4,6 +4,13 @@
 
 const visualizers = [
   {
+    name: 'MVCC Garbage Collection (Vacuum)',
+    path: '/pages/visualizers/mvcc-visualizer/mvcc-visualizer.html',
+    category: 'Database Internals',
+    icon: 'fa-database',
+    desc: 'Interactive visualizer for Postgres-style Multi-Version Concurrency Control (MVCC) and Garbage Collection sweeps.',
+  },
+  {
     name: 'Quotient Filter Data Structure',
     path: '/pages/visualizers/quotient-filter/quotient-filter.html',
     category: 'Data Structures',
