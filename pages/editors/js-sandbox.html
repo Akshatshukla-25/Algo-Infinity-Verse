@@ -67,6 +67,13 @@ function solve(arr) {
               <i class="fas fa-magic"></i> Generate Dynamic UI (Local LLM)
             </button>
           </div>
+          
+          <!-- Neural-Symbolic Synthesis Toggle -->
+          <div class="row" style="margin-top: 15px;">
+            <button type="button" id="synthesizeCode" class="btn btn-primary" style="width:100%; background:linear-gradient(90deg, #3b82f6, #8b5cf6); border:none; color:white;">
+              <i class="fas fa-bolt"></i> Neural-Symbolic Auto-Synthesize (Z3 Solver)
+            </button>
+          </div>
           <div class="row" style="margin-top: 15px;">
             <label class="checkbox" style="color: #f59e0b; font-weight: bold;">
               <input id="enableFHE" type="checkbox" />
@@ -91,6 +98,13 @@ function solve(arr) {
 
           <div id="testsList" class="tests-list"></div>
 
+          <!-- Neural-Symbolic UI Container -->
+          <div id="nsContainer" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid #3b82f6; border-radius: 8px; background: rgba(59, 130, 246, 0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+              <h3 style="margin:0; font-size:1rem; color:#3b82f6;"><i class="fas fa-network-wired"></i> Neuro-Symbolic Synthesis Engine</h3>
+              <span id="nsStatus" class="badge" style="background:#3b82f6; color:#fff;">Initializing Z3...</span>
+            </div>
+            <pre id="nsTerminal" class="transcript" style="font-size: 0.75rem; color:#93c5fd; background:rgba(0,0,0,0.7); max-height: 150px; overflow-y:auto; margin-bottom: 0;">Loading local transformer weights...</pre>
           <!-- Web3 DAO Smart Contract UI -->
           <div id="web3Container" style="display:none; margin-top: 1rem; padding: 1rem; border: 1px solid #10b981; border-radius: 8px; background: rgba(16, 185, 129, 0.05);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
