@@ -414,5 +414,6 @@ function syncIcons() {
     waitForToggle();
   }
 
+  window.toggleTheme = toggleTheme;
   window.cleanupThemeManager = cleanupThemeManager;
 })();

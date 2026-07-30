@@ -89,6 +89,21 @@ export function initKeyboardShortcuts() {
         }, 250);
       }
     }
+    /* ── D — Toggle dark/light theme ── */
+    if (
+      (e.key === 'd' || e.key === 'D') &&
+      !isEditing &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey
+    ) {
+      e.preventDefault();
+      if (typeof window.toggleTheme === 'function') {
+        window.toggleTheme();
+      }
+      return;
+    }
+
     if (e.key === 'Escape') {
       const modal = document.getElementById('shortcutsModal');
       if (modal && modal.style.display !== 'none') {
