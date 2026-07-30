@@ -17,16 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
 // 1. CONSTANTS & STATE
 // ══════════════════════════════════════════════
 
-const ROLES = { FOLLOWER: 'FOLLOWER', CANDIDATE: 'CANDIDATE', LEADER: 'LEADER', PARTITIONED: 'PARTITIONED' };
-
-const COLORS = {
-  [ROLES.FOLLOWER]:    '#10b981',
-  [ROLES.CANDIDATE]:  '#3b82f6',
-  [ROLES.LEADER]:     '#f59e0b',
-  [ROLES.PARTITIONED]:'#ef4444',
+const ROLES = {
+  FOLLOWER: 'FOLLOWER',
+  CANDIDATE: 'CANDIDATE',
+  LEADER: 'LEADER',
+  PARTITIONED: 'PARTITIONED',
 };
 
-let nodes = [];      // Array of RaftNode
+const COLORS = {
+  [ROLES.FOLLOWER]: '#10b981',
+  [ROLES.CANDIDATE]: '#3b82f6',
+  [ROLES.LEADER]: '#f59e0b',
+  [ROLES.PARTITIONED]: '#ef4444',
+};
+
+let nodes = []; // Array of RaftNode
 let logEntries = []; // Shared committed log (visual)
 let snapshotIndex = null; // last snapshotted index
 let commandCounter = 0;
@@ -35,7 +40,7 @@ let leaderId = null;
 let partitionedIds = new Set();
 let preVoteEnabled = true;
 
-let canvas, ctx, animFrame;
+let canvas, ctx;
 let packets = []; // flying messages
 let electionTimers = {};
 let heartbeatTimer = null;
@@ -43,24 +48,25 @@ let heartbeatTimer = null;
 const MAX_LOG_BEFORE_SNAPSHOT = 8;
 
 const els = {
-  btnInit:           document.getElementById('btnInit'),
-  btnAppendLog:      document.getElementById('btnAppendLog'),
-  btnPartitionLeader:document.getElementById('btnPartitionLeader'),
-  btnHealPartition:  document.getElementById('btnHealPartition'),
-  btnCompactLog:     document.getElementById('btnCompactLog'),
-  nodeCountSelect:   document.getElementById('nodeCountSelect'),
-  electionTimeout:   document.getElementById('electionTimeout'),
-  electionTimeoutVal:document.getElementById('electionTimeoutVal'),
-  preVoteToggle:     document.getElementById('preVoteToggle'),
-  preVoteDesc:       document.getElementById('preVoteDesc'),
-  statTerm:          document.getElementById('statTerm'),
-  statLeader:        document.getElementById('statLeader'),
-  statLog:           document.getElementById('statLog'),
-  statSnapshot:      document.getElementById('statSnapshot'),
-  logEntries:        document.getElementById('logEntries'),
-  logCount:          document.getElementById('logCount'),
-  eventLog:          document.getElementById('eventLog'),
-  engineBadge:       document.getElementById('engineBadge'),
+  btnInit: document.getElementById('btnInit'),
+  btnAppendLog: document.getElementById('btnAppendLog'),
+  btnPartitionLeader: document.getElementById('btnPartitionLeader'),
+  btnHealPartition: document.getElementById('btnHealPartition'),
+  btnCompactLog: document.getElementById('btnCompactLog'),
+  btnElectionRace: document.getElementById('btnElectionRace'),
+  nodeCountSelect: document.getElementById('nodeCountSelect'),
+  electionTimeout: document.getElementById('electionTimeout'),
+  electionTimeoutVal: document.getElementById('electionTimeoutVal'),
+  preVoteToggle: document.getElementById('preVoteToggle'),
+  preVoteDesc: document.getElementById('preVoteDesc'),
+  statTerm: document.getElementById('statTerm'),
+  statLeader: document.getElementById('statLeader'),
+  statLog: document.getElementById('statLog'),
+  statSnapshot: document.getElementById('statSnapshot'),
+  logEntries: document.getElementById('logEntries'),
+  logCount: document.getElementById('logCount'),
+  eventLog: document.getElementById('eventLog'),
+  engineBadge: document.getElementById('engineBadge'),
 };
 
 // ══════════════════════════════════════════════
@@ -91,7 +97,7 @@ class RaftNode {
     if (electionTimers[this.id] && this.role !== ROLES.LEADER && this.role !== ROLES.PARTITIONED) {
       const remaining = electionTimers[this.id].remaining;
       const total = electionTimers[this.id].total;
-      const frac = 1 - (remaining / total);
+      const frac = 1 - remaining / total;
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius + 8, -Math.PI / 2, -Math.PI / 2 + frac * 2 * Math.PI);
       ctx.strokeStyle = `rgba(59,130,246,0.5)`;
@@ -223,6 +229,7 @@ function initRaft() {
   els.btnPartitionLeader.addEventListener('click', partitionLeader);
   els.btnHealPartition.addEventListener('click', healPartition);
   els.btnCompactLog.addEventListener('click', triggerSnapshot);
+  els.btnElectionRace.addEventListener('click', simulateElectionRace);
 
   renderLoop();
 }
@@ -258,15 +265,18 @@ function startCluster() {
   els.btnPartitionLeader.disabled = false;
   els.btnHealPartition.disabled = false;
   els.btnCompactLog.disabled = false;
+  els.btnElectionRace.disabled = false;
 }
 
 function spawnNodes(count) {
-  const cw = canvas.width, ch = canvas.height;
-  const cx = cw / 2, cy = ch / 2;
+  const cw = canvas.width,
+    ch = canvas.height;
+  const cx = cw / 2,
+    cy = ch / 2;
   const r = Math.min(cw, ch) * 0.32;
 
   for (let i = 0; i < count; i++) {
-    const angle = (2 * Math.PI * i / count) - Math.PI / 2;
+    const angle = (2 * Math.PI * i) / count - Math.PI / 2;
     const x = cx + r * Math.cos(angle);
     const y = cy + r * Math.sin(angle);
     nodes.push(new RaftNode(i, x, y));
@@ -293,26 +303,37 @@ function startElection(candidateId) {
     log(`[Pre-Vote] ${candidate.name} soliciting Pre-Vote at term ${termCounter}`, 'prevote');
 
     let preVoteCount = 1; // votes for itself
-    const peers = nodes.filter(n => n.id !== candidateId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id));
+    const peers = nodes.filter(
+      (n) => n.id !== candidateId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id)
+    );
 
-    peers.forEach(peer => {
+    peers.forEach((peer) => {
       packets.push(new Packet(candidate, peer, 'PRE-VOTE', '#38bdf8'));
 
       // Simulate peers responding — they grant if they haven't seen a leader recently
-      setTimeout(() => {
-        if (nodes[candidateId].role === ROLES.PARTITIONED) return;
-        packets.push(new Packet(peer, candidate, 'PRV-OK', '#38bdf8'));
-        preVoteCount++;
-        if (preVoteCount > nodes.length / 2) {
-          log(`[Pre-Vote] ${candidate.name} received majority Pre-Votes. Upgrading to Candidate.`, 'prevote');
-          promoteToCandidateAndVote(candidateId);
-        }
-      }, 300 + Math.random() * 200);
+      setTimeout(
+        () => {
+          if (nodes[candidateId].role === ROLES.PARTITIONED) return;
+          packets.push(new Packet(peer, candidate, 'PRV-OK', '#38bdf8'));
+          preVoteCount++;
+          if (preVoteCount > nodes.length / 2) {
+            log(
+              `[Pre-Vote] ${candidate.name} received majority Pre-Votes. Upgrading to Candidate.`,
+              'prevote'
+            );
+            promoteToCandidateAndVote(candidateId);
+          }
+        },
+        300 + Math.random() * 200
+      );
     });
 
     if (peers.length === 0) {
       // No peers to ask — isolated, don't inflate term
-      log(`[Pre-Vote] ${candidate.name} is isolated. Term NOT incremented (Pre-Vote protection).`, 'warn');
+      log(
+        `[Pre-Vote] ${candidate.name} is isolated. Term NOT incremented (Pre-Vote protection).`,
+        'warn'
+      );
       termCounter--; // revert term increment
       candidate.term = termCounter;
     }
@@ -332,39 +353,49 @@ function promoteToCandidateAndVote(candidateId) {
   updateStats();
 
   // Send RequestVote to all peers
-  const peers = nodes.filter(n => n.id !== candidateId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id));
+  const peers = nodes.filter(
+    (n) => n.id !== candidateId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id)
+  );
 
-  peers.forEach(peer => {
+  peers.forEach((peer) => {
     packets.push(new Packet(candidate, peer, 'REQ-VOTE', '#3b82f6'));
 
-    setTimeout(() => {
-      if (candidate.role !== ROLES.CANDIDATE) return;
-      // Grant vote if peer hasn't voted in this term
-      if (peer.term < candidate.term || (peer.term === candidate.term && peer.votedFor === null)) {
-        peer.votedFor = candidateId;
-        peer.term = candidate.term;
-        packets.push(new Packet(peer, candidate, 'VOTE✓', '#10b981'));
+    setTimeout(
+      () => {
+        if (candidate.role !== ROLES.CANDIDATE) return;
+        // Grant vote if peer hasn't voted in this term
+        if (
+          peer.term < candidate.term ||
+          (peer.term === candidate.term && peer.votedFor === null)
+        ) {
+          peer.votedFor = candidateId;
+          peer.term = candidate.term;
+          packets.push(new Packet(peer, candidate, 'VOTE✓', '#10b981'));
 
-        candidate.votesReceived++;
-        log(`${peer.name} → ${candidate.name}: Vote GRANTED (term ${candidate.term})`, 'elect');
+          candidate.votesReceived++;
+          log(`${peer.name} → ${candidate.name}: Vote GRANTED (term ${candidate.term})`, 'elect');
 
-        if (candidate.votesReceived > nodes.length / 2 && candidate.role === ROLES.CANDIDATE) {
-          becomeLeader(candidateId);
+          if (candidate.votesReceived > nodes.length / 2 && candidate.role === ROLES.CANDIDATE) {
+            becomeLeader(candidateId);
+          }
+        } else {
+          packets.push(new Packet(peer, candidate, 'VOTE✗', '#ef4444'));
+          log(`${peer.name} → ${candidate.name}: Vote DENIED`, 'info');
         }
-      } else {
-        packets.push(new Packet(peer, candidate, 'VOTE✗', '#ef4444'));
-        log(`${peer.name} → ${candidate.name}: Vote DENIED`, 'info');
-      }
-    }, 400 + Math.random() * 300);
+      },
+      400 + Math.random() * 300
+    );
   });
 
-  // Timeout if no majority
+  // Timeout if no majority (using configured timeout + random jitter to resolve split votes)
+  const baseTimeout = parseInt(els.electionTimeout.value, 10) || 2500;
+  const jitter = Math.random() * 1000;
   setTimeout(() => {
     if (candidate.role === ROLES.CANDIDATE) {
       log(`${candidate.name} election timed out. Retrying...`, 'warn');
       startElection(candidateId);
     }
-  }, 2500);
+  }, baseTimeout + jitter);
 }
 
 function becomeLeader(nodeId) {
@@ -381,7 +412,7 @@ function becomeLeader(nodeId) {
   leader.votesReceived = 0;
 
   // All other non-partitioned become followers
-  nodes.forEach(n => {
+  nodes.forEach((n) => {
     if (n.id !== nodeId && n.role !== ROLES.PARTITIONED) {
       n.role = ROLES.FOLLOWER;
       n.term = leader.term;
@@ -409,16 +440,24 @@ function sendHeartbeats() {
   const leader = nodes[leaderId];
   if (!leader || leader.role !== ROLES.LEADER) return;
 
-  const followers = nodes.filter(n => n.id !== leaderId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id));
-  followers.forEach(f => {
+  const followers = nodes.filter(
+    (n) => n.id !== leaderId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id)
+  );
+  followers.forEach((f) => {
     packets.push(new Packet(leader, f, 'HB', '#10b981'));
   });
 }
 
 function clientAppendCommand() {
-  if (leaderId === null) { log('No leader elected yet!', 'warn'); return; }
+  if (leaderId === null) {
+    log('No leader elected yet!', 'warn');
+    return;
+  }
   const leader = nodes[leaderId];
-  if (!leader || leader.role !== ROLES.LEADER) { log('Leader not available!', 'warn'); return; }
+  if (!leader || leader.role !== ROLES.LEADER) {
+    log('Leader not available!', 'warn');
+    return;
+  }
 
   commandCounter++;
   const cmd = `set:x=${commandCounter}`;
@@ -428,30 +467,38 @@ function clientAppendCommand() {
   log(`Client → ${leader.name}: Append [${cmd}]`, 'repl');
 
   // Replicate to followers
-  const followers = nodes.filter(n => n.id !== leaderId && !partitionedIds.has(n.id) && n.role !== ROLES.PARTITIONED);
+  const followers = nodes.filter(
+    (n) => n.id !== leaderId && !partitionedIds.has(n.id) && n.role !== ROLES.PARTITIONED
+  );
   let acks = 1; // leader counts itself
 
-  followers.forEach(f => {
+  followers.forEach((f) => {
     packets.push(new Packet(leader, f, 'AppEnt', '#0ea5e9'));
 
-    setTimeout(() => {
-      packets.push(new Packet(f, leader, 'ACK', '#10b981'));
-      f.log.push(entry);
-      acks++;
+    setTimeout(
+      () => {
+        packets.push(new Packet(f, leader, 'ACK', '#10b981'));
+        f.log.push(entry);
+        acks++;
 
-      if (acks > nodes.length / 2 && !entry.committed) {
-        entry.committed = true;
-        leader.log.push(entry);
-        log(`Entry [${cmd}] committed (majority ACK)`, 'repl');
-        renderLogPanel();
-        updateStats();
+        if (acks > nodes.length / 2 && !entry.committed) {
+          entry.committed = true;
+          leader.log.push(entry);
+          log(`Entry [${cmd}] committed (majority ACK)`, 'repl');
+          renderLogPanel();
+          updateStats();
 
-        // Auto-snapshot if log is too large
-        if (logEntries.filter(e => e.committed && e.index > (snapshotIndex || 0)).length >= MAX_LOG_BEFORE_SNAPSHOT) {
-          setTimeout(() => triggerSnapshot(), 500);
+          // Auto-snapshot if log is too large
+          if (
+            logEntries.filter((e) => e.committed && e.index > (snapshotIndex || 0)).length >=
+            MAX_LOG_BEFORE_SNAPSHOT
+          ) {
+            setTimeout(() => triggerSnapshot(), 500);
+          }
         }
-      }
-    }, 300 + Math.random() * 200);
+      },
+      300 + Math.random() * 200
+    );
   });
 
   renderLogPanel();
@@ -463,7 +510,10 @@ function clientAppendCommand() {
 // ══════════════════════════════════════════════
 
 function partitionLeader() {
-  if (leaderId === null) { log('No leader to partition!', 'warn'); return; }
+  if (leaderId === null) {
+    log('No leader to partition!', 'warn');
+    return;
+  }
 
   const leader = nodes[leaderId];
   partitionedIds.add(leaderId);
@@ -477,15 +527,38 @@ function partitionLeader() {
   updateStats();
 
   // Remaining nodes trigger new election after a delay
-  const remaining = nodes.filter(n => n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id));
+  const remaining = nodes.filter((n) => n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id));
   if (remaining.length > 0) {
     const nextCandidate = remaining[Math.floor(Math.random() * remaining.length)];
     setTimeout(() => startElection(nextCandidate.id), 1200);
   }
 }
 
+function simulateElectionRace() {
+  if (leaderId !== null) {
+    const leader = nodes[leaderId];
+    partitionedIds.add(leaderId);
+    leader.role = ROLES.PARTITIONED;
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+    leaderId = null;
+    log(`⚠ Leader partitioned for election race!`, 'warn');
+    updateStats();
+  }
+
+  const remaining = nodes.filter((n) => n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id));
+  if (remaining.length > 1) {
+    log(`🏁 Triggering simultaneous election timeout for ${remaining.length} nodes!`, 'warn');
+    remaining.forEach((node) => {
+      startElection(node.id);
+    });
+  } else {
+    log('Not enough nodes to simulate an election race.', 'warn');
+  }
+}
+
 function healPartition() {
-  partitionedIds.forEach(id => {
+  partitionedIds.forEach((id) => {
     const node = nodes[id];
     if (node) {
       node.role = ROLES.FOLLOWER;
@@ -502,7 +575,7 @@ function healPartition() {
 
         setTimeout(() => {
           node.snapshotIndex = snapshotIndex;
-          node.log = logEntries.filter(e => e.committed).slice();
+          node.log = logEntries.filter((e) => e.committed).slice();
           packets.push(new Packet(node, leader, 'SNAP-OK', '#a855f7'));
           log(`${node.name} snapshot installed. Log synced to index ${snapshotIndex || 0}`, 'snap');
         }, 800);
@@ -519,26 +592,32 @@ function healPartition() {
 // ══════════════════════════════════════════════
 
 function triggerSnapshot() {
-  const committed = logEntries.filter(e => e.committed);
-  if (committed.length === 0) { log('No committed entries to snapshot.', 'warn'); return; }
+  const committed = logEntries.filter((e) => e.committed);
+  if (committed.length === 0) {
+    log('No committed entries to snapshot.', 'warn');
+    return;
+  }
 
   snapshotIndex = committed[committed.length - 1].index;
 
   // Mark snapshotted entries visually
-  logEntries.forEach(e => {
+  logEntries.forEach((e) => {
     if (e.committed && e.index <= snapshotIndex) {
       e.snapshotted = true;
     }
   });
 
   // Update all nodes
-  nodes.forEach(n => {
+  nodes.forEach((n) => {
     if (n.role !== ROLES.PARTITIONED) {
       n.snapshotIndex = snapshotIndex;
     }
   });
 
-  log(`📦 Snapshot taken at index ${snapshotIndex}. Discarding ${committed.length} old log entries.`, 'snap');
+  log(
+    `📦 Snapshot taken at index ${snapshotIndex}. Discarding ${committed.length} old log entries.`,
+    'snap'
+  );
   renderLogPanel();
   updateStats();
 }
@@ -552,8 +631,8 @@ function renderLoop() {
 
   // Draw connections
   if (nodes.length > 1) {
-    nodes.forEach(a => {
-      nodes.forEach(b => {
+    nodes.forEach((a) => {
+      nodes.forEach((b) => {
         if (b.id <= a.id) return;
         const isPartitioned = partitionedIds.has(a.id) || partitionedIds.has(b.id);
         ctx.beginPath();
@@ -570,13 +649,16 @@ function renderLoop() {
 
   // Draw packets
   const toRemove = [];
-  packets.forEach((p, i) => { if (p.update()) toRemove.push(i); else p.draw(ctx); });
-  toRemove.reverse().forEach(i => packets.splice(i, 1));
+  packets.forEach((p, i) => {
+    if (p.update()) toRemove.push(i);
+    else p.draw(ctx);
+  });
+  toRemove.reverse().forEach((i) => packets.splice(i, 1));
 
   // Draw nodes
-  nodes.forEach(n => n.draw(ctx));
+  nodes.forEach((n) => n.draw(ctx));
 
-  animFrame = requestAnimationFrame(renderLoop);
+  requestAnimationFrame(renderLoop);
 }
 
 // ══════════════════════════════════════════════
@@ -596,8 +678,8 @@ function renderLogPanel() {
   }
 
   // Show non-snapshotted entries
-  const visible = logEntries.filter(e => !e.snapshotted);
-  visible.forEach(e => {
+  const visible = logEntries.filter((e) => !e.snapshotted);
+  visible.forEach((e) => {
     const div = document.createElement('div');
     div.className = `log-entry ${e.committed ? 'committed' : 'uncommitted'}`;
     div.innerHTML = `<div class="entry-term">term ${e.term}</div><div>#${e.index}</div><div>${e.cmd}</div>`;
@@ -611,14 +693,19 @@ function updateStats() {
   const leader = leaderId !== null ? nodes[leaderId] : null;
   els.statTerm.textContent = termCounter;
   els.statLeader.textContent = leader ? leader.name : '–';
-  els.statLog.textContent = logEntries.filter(e => e.committed).length;
+  els.statLog.textContent = logEntries.filter((e) => e.committed).length;
   els.statSnapshot.textContent = snapshotIndex !== null ? `idx ${snapshotIndex}` : 'None';
 }
 
 function log(msg, type = 'info') {
   const div = document.createElement('div');
   div.className = `log-line ${type}`;
-  const time = new Date().toLocaleTimeString('en', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const time = new Date().toLocaleTimeString('en', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
   div.textContent = `[${time}] ${msg}`;
   els.eventLog.appendChild(div);
   els.eventLog.scrollTop = els.eventLog.scrollHeight;
@@ -630,7 +717,7 @@ function log(msg, type = 'info') {
 }
 
 function clearAllTimers() {
-  Object.values(electionTimers).forEach(t => clearTimeout(t.id));
+  Object.values(electionTimers).forEach((t) => clearTimeout(t.id));
   electionTimers = {};
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = null;
