@@ -26,12 +26,17 @@ export async function revokeAllUserSessions(userId) {
   if (!userId) return;
   const nowSeconds = Math.floor(Date.now() / 1000);
   if (redisAvailable && redisClient) {
-    await redisClient.set(
-      `user_revocation:${userId}`,
-      nowSeconds,
-      'EX',
-      ACCESS_TOKEN_MAX_AGE_SECONDS
-    );
+    try {
+      await redisClient.set(
+        `user_revocation:${userId}`,
+        nowSeconds,
+        'EX',
+        ACCESS_TOKEN_MAX_AGE_SECONDS
+      );
+    } catch (err) {
+      console.error('[Redis] Error in revokeAllUserSessions:', err.message);
+      revokedUserSessions.set(userId, nowSeconds);
+    }
   } else {
     revokedUserSessions.set(userId, nowSeconds);
   }
@@ -252,7 +257,12 @@ export async function createRefreshToken(
     throw new Error(validationError);
   }
   if (redisAvailable && redisClient) {
-    await redisClient.set(`refresh:${familyId}`, nonce, 'EX', REFRESH_TOKEN_MAX_AGE_SECONDS);
+    try {
+      await redisClient.set(`refresh:${familyId}`, nonce, 'EX', REFRESH_TOKEN_MAX_AGE_SECONDS);
+    } catch (err) {
+      console.error('[Redis] Error in createRefreshToken:', err.message);
+      activeRefreshFamilies.set(familyId, { currentNonce: nonce });
+    }
   } else {
     activeRefreshFamilies.set(familyId, { currentNonce: nonce });
   }
@@ -278,7 +288,12 @@ export async function revokeTokenFamily(familyId) {
     throw new Error(validationError);
   }
   if (redisAvailable && redisClient) {
-    await redisClient.del(`refresh:${familyId}`);
+    try {
+      await redisClient.del(`refresh:${familyId}`);
+    } catch (err) {
+      console.error('[Redis] Error in revokeTokenFamily:', err.message);
+      activeRefreshFamilies.delete(familyId);
+    }
   } else {
     activeRefreshFamilies.delete(familyId);
   }
@@ -343,10 +358,15 @@ export async function verifyRefreshToken(token) {
   if (!session) return null;
 
   if (redisAvailable && redisClient) {
-    const currentNonce = await redisClient.get(`refresh:${session.familyId}`);
-    if (!currentNonce) return null;
-    if (currentNonce !== session.nonce) {
-      await revokeTokenFamily(session.familyId);
+    try {
+      const currentNonce = await redisClient.get(`refresh:${session.familyId}`);
+      if (!currentNonce) return null;
+      if (currentNonce !== session.nonce) {
+        await revokeTokenFamily(session.familyId);
+        return null;
+      }
+    } catch (err) {
+      console.error('[Redis] Error in verifyRefreshToken:', err.message);
       return null;
     }
   } else {
