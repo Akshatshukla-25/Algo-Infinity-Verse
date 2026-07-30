@@ -184,11 +184,13 @@ function buildJsHarness(code, fn, tcs, isClass, problem) {
   const tcJson = JSON.stringify(tcs);
   const clsCheck = isClass ? 'true' : 'false';
   const isLL = !isClass && problem?.category === 'linkedlist';
+  const isTreeClass = isClass && problem?.category === 'trees';
 
   let preamble = '';
   let inpConv = '';
   let resultConv = 'result';
   let actualExpr = 'result';
+  let methodLoop = '';
 
   if (isLL) {
     preamble = `
@@ -213,6 +215,66 @@ function __isListNode(v) {
     actualExpr = resultConv;
   }
 
+  if (isTreeClass) {
+    preamble += `
+
+function __arrayToTree(arr) {
+  if (!arr || arr.length === 0) return null;
+  const __createNode = (v) => ({ val: v, left: null, right: null });
+  const root = __createNode(arr[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length > 0 && i < arr.length) {
+    const node = queue.shift();
+    if (i < arr.length && arr[i] !== null && arr[i] !== undefined && arr[i] !== 'null') {
+      node.left = __createNode(arr[i]);
+      queue.push(node.left);
+    }
+    i++;
+    if (i < arr.length && arr[i] !== null && arr[i] !== undefined && arr[i] !== 'null') {
+      node.right = __createNode(arr[i]);
+      queue.push(node.right);
+    }
+    i++;
+  }
+  return root;
+}
+function __treeToArray(root) {
+  if (!root) return [];
+  const res = [];
+  const queue = [root];
+  while (queue.length > 0) {
+    const node = queue.shift();
+    if (node !== null && node !== undefined) {
+      res.push(node.val);
+      queue.push(node.left !== null && node.left !== undefined ? node.left : null);
+      queue.push(node.right !== null && node.right !== undefined ? node.right : null);
+    } else {
+      res.push(null);
+    }
+  }
+  while (res.length > 0 && res[res.length - 1] === null) res.pop();
+  return res;
+}`;
+    methodLoop = '\n' +
+    '        if (tc.methods && Array.isArray(tc.methods)) {\n' +
+    '          result = instance;\n' +
+    '          for (const m of tc.methods) {\n' +
+    '            if (m[0] === "serialize") {\n' +
+    '              const treeArg = __arrayToTree(m[1]);\n' +
+    '              result = instance[m[0]](treeArg);\n' +
+    '            } else if (m[0] === "deserialize") {\n' +
+    '              const treeResult = instance[m[0]](m[1]);\n' +
+    '              result = __treeToArray(treeResult);\n' +
+    '            } else {\n' +
+    '              result = instance[m[0]](...m.slice(1));\n' +
+    '            }\n' +
+    '          }\n' +
+    '        } else {\n' +
+    '          result = instance;\n' +
+    '        }';
+  }
+
   return code + preamble +
     '\n\nconst __TC__ = ' + tcJson + ';\n' +
     'const __RES__ = [];\n' +
@@ -223,14 +285,14 @@ function __isListNode(v) {
     inpConv +
     '    if (' + clsCheck + ') {\n' +
     '      const instance = new ' + fn + '(...' + (isLL ? '__inp' : 'tc.input') + ');\n' +
-    '      if (tc.methods && Array.isArray(tc.methods)) {\n' +
+    (isTreeClass ? methodLoop : '      if (tc.methods && Array.isArray(tc.methods)) {\n' +
     '        result = instance;\n' +
     '        for (const m of tc.methods) {\n' +
     '          result = instance[m[0]](...m.slice(1));\n' +
     '        }\n' +
     '      } else {\n' +
     '        result = instance;\n' +
-    '      }\n' +
+    '      }') + '\n' +
     '    } else {\n' +
     '      result = ' + fn + '(...' + (isLL ? '__inp' : 'tc.input') + ');\n' +
     '    }\n' +
@@ -251,6 +313,12 @@ function buildPythonHarness(code, fn, tcs, isClass) {
     '\n\nimport json\n' +
     "__TC__ = json.loads('" + esc + "')\n" +
     '__RES__ = []\n' +
+    'def __eq(a, b):\n' +
+    '    if type(a) is bool or type(b) is bool:\n' +
+    '        return json.dumps(a, default=str) == json.dumps(b, default=str)\n' +
+    '    if isinstance(a, (int, float)) and isinstance(b, (int, float)):\n' +
+    '        return float(a) == float(b)\n' +
+    '    return json.dumps(a, default=str) == json.dumps(b, default=str)\n' +
     'for i, tc in enumerate(__TC__):\n' +
     '    try:\n' +
     '        if ' + clsCheck + ':\n' +
@@ -263,7 +331,7 @@ function buildPythonHarness(code, fn, tcs, isClass) {
     '                result = instance\n' +
     '        else:\n' +
     '            result = ' + fn + '(*tc["input"])\n' +
-    '        passed = True if ' + clsCheck + ' and not tc.get("methods") else json.dumps(result, default=str) == json.dumps(tc["expected"], default=str)\n' +
+    '        passed = True if ' + clsCheck + ' and not tc.get("methods") else __eq(result, tc["expected"])\n' +
     '        __RES__.append({"index": i, "ran": True, "passed": passed, "actual": str(result) if ' + clsCheck + ' and not tc.get("methods") else result, "expected": tc["expected"], "input": tc["input"], "error": None})\n' +
     '    except Exception as e:\n' +
     '        __RES__.append({"index": i, "ran": True, "passed": False, "actual": None, "expected": tc["expected"], "input": tc["input"], "error": str(e)})\n' +
