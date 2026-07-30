@@ -62,16 +62,6 @@ const languages = [
     langKey: 'c',
     desc: 'The foundation of modern computing. Efficient, portable, and the language that built operating systems.',
   },
-  {
-    name: 'Rust',
-    path: '/pages/rust-academy/rust-academy.html',
-    category: 'Systems',
-    icon: 'fa-cubes',
-    isBrandIcon: false,
-    langKey: 'rust',
-    desc: 'Fearless concurrency, memory safety without a garbage collector, and blazingly fast performance.',
-    svgIcon: `<img src="https://cdn.simpleicons.org/rust/dea584" alt="Rust" style="width:1em;height:1em;display:block;">`
-  },
 
   // ── Web ──
   {
@@ -131,7 +121,6 @@ const langColors = {
   cplusplus: '#f34b7d',
   c: '#888888',
   php: '#777BB4',
-  rust: '#dea584',
   solidity: '#fbc4ab',
   kotlin: '#a8c8f0',
   csharp: '#e8b0b0',
