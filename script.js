@@ -5442,18 +5442,11 @@ async function runPerl() {
 }
 
 // Inject Report Issue Feature on educational pages
-document.addEventListener('DOMContentLoaded', () => {
-  const path = window.location.pathname;
-  if (
-    path.includes('/pages/learning/') ||
-    path.includes('/pages/visualizers/') ||
-    path.includes('/pages/resources/')
-  ) {
-    import('/scripts/report-issue.js').catch((err) =>
-      console.error('Failed to dynamically import report issue script:', err)
-    );
-  }
-});
+if (!window.location.pathname.includes('/pages/learning/tech-stacks') && (window.location.pathname.includes('/pages/learning/') || window.location.pathname.includes('/pages/visualizers/') || window.location.pathname.includes('/pages/resources/'))) {
+  import('/scripts/report-issue.js').catch((err) =>
+    console.error('Failed to dynamically import report issue script:', err)
+  );
+}
 
 // ===== KEYBOARD SHORTCUTS =====
 document.addEventListener('keydown', function (e) {
@@ -6314,7 +6307,7 @@ function updateProblemCount(filteredProblems) {
 // NavigationManager can attach to it — even on pages that don't load
 // the navbar partial (where the element normally lives).
 (function () {
-  if (!document.getElementById('dynamic-breadcrumbs')) {
+  if (!window.location.pathname.includes('/pages/learning/tech-stacks/') && !document.getElementById('dynamic-breadcrumbs')) {
     const div = document.createElement('div');
     div.id = 'dynamic-breadcrumbs';
     div.className = 'breadcrumb-bar';
