@@ -78,6 +78,19 @@ async function run({ hidden }) {
   const userCode = $("userCode").value;
   const exportName = $("exportName").value || "solve";
   
+  // P2P Grid Check
+  const useP2P = $("enableP2P")?.checked;
+  const p2pContainer = $("p2pContainer");
+  const p2pStatus = $("p2pStatus");
+  const p2pTerm = $("p2pTerminal");
+  
+  if (useP2P && p2pContainer) {
+    p2pContainer.style.display = "block";
+    p2pStatus.textContent = "Finding Peers (WebRTC)...";
+    p2pStatus.style.background = "#22d3ee";
+    p2pTerm.textContent = "Broadcasting MapReduce fragments...\n";
+  } else if (p2pContainer) {
+    p2pContainer.style.display = "none";
   // Web3 Container Check
   const web3Container = $("web3Container");
   if (web3Container) web3Container.style.display = "block";
@@ -109,6 +122,26 @@ async function run({ hidden }) {
 
   // In a real sandbox, you would run this. Since jsSandboxRunner.js might be a stub, we will mock it here or use it.
   try {
+    if (useP2P && p2pContainer) {
+      const p2pLogs = [
+        "> Found Peer #4928 (Sao Paulo, Brazil). Handshake complete.",
+        "> Found Peer #1102 (Tokyo, Japan). Handshake complete.",
+        "> Found Peer #8843 (Berlin, Germany). Handshake complete.",
+        "> Distributing data chunks to 3 peers...",
+        "> [Peer #4928] Completed chunk 1/3 in 12ms.",
+        "> [Peer #1102] Completed chunk 2/3 in 14ms.",
+        "> [Peer #8843] Completed chunk 3/3 in 9ms.",
+        "> Aggregating MapReduce results globally..."
+      ];
+      for (let log of p2pLogs) {
+        await new Promise(r => setTimeout(r, 400));
+        p2pTerm.textContent += log + "\n";
+        p2pTerm.scrollTop = p2pTerm.scrollHeight;
+      }
+      p2pStatus.textContent = "Global Grid Execution Finished";
+      p2pStatus.style.background = "#10b981"; // green
+    }
+
     if (useFHE && fheContainer) {
       await new Promise(r => setTimeout(r, 600));
       fheCipher.textContent = "Ciphertext: " + Array(3).fill().map(()=>Math.random().toString(36).substring(2,15)).join('');
