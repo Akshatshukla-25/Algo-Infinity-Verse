@@ -44,6 +44,12 @@ let canvas, ctx;
 let packets = []; // flying messages
 let electionTimers = {};
 let heartbeatTimer = null;
+let lastTime = performance.now();
+
+let firewallLine = null;
+let isDrawingFirewall = false;
+let firewallStartX = 0;
+let firewallStartY = 0;
 
 const MAX_LOG_BEFORE_SNAPSHOT = 8;
 
@@ -67,7 +73,34 @@ const els = {
   logCount: document.getElementById('logCount'),
   eventLog: document.getElementById('eventLog'),
   engineBadge: document.getElementById('engineBadge'),
+  btnClearFirewall: document.getElementById('btnClearFirewall'),
 };
+
+function canCommunicate(a, b) {
+  if (a.role === ROLES.PARTITIONED || b.role === ROLES.PARTITIONED) return false;
+  if (partitionedIds.has(a.id) || partitionedIds.has(b.id)) return false;
+  if (firewallLine) {
+    return !lineSegmentsIntersect(
+      a.x,
+      a.y,
+      b.x,
+      b.y,
+      firewallLine.x1,
+      firewallLine.y1,
+      firewallLine.x2,
+      firewallLine.y2
+    );
+  }
+  return true;
+}
+
+function lineSegmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+  const det = (x2 - x1) * (y4 - y3) - (x4 - x3) * (y2 - y1);
+  if (det === 0) return false;
+  const lambda = ((y4 - y3) * (x4 - x1) + (x3 - x4) * (y4 - y1)) / det;
+  const gamma = ((y1 - y2) * (x4 - x1) + (x2 - x1) * (y4 - y1)) / det;
+  return 0 < lambda && lambda < 1 && 0 < gamma && gamma < 1;
+}
 
 // ══════════════════════════════════════════════
 // 2. NODE CLASS
@@ -229,9 +262,39 @@ function initRaft() {
   els.btnPartitionLeader.addEventListener('click', partitionLeader);
   els.btnHealPartition.addEventListener('click', healPartition);
   els.btnCompactLog.addEventListener('click', triggerSnapshot);
+  els.btnClearFirewall.addEventListener('click', () => {
+    firewallLine = null;
+    log('Firewall cleared. Partitions resolving...', 'info');
+  });
   els.btnElectionRace.addEventListener('click', simulateElectionRace);
 
-  renderLoop();
+  canvas.addEventListener('mousedown', (e) => {
+    isDrawingFirewall = true;
+    const rect = canvas.getBoundingClientRect();
+    firewallStartX = e.clientX - rect.left;
+    firewallStartY = e.clientY - rect.top;
+    firewallLine = {
+      x1: firewallStartX,
+      y1: firewallStartY,
+      x2: firewallStartX,
+      y2: firewallStartY,
+    };
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (!isDrawingFirewall) return;
+    const rect = canvas.getBoundingClientRect();
+    firewallLine.x2 = e.clientX - rect.left;
+    firewallLine.y2 = e.clientY - rect.top;
+  });
+
+  canvas.addEventListener('mouseup', () => {
+    isDrawingFirewall = false;
+    log('Firewall deployed. Network partitioned.', 'warn');
+  });
+
+  lastTime = performance.now();
+  animFrame = requestAnimationFrame(renderLoop);
 }
 
 function resizeCanvas() {
@@ -256,10 +319,10 @@ function startCluster() {
 
   const count = parseInt(els.nodeCountSelect.value);
   spawnNodes(count);
-  log('Cluster initialized with ' + count + ' nodes. Waiting for election...', 'info');
 
-  // Elect an initial leader quickly
-  setTimeout(() => startElection(0), 600);
+  nodes.forEach((n) => resetElectionTimer(n.id));
+
+  log('Cluster initialized with ' + count + ' nodes. Waiting for election...', 'info');
 
   els.btnAppendLog.disabled = false;
   els.btnPartitionLeader.disabled = false;
@@ -303,9 +366,7 @@ function startElection(candidateId) {
     log(`[Pre-Vote] ${candidate.name} soliciting Pre-Vote at term ${termCounter}`, 'prevote');
 
     let preVoteCount = 1; // votes for itself
-    const peers = nodes.filter(
-      (n) => n.id !== candidateId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id)
-    );
+    const peers = nodes.filter((n) => n.id !== candidateId && canCommunicate(candidate, n));
 
     peers.forEach((peer) => {
       packets.push(new Packet(candidate, peer, 'PRE-VOTE', '#38bdf8'));
@@ -353,9 +414,7 @@ function promoteToCandidateAndVote(candidateId) {
   updateStats();
 
   // Send RequestVote to all peers
-  const peers = nodes.filter(
-    (n) => n.id !== candidateId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id)
-  );
+  const peers = nodes.filter((n) => n.id !== candidateId && canCommunicate(candidate, n));
 
   peers.forEach((peer) => {
     packets.push(new Packet(candidate, peer, 'REQ-VOTE', '#3b82f6'));
@@ -381,6 +440,16 @@ function promoteToCandidateAndVote(candidateId) {
         } else {
           packets.push(new Packet(peer, candidate, 'VOTE✗', '#ef4444'));
           log(`${peer.name} → ${candidate.name}: Vote DENIED`, 'info');
+
+          // STEP DOWN LOGIC
+          if (peer.term > candidate.term) {
+            candidate.term = peer.term;
+            candidate.role = ROLES.FOLLOWER;
+            candidate.votedFor = null;
+            resetElectionTimer(candidateId);
+            log(`${candidate.name} stepped down (saw higher term ${peer.term})`, 'warn');
+            updateStats();
+          }
         }
       },
       400 + Math.random() * 300
@@ -410,13 +479,15 @@ function becomeLeader(nodeId) {
   const leader = nodes[nodeId];
   leader.role = ROLES.LEADER;
   leader.votesReceived = 0;
+  delete electionTimers[nodeId];
 
   // All other non-partitioned become followers
   nodes.forEach((n) => {
-    if (n.id !== nodeId && n.role !== ROLES.PARTITIONED) {
+    if (n.id !== nodeId && canCommunicate(leader, n)) {
       n.role = ROLES.FOLLOWER;
       n.term = leader.term;
       n.votedFor = null;
+      resetElectionTimer(n.id);
     }
   });
 
@@ -440,11 +511,39 @@ function sendHeartbeats() {
   const leader = nodes[leaderId];
   if (!leader || leader.role !== ROLES.LEADER) return;
 
-  const followers = nodes.filter(
-    (n) => n.id !== leaderId && n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id)
-  );
+  const followers = nodes.filter((n) => n.id !== leaderId && canCommunicate(leader, n));
   followers.forEach((f) => {
     packets.push(new Packet(leader, f, 'HB', '#10b981'));
+
+    // Simulate follower receiving heartbeat
+    setTimeout(
+      () => {
+        if (!canCommunicate(leader, f)) return;
+        if (leader.term >= f.term) {
+          f.term = leader.term;
+          if (f.role !== ROLES.FOLLOWER) {
+            f.role = ROLES.FOLLOWER;
+            f.votedFor = null;
+            log(
+              `${f.name} stepped down to FOLLOWER (received heartbeat from ${leader.name})`,
+              'warn'
+            );
+          }
+          resetElectionTimer(f.id);
+          // TRUNCATE CONFLICTING LOGS (visual simplification)
+          if (
+            f.log.length > leader.log.length ||
+            (f.log.length > 0 &&
+              leader.log.length > 0 &&
+              f.log[f.log.length - 1].term !== leader.log[leader.log.length - 1].term)
+          ) {
+            f.log = leader.log.slice();
+          }
+          updateStats();
+        }
+      },
+      400 + Math.random() * 200
+    );
   });
 }
 
@@ -467,9 +566,7 @@ function clientAppendCommand() {
   log(`Client → ${leader.name}: Append [${cmd}]`, 'repl');
 
   // Replicate to followers
-  const followers = nodes.filter(
-    (n) => n.id !== leaderId && !partitionedIds.has(n.id) && n.role !== ROLES.PARTITIONED
-  );
+  const followers = nodes.filter((n) => n.id !== leaderId && canCommunicate(leader, n));
   let acks = 1; // leader counts itself
 
   followers.forEach((f) => {
@@ -626,15 +723,40 @@ function triggerSnapshot() {
 // 9. RENDER LOOP
 // ══════════════════════════════════════════════
 
-function renderLoop() {
+function renderLoop(time) {
+  if (!time) time = performance.now();
+  const dt = time - lastTime;
+  lastTime = time;
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Decrease election timers
+  Object.keys(electionTimers).forEach((id) => {
+    const t = electionTimers[id];
+    t.remaining -= dt;
+    if (t.remaining <= 0) {
+      delete electionTimers[id];
+      startElection(parseInt(id));
+    }
+  });
+
+  if (firewallLine) {
+    ctx.beginPath();
+    ctx.moveTo(firewallLine.x1, firewallLine.y1);
+    ctx.lineTo(firewallLine.x2, firewallLine.y2);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10, 10]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   // Draw connections
   if (nodes.length > 1) {
     nodes.forEach((a) => {
       nodes.forEach((b) => {
         if (b.id <= a.id) return;
-        const isPartitioned = partitionedIds.has(a.id) || partitionedIds.has(b.id);
+        const isPartitioned = !canCommunicate(a, b);
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
@@ -717,8 +839,13 @@ function log(msg, type = 'info') {
 }
 
 function clearAllTimers() {
-  Object.values(electionTimers).forEach((t) => clearTimeout(t.id));
   electionTimers = {};
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = null;
+}
+
+function resetElectionTimer(nodeId) {
+  const baseTimeout = parseInt(els.electionTimeout.value);
+  const total = baseTimeout + Math.random() * baseTimeout;
+  electionTimers[nodeId] = { total: total, remaining: total };
 }

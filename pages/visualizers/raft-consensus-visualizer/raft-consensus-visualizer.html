@@ -82,6 +82,9 @@
           <button type="button" class="btn btn-success w-100 mt-sm" id="btnHealPartition">
             <i class="fas fa-heart-pulse"></i> Heal Partition
           </button>
+          <button type="button" class="btn btn-danger w-100 mt-sm" id="btnClearFirewall">
+            <i class="fas fa-fire-extinguisher"></i> Clear Firewall
+          </button>
           <button type="button" class="btn btn-info w-100 mt-sm" id="btnCompactLog">
             <i class="fas fa-compress-arrows-alt"></i> Trigger Snapshot
           </button>
@@ -111,7 +114,10 @@
 
       <!-- Center: Canvas -->
       <div class="raft-center">
-        <div class="canvas-wrap">
+        <div class="canvas-wrap" style="position: relative">
+          <div class="firewall-instruction">
+            <i class="fas fa-mouse-pointer"></i> Drag across canvas to draw a Firewall
+          </div>
           <canvas id="raftCanvas"></canvas>
         </div>
 
