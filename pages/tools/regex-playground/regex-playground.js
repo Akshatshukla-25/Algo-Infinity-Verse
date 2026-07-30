@@ -1570,7 +1570,7 @@
         );
       }
     }
-  } }
+  }
 
   function checkNfaVerdict() {
     var accepted = false;

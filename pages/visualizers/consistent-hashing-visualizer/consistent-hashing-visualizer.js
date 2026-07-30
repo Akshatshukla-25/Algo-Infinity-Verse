@@ -445,6 +445,7 @@ function initChart() {
     createChart();
   }
 }
+}
 
 function updateChart() {
   if (!state.chartInstance) return;
