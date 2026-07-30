@@ -5720,6 +5720,10 @@ document.addEventListener('keydown', function (e) {
 //bookamrks
 //===========================================
 (function () {
+  // Skip bookmark rendering on auth pages (login, signup) — users can't save favorites without being logged in
+  const page = document.body?.dataset?.page;
+  if (page === 'login' || page === 'signup') return;
+
   // Helper: Safely retrieve saved favorites array
   function getSavedFavorites() {
     try {
