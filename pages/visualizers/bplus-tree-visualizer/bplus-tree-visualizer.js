@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function () {
   bptInit();
 });
 
-
 let bptNodeIdCounter = 0;
 let bptTree = null;
 let bptCurrentOp = 'insert';
@@ -12,7 +11,7 @@ let bptPlaying = false;
 let bptTimer = null;
 let bptSpeed = 700;
 
-let BPT_OPS = ['insert', 'delete', 'search'];
+let BPT_OPS = ['insert', 'delete', 'search', 'range'];
 
 function bptCreateNode(isLeaf) {
   bptNodeIdCounter++;
@@ -24,7 +23,7 @@ function bptCreateNode(isLeaf) {
     values: isLeaf ? [] : undefined,
     children: isLeaf ? undefined : [],
     next: isLeaf ? null : undefined,
-    parent: null
+    parent: null,
   };
 }
 
@@ -68,7 +67,8 @@ function bptCloneForSnapshot(node) {
     id: node.id,
     leaf: node.leaf,
     keys: node.keys.slice(),
-    children: node.leaf ? [] : node.children.map(bptCloneForSnapshot)
+    children: node.leaf ? [] : node.children.map(bptCloneForSnapshot),
+    nextId: node.leaf ? (node.next ? node.next.id : null) : undefined,
   };
 }
 
@@ -78,7 +78,7 @@ function bptSnapshot(tree, highlightIds, message, type, locks = {}) {
     highlight: highlightIds.slice(),
     type: type || 'active',
     message: message,
-    locks: Object.assign({}, locks)
+    locks: Object.assign({}, locks),
   };
 }
 
@@ -100,7 +100,9 @@ function bptInsertKey(tree, key, steps) {
 
   path.push(node.id);
 
-  let idx = node.keys.findIndex(function (k) { return k > key; });
+  let idx = node.keys.findIndex(function (k) {
+    return k > key;
+  });
   if (idx === -1) idx = node.keys.length;
 
   node.keys.splice(idx, 0, key);
@@ -124,7 +126,14 @@ function bptSplitLeaf(tree, node, steps) {
 
   let upKey = newLeaf.keys[0];
 
-  steps.push(bptSnapshot(tree, [node.id, newLeaf.id], 'Leaf overflowed — splitting, key ' + upKey + ' moves up to parent', 'split'));
+  steps.push(
+    bptSnapshot(
+      tree,
+      [node.id, newLeaf.id],
+      'Leaf overflowed — splitting, key ' + upKey + ' moves up to parent',
+      'split'
+    )
+  );
 
   bptInsertIntoParent(tree, node, upKey, newLeaf, steps);
 }
@@ -136,12 +145,21 @@ function bptSplitInternal(tree, node, steps) {
   let newNode = bptCreateNode(false);
   newNode.keys = node.keys.slice(mid + 1);
   newNode.children = node.children.slice(mid + 1);
-  newNode.children.forEach(function (c) { c.parent = newNode; });
+  newNode.children.forEach(function (c) {
+    c.parent = newNode;
+  });
 
   node.keys = node.keys.slice(0, mid);
   node.children = node.children.slice(0, mid + 1);
 
-  steps.push(bptSnapshot(tree, [node.id, newNode.id], 'Internal node overflowed — splitting, key ' + upKey + ' moves up', 'split'));
+  steps.push(
+    bptSnapshot(
+      tree,
+      [node.id, newNode.id],
+      'Internal node overflowed — splitting, key ' + upKey + ' moves up',
+      'split'
+    )
+  );
 
   bptInsertIntoParent(tree, node, upKey, newNode, steps);
 }
@@ -157,7 +175,9 @@ function bptInsertIntoParent(tree, left, key, right, steps) {
     right.parent = newRoot;
     tree.root = newRoot;
 
-    steps.push(bptSnapshot(tree, [newRoot.id], 'Root split — created a new root with key ' + key, 'split'));
+    steps.push(
+      bptSnapshot(tree, [newRoot.id], 'Root split — created a new root with key ' + key, 'split')
+    );
     return;
   }
 
@@ -192,7 +212,9 @@ function bptDeleteKey(tree, key, steps) {
 
   let idx = node.keys.indexOf(key);
   if (idx === -1) {
-    steps.push(bptSnapshot(tree, [node.id], 'Key ' + key + ' was not found in the tree', 'notfound'));
+    steps.push(
+      bptSnapshot(tree, [node.id], 'Key ' + key + ' was not found in the tree', 'notfound')
+    );
     return false;
   }
 
@@ -219,7 +241,14 @@ function bptUpdateSeparator(tree, node, oldKey, newKey, steps) {
     let childIdx = p.children.indexOf(curr);
     if (childIdx > 0 && p.keys[childIdx - 1] === oldKey) {
       p.keys[childIdx - 1] = newKey;
-      steps.push(bptSnapshot(tree, [p.id], 'Updated routing key in parent from ' + oldKey + ' to ' + newKey, 'borrow'));
+      steps.push(
+        bptSnapshot(
+          tree,
+          [p.id],
+          'Updated routing key in parent from ' + oldKey + ' to ' + newKey,
+          'borrow'
+        )
+      );
       return;
     }
     curr = p;
@@ -231,7 +260,14 @@ function bptFixUnderflow(tree, node, steps) {
     if (!node.leaf && node.keys.length === 0 && node.children.length === 1) {
       tree.root = node.children[0];
       tree.root.parent = null;
-      steps.push(bptSnapshot(tree, [tree.root.id], 'Root had only one child — promoting it to be the new root', 'merge'));
+      steps.push(
+        bptSnapshot(
+          tree,
+          [tree.root.id],
+          'Root had only one child — promoting it to be the new root',
+          'merge'
+        )
+      );
     }
     return;
   }
@@ -277,7 +313,14 @@ function bptBorrowFromLeft(tree, parent, idx, steps) {
     parent.keys[idx - 1] = borrowedKey;
   }
 
-  steps.push(bptSnapshot(tree, [node.id, left.id, parent.id], 'Borrowed a key from the left sibling', 'borrow'));
+  steps.push(
+    bptSnapshot(
+      tree,
+      [node.id, left.id, parent.id],
+      'Borrowed a key from the left sibling',
+      'borrow'
+    )
+  );
 }
 
 function bptBorrowFromRight(tree, parent, idx, steps) {
@@ -297,7 +340,14 @@ function bptBorrowFromRight(tree, parent, idx, steps) {
     parent.keys[idx] = borrowedKey;
   }
 
-  steps.push(bptSnapshot(tree, [node.id, right.id, parent.id], 'Borrowed a key from the right sibling', 'borrow'));
+  steps.push(
+    bptSnapshot(
+      tree,
+      [node.id, right.id, parent.id],
+      'Borrowed a key from the right sibling',
+      'borrow'
+    )
+  );
 }
 
 function bptMergeNodes(tree, parent, leftIdx, steps) {
@@ -311,7 +361,9 @@ function bptMergeNodes(tree, parent, leftIdx, steps) {
   } else {
     left.keys = left.keys.concat([parent.keys[leftIdx]], right.keys);
     left.children = left.children.concat(right.children);
-    right.children.forEach(function (c) { c.parent = left; });
+    right.children.forEach(function (c) {
+      c.parent = left;
+    });
   }
 
   parent.keys.splice(leftIdx, 1);
@@ -334,16 +386,22 @@ function bptSearchKey(tree, key, steps) {
 
   while (true) {
     path.push(node.id);
-    steps.push(bptSnapshot(tree, path.slice(), 'Visiting node, comparing against ' + key, 'active'));
+    steps.push(
+      bptSnapshot(tree, path.slice(), 'Visiting node, comparing against ' + key, 'active')
+    );
 
     if (node.leaf) {
       let found = node.keys.indexOf(key) > -1;
-      steps.push(bptSnapshot(
-        tree,
-        path.slice(),
-        found ? ('Found ' + key + ' in this leaf!') : ('Key ' + key + ' not found — reached a leaf with no match'),
-        found ? 'found' : 'notfound'
-      ));
+      steps.push(
+        bptSnapshot(
+          tree,
+          path.slice(),
+          found
+            ? 'Found ' + key + ' in this leaf!'
+            : 'Key ' + key + ' not found — reached a leaf with no match',
+          found ? 'found' : 'notfound'
+        )
+      );
       return found;
     }
 
@@ -371,7 +429,9 @@ function bptCountKeys(node) {
   if (node.leaf) return node.keys.length;
 
   let sum = 0;
-  node.children.forEach(function (c) { sum += bptCountKeys(c); });
+  node.children.forEach(function (c) {
+    sum += bptCountKeys(c);
+  });
   return sum;
 }
 
@@ -429,9 +489,13 @@ function bptRenderTree(snapshot) {
         badge = '<span class="bpt-thread-badge">' + snapshot.locks[node.id].thread + '</span>';
       }
 
-      box.innerHTML = badge + node.keys.map(function (k) {
-        return '<span class="bpt-key">' + k + '</span>';
-      }).join('');
+      box.innerHTML =
+        badge +
+        node.keys
+          .map(function (k) {
+            return '<span class="bpt-key">' + k + '</span>';
+          })
+          .join('');
 
       row.appendChild(box);
     });
@@ -439,7 +503,9 @@ function bptRenderTree(snapshot) {
     area.appendChild(row);
   });
 
-  requestAnimationFrame(function () { bptDrawConnectors(snapshot); });
+  requestAnimationFrame(function () {
+    bptDrawConnectors(snapshot);
+  });
 }
 
 function bptDrawConnectors(snapshot) {
@@ -488,7 +554,10 @@ function bptDrawConnectors(snapshot) {
 
   let leaves = [];
   function collectLeaves(node) {
-    if (node.leaf) { leaves.push(node); return; }
+    if (node.leaf) {
+      leaves.push(node);
+      return;
+    }
     node.children.forEach(collectLeaves);
   }
   collectLeaves(snapshot.root);
@@ -609,16 +678,113 @@ function bptExecute() {
     let insertSteps = [];
     bptInsertKey(bptTree, val, insertSteps);
     bptLoadSteps(insertSteps);
-
   } else if (bptCurrentOp === 'delete') {
     let deleteSteps = [];
     bptDeleteKey(bptTree, val, deleteSteps);
     bptLoadSteps(deleteSteps);
-
   } else if (bptCurrentOp === 'search') {
     let searchSteps = [];
     bptSearchKey(bptTree, val, searchSteps);
     bptLoadSteps(searchSteps);
+  } else if (bptCurrentOp === 'range') {
+    let endInputEl = document.getElementById('bptRangeEndInput');
+    let endVal = parseInt(endInputEl.value, 10);
+    if (isNaN(endVal) || endVal < val) {
+      bptSetStatus('Please enter a valid End Value that is >= Start Value.', 'error');
+      return;
+    }
+    let rangeSteps = [];
+    bptRangeQuery(bptTree, val, endVal, rangeSteps);
+    bptLoadSteps(rangeSteps);
+  }
+}
+
+function bptRangeQuery(tree, startVal, endVal, steps) {
+  steps.push(
+    bptSnapshot(
+      tree,
+      [],
+      'Range Query [' + startVal + ' to ' + endVal + ']: Descending to first leaf...',
+      'active'
+    )
+  );
+
+  let node = tree.root;
+  let path = [];
+  while (!node.leaf) {
+    path.push(node.id);
+    steps.push(bptSnapshot(tree, path.slice(), 'Routing via internal nodes...', 'active'));
+    node = node.children[bptFindChildIndex(node, startVal)];
+  }
+
+  path.push(node.id);
+  steps.push(
+    bptSnapshot(tree, path.slice(), 'Reached start leaf node. Beginning sequential scan.', 'active')
+  );
+
+  let foundValues = [];
+  while (node) {
+    let toHighlight = [node.id];
+    let valuesInNode = [];
+    let stopScan = false;
+
+    for (let i = 0; i < node.keys.length; i++) {
+      let k = node.keys[i];
+      if (k >= startVal && k <= endVal) {
+        valuesInNode.push(k);
+        foundValues.push(k);
+      } else if (k > endVal) {
+        stopScan = true;
+        break;
+      }
+    }
+
+    if (valuesInNode.length > 0) {
+      steps.push(
+        bptSnapshot(
+          tree,
+          toHighlight.slice(),
+          'Found [' + valuesInNode.join(', ') + '] in current leaf. Total: ' + foundValues.length,
+          'range'
+        )
+      );
+    } else {
+      steps.push(
+        bptSnapshot(tree, toHighlight.slice(), 'Scanning leaf... no matching values here.', 'range')
+      );
+    }
+
+    if (stopScan) {
+      steps.push(
+        bptSnapshot(
+          tree,
+          toHighlight.slice(),
+          'Encountered key > ' +
+            endVal +
+            '. Scan complete. Found ' +
+            foundValues.length +
+            ' items.',
+          'found'
+        )
+      );
+      break;
+    }
+
+    node = node.next;
+    if (node) {
+      steps.push(
+        bptSnapshot(tree, [node.id], 'Following O(1) linked-list pointer to next leaf.', 'range')
+      );
+    } else {
+      steps.push(
+        bptSnapshot(
+          tree,
+          [],
+          'Reached end of linked list. Scan complete. Found ' + foundValues.length + ' items.',
+          'found'
+        )
+      );
+    }
   }
 }
 
@@ -638,29 +804,73 @@ function bptSimulateConcurrency() {
   bptInsertKey(bptTree, 20, tempSteps);
   bptInsertKey(bptTree, 30, tempSteps);
   bptSteps = [];
-  
-  let rootId = bptTree.root.id;
-  
-  bptSteps.push(bptSnapshot(bptTree, [], 'Starting Concurrency Control (Crabbing) Simulation', 'active'));
-  bptSteps.push(bptSnapshot(bptTree, [rootId], '[T1] Inserting 15. Acquiring Write Lock on Root.', 'active', { [rootId]: {type: 'write', thread: 'T1'} }));
-  bptSteps.push(bptSnapshot(bptTree, [rootId], '[T1] Root is full (unsafe). T1 holds lock.', 'active', { [rootId]: {type: 'write', thread: 'T1'} }));
-  
-  bptSteps.push(bptSnapshot(bptTree, [rootId], '[T2] Inserting 35. Requests Write Lock on Root... BLOCKED by T1.', 'error', { [rootId]: {type: 'write', thread: 'T1 (T2 Blocked)'} }));
 
-  bptInsertKey(bptTree, 15, tempSteps); 
+  let rootId = bptTree.root.id;
+
+  bptSteps.push(
+    bptSnapshot(bptTree, [], 'Starting Concurrency Control (Crabbing) Simulation', 'active')
+  );
+  bptSteps.push(
+    bptSnapshot(bptTree, [rootId], '[T1] Inserting 15. Acquiring Write Lock on Root.', 'active', {
+      [rootId]: { type: 'write', thread: 'T1' },
+    })
+  );
+  bptSteps.push(
+    bptSnapshot(bptTree, [rootId], '[T1] Root is full (unsafe). T1 holds lock.', 'active', {
+      [rootId]: { type: 'write', thread: 'T1' },
+    })
+  );
+
+  bptSteps.push(
+    bptSnapshot(
+      bptTree,
+      [rootId],
+      '[T2] Inserting 35. Requests Write Lock on Root... BLOCKED by T1.',
+      'error',
+      { [rootId]: { type: 'write', thread: 'T1 (T2 Blocked)' } }
+    )
+  );
+
+  bptInsertKey(bptTree, 15, tempSteps);
   let newRootId = bptTree.root.id;
   let leftId = bptTree.root.children[0].id;
   let rightId = bptTree.root.children[1].id;
 
-  bptSteps.push(bptSnapshot(bptTree, [newRootId, leftId, rightId], '[T1] Split complete. Inserted 15. Releasing locks.', 'split', { }));
-  
-  bptSteps.push(bptSnapshot(bptTree, [newRootId], '[T2] T1 released lock. T2 acquires Read Lock on Root (crabbing).', 'active', { [newRootId]: {type: 'read', thread: 'T2'} }));
-  
-  bptSteps.push(bptSnapshot(bptTree, [rightId], '[T2] T2 navigates to right child. Acquires Write Lock. Child is safe. Releases Root.', 'active', { [rightId]: {type: 'write', thread: 'T2'} }));
-  
+  bptSteps.push(
+    bptSnapshot(
+      bptTree,
+      [newRootId, leftId, rightId],
+      '[T1] Split complete. Inserted 15. Releasing locks.',
+      'split',
+      {}
+    )
+  );
+
+  bptSteps.push(
+    bptSnapshot(
+      bptTree,
+      [newRootId],
+      '[T2] T1 released lock. T2 acquires Read Lock on Root (crabbing).',
+      'active',
+      { [newRootId]: { type: 'read', thread: 'T2' } }
+    )
+  );
+
+  bptSteps.push(
+    bptSnapshot(
+      bptTree,
+      [rightId],
+      '[T2] T2 navigates to right child. Acquires Write Lock. Child is safe. Releases Root.',
+      'active',
+      { [rightId]: { type: 'write', thread: 'T2' } }
+    )
+  );
+
   bptInsertKey(bptTree, 35, tempSteps);
-  bptSteps.push(bptSnapshot(bptTree, [rightId], '[T2] Inserted 35. Releasing locks.', 'active', {}));
-  
+  bptSteps.push(
+    bptSnapshot(bptTree, [rightId], '[T2] Inserted 35. Releasing locks.', 'active', {})
+  );
+
   bptStepIndex = 0;
   bptPlaying = false;
   bptUpdateMeta();
@@ -689,14 +899,33 @@ function bptRenderOps() {
 
   wrap.innerHTML = BPT_OPS.map(function (op) {
     let label = op.charAt(0).toUpperCase() + op.slice(1);
-    return '<button class="bpt-op-btn' + (op === bptCurrentOp ? ' active' : '') + '" data-op="' + op + '">' + label + '</button>';
+    return (
+      '<button class="bpt-op-btn' +
+      (op === bptCurrentOp ? ' active' : '') +
+      '" data-op="' +
+      op +
+      '">' +
+      label +
+      '</button>'
+    );
   }).join('');
 
   wrap.querySelectorAll('.bpt-op-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      wrap.querySelectorAll('.bpt-op-btn').forEach(function (b) { b.classList.remove('active'); });
+      wrap.querySelectorAll('.bpt-op-btn').forEach(function (b) {
+        b.classList.remove('active');
+      });
       btn.classList.add('active');
       bptCurrentOp = btn.getAttribute('data-op');
+
+      let rangeInput = document.getElementById('bptRangeEndInput');
+      if (rangeInput) {
+        if (bptCurrentOp === 'range') {
+          rangeInput.style.display = 'inline-block';
+        } else {
+          rangeInput.style.display = 'none';
+        }
+      }
     });
   });
 }
@@ -729,7 +958,11 @@ function bptInit() {
   let speedSlider = document.getElementById('bptSpeedSlider');
   let valueInput = document.getElementById('bptValueInput');
 
-  if (stepBtn) stepBtn.addEventListener('click', function () { bptPauseAuto(); bptStepForward(); });
+  if (stepBtn)
+    stepBtn.addEventListener('click', function () {
+      bptPauseAuto();
+      bptStepForward();
+    });
   if (playBtn) playBtn.addEventListener('click', bptTogglePlay);
   if (resetBtn) resetBtn.addEventListener('click', bptReset);
   if (presetBtn) presetBtn.addEventListener('click', bptRunPreset);
