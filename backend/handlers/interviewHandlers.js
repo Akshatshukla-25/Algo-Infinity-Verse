@@ -6,6 +6,7 @@ import { validateInterviewExperiencePayload } from '../utils/interviewValidation
 import { initializeFirebase } from '../../firebase.js';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
+let fileWriteLock = Promise.resolve();
 
 export async function handleSubmitInterviewExperience(req, res) {
   const session = getSession(req);
@@ -49,15 +50,19 @@ export async function handleSubmitInterviewExperience(req, res) {
     } else {
       const filePath = path.join(DATA_DIR, 'interview-experiences.json');
       await fs.mkdir(DATA_DIR, { recursive: true });
-      let list = [];
-      try {
-        const raw = await fs.readFile(filePath, 'utf8');
-        list = JSON.parse(raw || '[]');
-      } catch (err) {
-        if (err.code !== 'ENOENT') throw err;
-      }
-      list.push(experienceData);
-      await fs.writeFile(filePath, JSON.stringify(list, null, 2) + '\n');
+      const lockPromise = fileWriteLock.then(async () => {
+        let list = [];
+        try {
+          const raw = await fs.readFile(filePath, 'utf8');
+          list = JSON.parse(raw || '[]');
+        } catch (err) {
+          if (err.code !== 'ENOENT') throw err;
+        }
+        list.push(experienceData);
+        await fs.writeFile(filePath, JSON.stringify(list, null, 2) + '\n');
+      });
+      fileWriteLock = lockPromise.catch(() => {});
+      await lockPromise;
     }
     return sendJson(res, 201, { success: true, experience: experienceData });
   } catch (err) {
