@@ -96,6 +96,18 @@ const languages = [
     desc: 'The language of Ethereum smart contracts. Statically typed, contract-oriented, and designed for the EVM.',
     svgIcon: `<img src="https://cdn.simpleicons.org/solidity/fbc4ab" alt="Solidity" style="width:1em;height:1em;display:block;">`
   },
+
+  // ── Mobile / JVM ──
+  {
+    name: 'Kotlin',
+    path: '/pages/learning/kotlin-learning/kotlin-learning.html',
+    category: 'General Purpose',
+    icon: 'fa-code',
+    isBrandIcon: false,
+    langKey: 'kotlin',
+    desc: 'Modern, concise, and safe JVM language. Preferred for Android development with seamless Java interop and coroutines.',
+    svgIcon: `<img src="https://cdn.simpleicons.org/kotlin/a8c8f0" alt="Kotlin" style="width:1em;height:1em;display:block;">`
+  },
 ];
 
 /* ─── Categories ─── */
@@ -112,6 +124,7 @@ const langColors = {
   php: '#777BB4',
   rust: '#dea584',
   solidity: '#fbc4ab',
+  kotlin: '#a8c8f0',
 };
 
 /* ─── DOM refs ─── */
