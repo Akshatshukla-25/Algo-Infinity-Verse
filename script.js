@@ -5716,39 +5716,169 @@ document.addEventListener('keydown', function (e) {
     initModalManager();
   }
 })();
-
-// ============================================
-// PROFILE EDITING & LANGUAGES MANAGER
-// ============================================
-// Handled by modules/profile-edit.js (initial-based avatars, language saving)
-// Legacy emoji-based IIFE removed.
-
-// Offline/Online status handler
-window.addEventListener('load', () => {
-  function updateOnlineStatus() {
-    const banner = document.getElementById('offline-banner');
-    if (banner) {
-      if (navigator.onLine) {
-        banner.classList.add('hidden');
-      } else {
-        banner.classList.remove('hidden');
-      }
+//===========================================
+//bookamrks
+//===========================================
+(function () {
+  // Helper: Safely retrieve saved favorites array
+  function getSavedFavorites() {
+    try {
+      const stored = localStorage.getItem('algoInfinityVerse_favorites');
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
     }
   }
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
-  updateOnlineStatus();
 
-  // Sync notes on load
-  if (window.syncProblemNotesDown) {
-    window.syncProblemNotesDown();
+  // Helper: Persist favorites to localStorage and global state
+  function saveFavorites(favs) {
+    try {
+      localStorage.setItem('algoInfinityVerse_favorites', JSON.stringify(favs));
+    } catch (e) {
+      console.warn('Unable to write to localStorage:', e);
+    }
+    if (typeof userProgress !== 'undefined' && userProgress) {
+      userProgress.favoriteProblems = favs;
+    }
+    if (typeof saveUserData === 'function') {
+      saveUserData();
+    }
   }
 
-  // Sync spaced repetition on load
-  if (window.syncSpacedRepetitionDown) {
-    window.syncSpacedRepetitionDown();
+  // 1. Inject Bookmarks into Standalone Lesson Headers
+  function injectHeaderBookmarks() {
+    const selectors = [
+      '.title-wrapper',
+      '.topic-header',
+      '.problem-header',
+      '.arr-lesson-header',
+      '.os-lesson-header',   
+      '.oop-lesson-header',  
+      '.lt-hero-content',    
+      '.modal-header',
+      '.totd-title',
+      '.hero-title',
+      '.section-title'
+    ];
+
+    let titleWrapper = document.querySelector(selectors.join(', '));
+
+    // Fallback if no explicit wrapper class exists
+    if (!titleWrapper) {
+      const heading = document.querySelector('.oop-main-content h3, .os-main-content h3, main h1, main h2, main h3, article h3');
+      if (heading) titleWrapper = heading;
+    }
+
+    if (!titleWrapper || titleWrapper.querySelector('.favorite-btn')) return;
+
+    const pageId = window.location.pathname + window.location.hash;
+    const favs = getSavedFavorites();
+    const isSaved = favs.includes(pageId);
+
+    const heartBtn = document.createElement('button');
+    heartBtn.className = `favorite-btn ${isSaved ? 'active' : ''}`;
+    heartBtn.title = isSaved ? 'Remove from bookmarks' : 'Bookmark this topic';
+    heartBtn.type = 'button';
+    heartBtn.setAttribute('aria-label', 'Toggle Bookmark');
+    heartBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+
+    heartBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let currentFavs = getSavedFavorites();
+
+      if (currentFavs.includes(pageId)) {
+        currentFavs = currentFavs.filter(id => id !== pageId);
+        heartBtn.classList.remove('active', 'pulse');
+        heartBtn.title = 'Bookmark this topic';
+        if (typeof showNotification === 'function') showNotification('Removed from bookmarks', 'info');
+      } else {
+        currentFavs.push(pageId);
+        heartBtn.classList.add('active', 'pulse');
+        heartBtn.title = 'Remove from bookmarks';
+        if (typeof showNotification === 'function') showNotification('Saved to bookmarks!', 'success');
+      }
+
+      saveFavorites(currentFavs);
+    });
+
+    titleWrapper.appendChild(heartBtn);
   }
-});
+
+  //  Inject Bookmarks into Landing/Grid Cards 
+  function injectCardBookmarks() {
+    const cards = document.querySelectorAll('.lt-card, .topic-card, .quiz-card, .problem-card');
+    if (!cards.length) return;
+
+    const favs = getSavedFavorites();
+
+    cards.forEach((card) => {
+      if (card.querySelector('.favorite-btn')) return;
+
+      const targetPath = card.getAttribute('href') || card.dataset.path || card.querySelector('a')?.getAttribute('href');
+      if (!targetPath) return;
+
+      const isSaved = favs.includes(targetPath);
+
+      const heartBtn = document.createElement('button');
+      heartBtn.className = `favorite-btn card-fav-btn ${isSaved ? 'active' : ''}`;
+      heartBtn.title = isSaved ? 'Remove from bookmarks' : 'Bookmark this topic';
+      heartBtn.type = 'button';
+      heartBtn.setAttribute('aria-label', 'Bookmark topic');
+      heartBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+
+      heartBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        let currentFavs = getSavedFavorites();
+
+        if (currentFavs.includes(targetPath)) {
+          currentFavs = currentFavs.filter(id => id !== targetPath);
+          heartBtn.classList.remove('active', 'pulse');
+          heartBtn.title = 'Bookmark this topic';
+          if (typeof showNotification === 'function') showNotification('Removed from bookmarks', 'info');
+        } else {
+          currentFavs.push(targetPath);
+          heartBtn.classList.add('active', 'pulse');
+          heartBtn.title = 'Remove from bookmarks';
+          if (typeof showNotification === 'function') showNotification('Saved to bookmarks!', 'success');
+        }
+
+        saveFavorites(currentFavs);
+      });
+
+      const iconWrap = card.querySelector('.lt-card-icon, .topic-icon, .lt-card-header') || card;
+      iconWrap.style.position = 'relative';
+      iconWrap.appendChild(heartBtn);
+    });
+  }
+
+  // Master execution function
+  function runBookmarks() {
+    try {
+      injectHeaderBookmarks();
+      injectCardBookmarks();
+    } catch (err) {
+      console.error('Bookmark Injection Error:', err);
+    }
+  }
+
+  // Lifecycle & Listener Triggers
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runBookmarks);
+  } else {
+    runBookmarks();
+  }
+
+  window.addEventListener('hashchange', () => setTimeout(runBookmarks, 100));
+
+  const observer = new MutationObserver(() => runBookmarks());
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+})();
 
 // ============================================
 // ACTIVITY FEED
