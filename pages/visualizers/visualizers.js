@@ -102,6 +102,13 @@ const visualizers = [
     desc: 'Interactive visualizer for the TLS 1.3 cryptographic handshake protocol (1-RTT and 0-RTT).',
   },
   {
+    name: 'LMAX Disruptor Simulator',
+    path: '/pages/visualizers/lmax-disruptor-simulator/lmax-disruptor-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-microchip',
+    desc: 'Visualize a lock-free Ring Buffer with Producers and Consumers using memory barriers and sequence numbers.',
+  },
+  {
     name: 'TLB Thrashing & Page Fault Simulator',
     path: '/pages/visualizers/tlb-page-fault-simulator/tlb-page-fault-simulator.html',
     category: 'OS & Architecture',
