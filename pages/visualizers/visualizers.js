@@ -39,6 +39,13 @@ const visualizers = [
     desc: 'Visualize a recurrent neural network acting as a content-addressable memory system.',
   },
   {
+    name: 'Transformer QKV Attention Flow',
+    path: '/pages/visualizers/transformer-qkv-visualizer/transformer-qkv-visualizer.html',
+    category: 'AI & ML',
+    icon: 'fa-project-diagram',
+    desc: 'Interactive visualizer demonstrating the Query, Key, and Value (QKV) dot-product attention mechanism used in LLMs.',
+  },
+  {
     name: 'Distributed Tracing Simulator',
     path: '/pages/visualizers/distributed-tracing/distributed-tracing.html',
     category: 'Distributed Systems',
