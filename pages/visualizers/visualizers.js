@@ -830,6 +830,13 @@ const visualizers = [
     desc: 'Interactive Raft consensus algorithm: leader election and log replication.',
   },
   {
+    name: 'Raft Split-Brain Simulator',
+    path: '/pages/visualizers/raft-split-brain-simulator/raft-split-brain-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Visualize Raft network partitions and the split-brain infinite election timeout loop.',
+  },
+  {
     name: 'PBFT Simulator',
     path: '/pages/visualizers/pbft-simulator/pbft-simulator.html',
     category: 'Distributed Systems',
