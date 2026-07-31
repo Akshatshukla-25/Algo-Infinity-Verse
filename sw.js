@@ -18,7 +18,9 @@ self.addEventListener('install', (e) => {
       .then((cache) => {
         return Promise.all(
           WASM_ASSETS.map((url) =>
-            cache.add(url).catch((err) => console.warn(`SW cache pre-fetch failed for ${url}:`, err))
+            cache
+              .add(url)
+              .catch((err) => console.warn(`SW cache pre-fetch failed for ${url}:`, err))
           )
         );
       })
@@ -42,9 +44,11 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // Cache-first for Pyodide CDN & local WASM assets
+  // Cache-first for Pyodide CDN, Monaco Editor, and local WASM assets
   if (
     url.hostname.includes('cdn.jsdelivr.net') ||
+    url.hostname.includes('cdnjs.cloudflare.com') ||
+    url.hostname.includes('unpkg.com') ||
     url.pathname.includes('/modules/wasm-executor.js')
   ) {
     e.respondWith(
