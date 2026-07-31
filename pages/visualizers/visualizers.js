@@ -788,6 +788,13 @@ const visualizers = [
 
   // ── Distributed Systems ──
   {
+    name: 'CRDT Sequence Interleaving Sandbox',
+    path: '/pages/visualizers/crdt-visualizer/crdt-visualizer.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Simulate offline edits on two disconnected clients, then visualize mathematical merging resolving edits concurrently without conflicts.',
+  },
+  {
     name: 'Chord vs Skip Graph DHT Routing',
     path: '/pages/visualizers/chord-vs-skip-graph/chord-vs-skip-graph.html',
     category: 'Distributed Systems',
