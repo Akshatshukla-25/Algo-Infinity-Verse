@@ -4,6 +4,13 @@
 
 const visualizers = [
   {
+    name: 'Redis Cluster Hash Slot Migration Storm',
+    path: '/pages/visualizers/redis-cluster-migration-storm/redis-cluster-migration-storm.html',
+    category: 'Distributed Systems',
+    icon: 'fa-server',
+    desc: 'Visualize 16,384 hash slots distributed across 3 Master nodes. Trigger a failure, animate Slave promotion, and see the Migration Storm re-synchronize quorum.',
+  },
+  {
     name: 'MVCC Garbage Collection (Vacuum)',
     path: '/pages/visualizers/mvcc-visualizer/mvcc-visualizer.html',
     category: 'Database Internals',
