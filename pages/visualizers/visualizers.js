@@ -2038,6 +2038,13 @@ const visualizers = [
     desc: 'See how content is delivered from edge locations to users via CDN with origin pull, edge caching, and TTL-based cache invalidation.',
   },
   {
+    name: 'CDN Edge Cache Stampede Simulator',
+    path: '/pages/visualizers/cdn-cache-stampede-simulator/cdn-cache-stampede-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-bolt',
+    desc: 'Visualize the Cache Stampede (Thundering Herd) problem where simultaneous requests crash the origin, and see how Request Collapsing (Promise Locking) solves it.',
+  },
+  {
     name: 'JavaScript Event Loop Visualizer',
     path: '/pages/visualizers/event-loop-visualizer/event-loop-visualizer.html',
     category: 'Systems & OS',
