@@ -1127,6 +1127,13 @@ const visualizers = [
     icon: 'fa-earth-americas',
     desc: 'Traveling Salesman Problem solvers: nearest neighbor, 2-opt, and more.',
   },
+  {
+    name: 'Bézier Curve & De Casteljau Sandbox',
+    path: '/pages/visualizers/bezier-curve/bezier-curve.html',
+    category: 'Math & Geometry',
+    icon: 'fa-bezier-curve',
+    desc: "Explore Bézier curves and De Casteljau's recursive linear interpolation algorithm step-by-step.",
+  },
 
   // ── AI & Machine Learning ──
   {
