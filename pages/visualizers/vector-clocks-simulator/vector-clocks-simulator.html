@@ -80,6 +80,9 @@
 
           <!-- SVG for Drawing Message Arrows -->
           <svg class="arrows-svg" id="arrowsSvg"></svg>
+
+          <!-- Overlay for Flying Packets -->
+          <div id="packetOverlay" class="packet-overlay"></div>
         </section>
 
         <!-- Causality Analyzer Panel -->
@@ -105,6 +108,12 @@
             </div>
 
             <div class="result-box" id="analyzerResult">Waiting for selection...</div>
+
+            <div class="concurrency-info" id="concurrencyInfo">
+              <i class="fas fa-lightbulb"></i> Selecting an event highlights all perfectly
+              concurrent events in
+              <span style="color: #eab308; font-weight: bold">yellow</span> across other nodes.
+            </div>
 
             <button class="btn btn-reset" onclick="resetAll()">Reset Simulator</button>
           </div>
