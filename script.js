@@ -5933,7 +5933,7 @@ document.addEventListener('keydown', function (e) {
     try {
       // Skip bookmark injection on learning pages with custom bookmark systems
       var pageData = document.body && document.body.getAttribute('data-page');
-      if (pageData === 'csharp-learning' || pageData === 'php-learning' || pageData === 'solidity-learning' || pageData === 'typescript-learning' || pageData === 'swift-learning' || pageData === 'kotlin-learning') return;
+      if (pageData === 'csharp-learning' || pageData === 'php-learning' || pageData === 'solidity-learning' || pageData === 'typescript-learning' || pageData === 'swift-learning' || pageData === 'kotlin-learning' || pageData === 'keyboard-shortcuts') return;
       injectHeaderBookmarks();
       injectCardBookmarks();
     } catch (err) {

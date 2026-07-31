@@ -1465,6 +1465,48 @@ html.light-mode .hp-topic-tooltip-row {
   font-size: 1.2rem;
 }
 
+.shortcuts-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shortcuts-print-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--hp-lavender);
+  text-decoration: none;
+  background: rgba(var(--hp-lavender-rgb), 0.08);
+  border: 1px solid rgba(var(--hp-lavender-rgb), 0.18);
+  transition: all var(--hp-transition-fast);
+}
+
+.shortcuts-print-link:hover {
+  background: rgba(var(--hp-lavender-rgb), 0.16);
+  border-color: rgba(var(--hp-lavender-rgb), 0.34);
+  color: var(--hp-lavender);
+}
+
+.shortcuts-print-link:focus-visible {
+  outline: 2px solid var(--hp-lavender) !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 480px) {
+  .shortcuts-print-link span {
+    display: none;
+  }
+
+  .shortcuts-print-link {
+    padding: 8px 10px;
+  }
+}
+
 .shortcuts-card-header .modal-close {
   background: none;
   border: none;
