@@ -5,6 +5,48 @@
 const practiceTools = [
   // ── Featured (new) ──
   {
+    name: 'Layout Thrashing Profiler',
+    path: '/pages/tools/layout-thrashing-profiler/index.html',
+    category: 'Debugging',
+    icon: 'fa-gauge',
+    desc: 'Detect interleaved DOM read/write patterns, score forced reflows, and get batched rAF refactor patches.',
+  },
+  {
+    name: 'JWT Refresh Rotation Lab',
+    path: '/pages/tools/jwt-refresh-rotation-lab/index.html',
+    category: 'Other',
+    icon: 'fa-rotate',
+    desc: 'Simulate concurrent refresh races, reuse/replay risks, token family invalidation, and rotation hardening.',
+  },
+  {
+    name: 'SBOM Supply-Chain Auditor',
+    path: '/pages/tools/sbom-supply-chain-auditor/index.html',
+    category: 'Analysis',
+    icon: 'fa-boxes-stacked',
+    desc: 'Diff lockfile/SBOM snapshots, flag major version jumps, and score transitive dependency risk.',
+  },
+  {
+    name: 'Service Worker Cache Auditor',
+    path: '/pages/tools/service-worker-cache-auditor/index.html',
+    category: 'Other',
+    icon: 'fa-cloud-arrow-down',
+    desc: 'Audit cache-first/network-first strategies, simulate cache poisoning, and recommend integrity hashes.',
+  },
+  {
+    name: 'CSP Bypass Auditor',
+    path: '/pages/tools/csp-bypass-auditor/index.html',
+    category: 'Other',
+    icon: 'fa-shield-halved',
+    desc: 'Parse CSP headers, flag unsafe directives, simulate bypass vectors, and generate a hardened policy.',
+  },
+  {
+    name: 'GraphQL Query Cost Auditor',
+    path: '/pages/tools/graphql-query-cost-auditor/index.html',
+    category: 'Analysis',
+    icon: 'fa-project-diagram',
+    desc: 'Score GraphQL depth/complexity, detect alias floods and N+1 risks, and recommend cost limits.',
+  },
+  {
     name: 'Client Memory GC Auditor',
     path: '/pages/tools/client-memory-gc-auditor/index.html',
     category: 'Debugging',

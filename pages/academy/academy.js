@@ -5,6 +5,15 @@
 const academies = [
   // ── Featured (new) ──
   {
+    id: 'db-isolation-anomaly',
+    name: 'DB Isolation Anomaly Lab',
+    path: '/pages/academy/db-isolation-anomaly-lab/index.html',
+    category: 'Databases',
+    icon: 'fa-solid fa-database',
+    difficulty: 'Advanced',
+    desc: 'Hands-on isolation lab: dirty/non-repeatable/phantom/lost-update anomalies, schedule simulator, and quizzes.',
+  },
+  {
     id: 'pqc-migration',
     name: 'PQC Migration Masterclass',
     path: '/pages/academy/pqc-migration-masterclass/index.html',

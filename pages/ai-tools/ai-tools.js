@@ -5,6 +5,27 @@
 const aiTools = [
   // ── Featured (new) ──
   {
+    name: 'AI Prompt Injection Defense Lab',
+    path: '/pages/ai-features/ai-prompt-injection-defense-lab/index.html',
+    category: 'Crypto & Security',
+    icon: 'fa-user-secret',
+    desc: 'Detect prompt injection and jailbreaks, score tool-call abuse, and generate hardened system-prompt patches.',
+  },
+  {
+    name: 'AI DSA Hallucination Detector',
+    path: '/pages/ai-features/ai-dsa-hallucination-detector/index.html',
+    category: 'Learning Assistants',
+    icon: 'fa-magnifying-glass-chart',
+    desc: 'Fact-check AI DSA explanations for wrong complexities and false invariants with rewrite suggestions.',
+  },
+  {
+    name: 'AI Code Review Comment Scorer',
+    path: '/pages/ai-features/ai-code-review-comment-scorer/index.html',
+    category: 'Code Quality',
+    icon: 'fa-comments',
+    desc: 'Score PR review comments for clarity, actionability, and toxicity — with inclusive rewrite coaching.',
+  },
+  {
     name: 'AI Code Smell Scanner',
     path: '/pages/ai-features/ai-code-smell-scanner/index.html',
     category: 'Code Quality',
