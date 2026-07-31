@@ -4,6 +4,13 @@
 
 const visualizers = [
   {
+    name: 'Eventual Consistency Anti-Entropy Gossip Protocol',
+    path: '/pages/visualizers/eventual-consistency-gossip/eventual-consistency-gossip.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Visualize how databases like Cassandra use Gossip Protocol and Merkle Trees to achieve eventual consistency and repair stale nodes via anti-entropy.',
+    },
+  {
     name: 'Redis Cluster Hash Slot Migration Storm',
     path: '/pages/visualizers/redis-cluster-migration-storm/redis-cluster-migration-storm.html',
     category: 'Distributed Systems',
