@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const rwRatioSelect = document.getElementById('rwRatioSelect');
   const btnRunAiAudit = document.getElementById('btnRunAiAudit');
 
+  
   const avgRpsVal = document.getElementById('avgRpsVal');
   const peakRpsVal = document.getElementById('peakRpsVal');
   const writeIopsVal = document.getElementById('writeIopsVal');
