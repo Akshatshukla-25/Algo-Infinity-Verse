@@ -4,6 +4,8 @@ import { setupWebRTCSignaling } from './backend/services/webrtc.service.js';
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import http from 'http';
+import zlib from 'zlib';
+import util from 'util';
 import express from 'express';
 import apiRouter from './backend/routes/api.js';
 import { errorHandler } from './backend/middleware/errorHandler.js';
@@ -3023,11 +3025,14 @@ function resolveStaticPath(pathname) {
   return filePath;
 }
 
-function getCacheControlHeader(ext) {
+function getCacheControlHeader(ext, filename = '') {
   if (ext === '.html') {
     return 'no-store, no-cache, must-revalidate, private';
   }
   if (ext === '.css' || ext === '.js' || ext === '.json') {
+    if (/[-.][a-fA-F0-9]{8,}\.(js|css)$/.test(filename)) {
+      return 'public, max-age=31536000, immutable';
+    }
     return 'no-cache, public';
   }
   if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp'].includes(ext)) {
@@ -3074,8 +3079,21 @@ async function serveStatic(req, res, pathname) {
     // ETag generation based on file size and mtime
     const mtimeMs = fileStat.mtime.getTime();
     const size = fileStat.size;
-    const etag = `W/"${size}-${mtimeMs}"`;
-    const cacheControl = getCacheControlHeader(ext);
+    const baseEtag = `W/"${size}-${mtimeMs}"`;
+
+    const filename = path.basename(target);
+    const cacheControl = getCacheControlHeader(ext, filename);
+
+    const acceptEncoding = req.headers['accept-encoding'] || '';
+    const isCompressible = ['.html', '.css', '.js', '.json', '.svg', '.txt'].includes(ext);
+
+    let encoding = '';
+    if (isCompressible) {
+      if (acceptEncoding.includes('br')) encoding = 'br';
+      else if (acceptEncoding.includes('gzip')) encoding = 'gzip';
+    }
+
+    const etag = encoding ? `${baseEtag}-${encoding}` : baseEtag;
 
     const headers = {
       'X-Content-Type-Options': 'nosniff',
@@ -3084,6 +3102,7 @@ async function serveStatic(req, res, pathname) {
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
       'Cache-Control': cacheControl,
+      Vary: 'Accept-Encoding',
       ETag: etag,
     };
 
@@ -3112,6 +3131,14 @@ async function serveStatic(req, res, pathname) {
         `base-uri 'self';`;
     } else {
       content = await fs.readFile(target);
+    }
+
+    if (encoding === 'br') {
+      headers['Content-Encoding'] = 'br';
+      content = await util.promisify(zlib.brotliCompress)(content);
+    } else if (encoding === 'gzip') {
+      headers['Content-Encoding'] = 'gzip';
+      content = await util.promisify(zlib.gzip)(content);
     }
 
     headers['Content-Type'] = mimeTypes[ext] || 'application/octet-stream';
