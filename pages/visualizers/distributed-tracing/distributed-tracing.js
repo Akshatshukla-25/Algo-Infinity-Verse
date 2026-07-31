@@ -17,6 +17,8 @@ const els = {
     billing: document.getElementById('node-billing'),
     db: document.getElementById('node-db'),
   },
+  injectTarget: document.getElementById('injectTarget'),
+  injectDelay: document.getElementById('injectDelay'),
 };
 
 let currentTrace = [];
@@ -39,8 +41,11 @@ function triggerRequest() {
 
   els.btnTrigger.disabled = true;
 
+  const delayTarget = els.injectTarget.value;
+  const delayMs = parseInt(els.injectDelay.value, 10) || 0;
+
   // Simulate dynamic trace timings
-  const timings = generateTraceTimings();
+  const timings = generateTraceTimings(delayTarget, delayMs);
   TOTAL_TIMELINE_MS = timings.gwEnd;
 
   // Update timeline header dynamically
@@ -124,25 +129,39 @@ function triggerRequest() {
   );
 }
 
-function generateTraceTimings() {
-  const authNetReq = 5 + Math.floor(Math.random() * 15);
-  const authProc = 20 + Math.floor(Math.random() * 30);
-  const authNetRes = 5 + Math.floor(Math.random() * 15);
+function generateTraceTimings(delayTarget = 'none', delayMs = 0) {
+  let authNetReq = 5 + Math.floor(Math.random() * 15);
+  let authProc = 20 + Math.floor(Math.random() * 30);
+  let authNetRes = 5 + Math.floor(Math.random() * 15);
+
+  if (delayTarget === 'auth') {
+    authProc += delayMs;
+  }
 
   const authStart = authNetReq;
   const authEnd = authStart + authProc;
   const gwAfterAuth = authEnd + authNetRes;
 
-  const billNetReq = 5 + Math.floor(Math.random() * 15);
+  let billNetReq = 5 + Math.floor(Math.random() * 15);
   const billStart = gwAfterAuth + billNetReq;
 
-  const dbNetReq = 5 + Math.floor(Math.random() * 10);
-  const dbStart = billStart + dbNetReq;
-  const dbProc = 30 + Math.floor(Math.random() * 40);
-  const dbEnd = dbStart + dbProc;
-  const dbNetRes = 5 + Math.floor(Math.random() * 10);
+  let dbNetReq = 5 + Math.floor(Math.random() * 10);
+  let dbProc = 30 + Math.floor(Math.random() * 40);
+  let dbNetRes = 5 + Math.floor(Math.random() * 10);
 
-  const billEnd = dbEnd + dbNetRes + 5 + Math.floor(Math.random() * 15);
+  if (delayTarget === 'db') {
+    dbProc += delayMs;
+  }
+
+  const dbStart = billStart + dbNetReq;
+  const dbEnd = dbStart + dbProc;
+
+  let billProcBase = 5 + Math.floor(Math.random() * 15); // Billing processing after DB returns
+  if (delayTarget === 'billing') {
+    billProcBase += delayMs;
+  }
+
+  const billEnd = dbEnd + dbNetRes + billProcBase;
   const billNetRes = 5 + Math.floor(Math.random() * 15);
 
   const gwEnd = billEnd + billNetRes + Math.floor(Math.random() * 10);
