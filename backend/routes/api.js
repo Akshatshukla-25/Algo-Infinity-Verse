@@ -18,16 +18,18 @@ router.get('/csrf-token', getCsrfToken);
 router.post('/log-error', logError);
 router.post('/execute', executeCode);
 router.post('/execute/traced', executeTracedCode);
-router.post('/explain-code', async (req, res) => {
+router.post('/explain-code', async (req, res, next) => {
   try {
     const { code, language } = req.body || {};
     if (!code || typeof code !== 'string') {
-      return res.status(400).json({ error: 'code is required and must be a string' });
+      const err = new Error('code is required and must be a string');
+      err.status = 400;
+      return next(err);
     }
     const result = await explainCode({ code, language });
     return res.status(200).json(result);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return next(err);
   }
 });
 
@@ -40,26 +42,32 @@ router.all('/cheat-sheet', (req, res) => cheatSheetHandler(req, res));
 // Forwards requests to external APIs so the client-side API Playground can
 // avoid CORS restrictions. Supports GET, POST, PUT, PATCH, DELETE, HEAD.
 // In production, consider adding allowlist/denylist logic to avoid SSRF.
-router.post('/proxy/request', async (req, res) => {
+router.post('/proxy/request', async (req, res, next) => {
   try {
     const { method, url, headers, body } = req.body || {};
 
     // Validate method
     const allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
     if (!method || !allowedMethods.includes(method.toUpperCase())) {
-      return res.status(400).json({ error: 'Invalid or missing HTTP method.' });
+      const err = new Error('Invalid or missing HTTP method.');
+      err.status = 400;
+      return next(err);
     }
 
     // Validate URL
     if (!url || typeof url !== 'string') {
-      return res.status(400).json({ error: 'URL is required.' });
+      const err = new Error('URL is required.');
+      err.status = 400;
+      return next(err);
     }
 
     let parsedUrl;
     try {
       parsedUrl = new URL(url);
     } catch (_) {
-      return res.status(400).json({ error: 'Invalid URL format.' });
+      const err = new Error('Invalid URL format.');
+      err.status = 400;
+      return next(err);
     }
 
     // Block requests to internal/private IP ranges (SSRF protection)
@@ -70,12 +78,16 @@ router.post('/proxy/request', async (req, res) => {
     try {
       const { lookup } = await import('dns/promises');
       const addresses = await lookup(hostname, { all: true });
-      resolvedAddresses = addresses.map(function (a) { return a.address; }).filter(Boolean);
+      resolvedAddresses = addresses
+        .map(function (a) {
+          return a.address;
+        })
+        .filter(Boolean);
     } catch (_lookupErr) {
       // DNS resolution failed — still check against known private patterns
     }
 
-    function isPrivateIP(ip) {
+    const isPrivateIP = (ip) => {
       if (!ip || typeof ip !== 'string') return false;
       // Remove IPv6 mapping prefix if present
       ip = ip.replace(/^::ffff:/, '');
@@ -85,29 +97,33 @@ router.post('/proxy/request', async (req, res) => {
       if (parts.length === 4) {
         const first = parseInt(parts[0], 10);
         const second = parseInt(parts[1], 10);
-        if (first === 10) return true;                                    // 10.0.0.0/8
-        if (first === 127) return true;                                   // 127.0.0.0/8 (loopback)
-        if (first === 169 && second === 254) return true;                 // 169.254.0.0/16 (link-local)
-        if (first === 172 && second >= 16 && second <= 31) return true;   // 172.16.0.0/12
-        if (first === 192 && second === 168) return true;                 // 192.168.0.0/16
-        if (first === 0) return true;                                     // 0.0.0.0/8
-        if (first === 100 && second >= 64 && second <= 127) return true;  // 100.64.0.0/10 (CGNAT)
-        if (first === 198 && second === 18) return true;                  // 198.18.0.0/15 (benchmarking)
+        if (first === 10) return true; // 10.0.0.0/8
+        if (first === 127) return true; // 127.0.0.0/8 (loopback)
+        if (first === 169 && second === 254) return true; // 169.254.0.0/16 (link-local)
+        if (first === 172 && second >= 16 && second <= 31) return true; // 172.16.0.0/12
+        if (first === 192 && second === 168) return true; // 192.168.0.0/16
+        if (first === 0) return true; // 0.0.0.0/8
+        if (first === 100 && second >= 64 && second <= 127) return true; // 100.64.0.0/10 (CGNAT)
+        if (first === 198 && second === 18) return true; // 198.18.0.0/15 (benchmarking)
       }
 
       // IPv6 private/loopback
       if (ip === '::1' || ip === '0:0:0:0:0:0:0:1') return true;
-      if (ip.startsWith('fd') || ip.startsWith('fc')) return true;       // Unique local address
-      if (ip.startsWith('fe80')) return true;                            // Link-local
+      if (ip.startsWith('fd') || ip.startsWith('fc')) return true; // Unique local address
+      if (ip.startsWith('fe80')) return true; // Link-local
 
       return false;
-    }
+    };
 
     // Check resolved IPs first (catches DNS rebinding / nip.io style attacks)
     if (resolvedAddresses && resolvedAddresses.length > 0) {
       for (const addr of resolvedAddresses) {
         if (isPrivateIP(addr)) {
-          return res.status(400).json({ error: 'Requests to private/internal networks are not allowed (resolved IP: ' + addr + ').' });
+          const err = new Error(
+            'Requests to private/internal networks are not allowed (resolved IP: ' + addr + ').'
+          );
+          err.status = 400;
+          return next(err);
         }
       }
     }
@@ -122,12 +138,16 @@ router.post('/proxy/request', async (req, res) => {
       hostname.endsWith('.local') ||
       hostname.endsWith('.internal')
     ) {
-      return res.status(400).json({ error: 'Requests to private/internal networks are not allowed.' });
+      const err = new Error('Requests to private/internal networks are not allowed.');
+      err.status = 400;
+      return next(err);
     }
 
     // Validate protocol — restrict to http/https
     if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-      return res.status(400).json({ error: 'Only http:// and https:// URLs are supported.' });
+      const err = new Error('Only http:// and https:// URLs are supported.');
+      err.status = 400;
+      return next(err);
     }
 
     // Build fetch options
@@ -140,7 +160,15 @@ router.post('/proxy/request', async (req, res) => {
 
     // Forward user-agent and content-type from the client headers
     if (headers && typeof headers === 'object') {
-      const allowedHeaders = ['content-type', 'authorization', 'accept', 'accept-language', 'x-api-key', 'if-none-match', 'cache-control'];
+      const allowedHeaders = [
+        'content-type',
+        'authorization',
+        'accept',
+        'accept-language',
+        'x-api-key',
+        'if-none-match',
+        'cache-control',
+      ];
       for (const [key, value] of Object.entries(headers)) {
         const lowerKey = key.toLowerCase();
         // Skip headers that could cause issues
@@ -207,10 +235,14 @@ router.post('/proxy/request', async (req, res) => {
     }
   } catch (err) {
     if (err.name === 'AbortError') {
-      return res.status(504).json({ error: 'Request timed out after 30 seconds.' });
+      const timeoutErr = new Error('Request timed out after 30 seconds.');
+      timeoutErr.status = 504;
+      return next(timeoutErr);
     }
     console.error('[proxy/request] Error:', err.message);
-    return res.status(502).json({ error: 'Failed to proxy request: ' + err.message });
+    const proxyErr = new Error('Failed to proxy request: ' + err.message);
+    proxyErr.status = 502;
+    return next(proxyErr);
   }
 });
 

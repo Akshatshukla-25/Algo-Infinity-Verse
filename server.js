@@ -6,6 +6,7 @@ import fs from 'fs/promises';
 import http from 'http';
 import express from 'express';
 import apiRouter from './backend/routes/api.js';
+import { errorHandler } from './backend/middleware/errorHandler.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
@@ -3132,7 +3133,7 @@ async function serve404Page(req, res) {
   }
 }
 
-async function requestHandler(req, res) {
+async function requestHandler(req, res, next) {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = normalizePathname(decodeURIComponent(url.pathname));
@@ -3162,6 +3163,7 @@ async function requestHandler(req, res) {
     return await serveStatic(req, res, pathname);
   } catch (error) {
     console.error(error);
+    if (next) return next(error);
     sendJson(res, 500, { error: 'Something went wrong.' });
   }
 }
@@ -3170,11 +3172,12 @@ const app = express();
 app.use('/api', apiRouter);
 app.use(async (req, res, next) => {
   try {
-    await requestHandler(req, res);
+    await requestHandler(req, res, next);
   } catch (err) {
     next(err);
   }
 });
+app.use(errorHandler);
 const server = http.createServer(app);
 
 // ===== CODE ANALYSIS ENGINE =====
