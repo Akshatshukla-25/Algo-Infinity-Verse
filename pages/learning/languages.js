@@ -119,6 +119,18 @@ const languages = [
     desc: "Apple's modern, type-safe language for iOS, macOS, and beyond. Optionals, protocols, and closures make safe, expressive code the default.",
     svgIcon: `<img src="https://cdn.simpleicons.org/swift/f2a88a" alt="Swift" style="width:1em;height:1em;display:block;">`
   },
+
+  // ── Mobile / Cross-platform ──
+  {
+    name: 'Flutter',
+    path: '/pages/learning/flutter-learning/flutter-learning.html',
+    category: 'General Purpose',
+    icon: 'fa-mobile-screen',
+    isBrandIcon: false,
+    langKey: 'flutter',
+    desc: 'Google\'s UI toolkit for building beautiful, natively compiled apps for mobile, web, and desktop from a single Dart codebase.',
+    svgIcon: `<img src="https://cdn.simpleicons.org/flutter/a8c8dc" alt="Flutter" style="width:1em;height:1em;display:block;">`
+  },
 ];
 
 /* ─── Categories ─── */
@@ -137,6 +149,7 @@ const langColors = {
   kotlin: '#a8c8f0',
   csharp: '#e8b0b0',
   swift: '#f2a88a',
+  flutter: '#a8c8dc',
 };
 
 /* ─── DOM refs ─── */
