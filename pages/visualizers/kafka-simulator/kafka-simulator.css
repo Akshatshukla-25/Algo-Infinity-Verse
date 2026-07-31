@@ -241,6 +241,17 @@ body.kafka-body {
   color: var(--kf-primary);
   font-weight: 700;
 }
+.lag-val {
+  color: var(--text-secondary);
+  transition:
+    color 0.3s,
+    font-weight 0.3s;
+}
+.lag-val.lag-spike {
+  color: var(--kf-danger);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
 
 /* Center Panel (Brokers/Partitions) */
 .panel-center {

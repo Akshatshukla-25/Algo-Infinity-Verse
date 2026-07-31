@@ -116,6 +116,15 @@ function produceMessage() {
   document.getElementById(`hw-${targetPartition}`).textContent =
     state.highWatermarks[targetPartition];
 
+  const lag = state.highWatermarks[targetPartition] - state.committedOffsets[targetPartition];
+  const lagEl = document.getElementById(`lag-${targetPartition}`);
+  if (lagEl) {
+    lagEl.textContent = lag;
+    if (lag >= 10) {
+      lagEl.classList.add('lag-spike');
+    }
+  }
+
   renderMessage(targetPartition, msg);
 }
 
@@ -320,6 +329,15 @@ function consumeTick() {
         const td = document.getElementById(`off-${pIdx}`);
         td.textContent = state.committedOffsets[pIdx];
         td.style.color = c.color; // Color code offset to consumer
+
+        const lag = hw - state.committedOffsets[pIdx];
+        const lagEl = document.getElementById(`lag-${pIdx}`);
+        if (lagEl) {
+          lagEl.textContent = lag;
+          if (lag < 10) {
+            lagEl.classList.remove('lag-spike');
+          }
+        }
 
         // Visual update on message block
         const msgEl = document.getElementById(`msg-${pIdx}-${commitOffset}`);
