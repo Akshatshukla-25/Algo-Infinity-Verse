@@ -3,6 +3,15 @@
    ============================================ */
 
 const practiceTools = [
+  // ── Featured (new) ──
+  {
+    name: 'Chaos Resiliency Simulator',
+    path: '/pages/tools/chaos-resiliency-simulator/index.html',
+    category: 'Simulators',
+    icon: 'fa-bolt',
+    desc: 'Simulate multi-region outages, split-brain, and DNS failover — measure RTO/RPO and get architecture hardening recommendations.',
+  },
+
   // ── Analysis ──
   {
     name: 'Complexity Analyzer',
