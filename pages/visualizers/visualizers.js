@@ -2136,6 +2136,13 @@ const visualizers = [
     desc: 'Simulate gossip protocol dissemination and phi-accrual failure detection across a cluster of nodes.',
   },
   {
+    name: 'Raft Consensus Split-Brain Simulator',
+    path: '/pages/visualizers/raft-partition-simulator/raft-partition-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-house-medical',
+    desc: 'Simulate Raft node elections, AppendEntries replication, network partitions, and log healing.',
+  },
+  {
     name: 'Join Optimizer Visualizer',
     path: '/pages/visualizers/join-optimizer/join-optimizer.html',
     category: 'Systems & OS',
