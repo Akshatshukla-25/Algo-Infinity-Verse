@@ -958,6 +958,13 @@ const visualizers = [
     desc: 'Zero-Knowledge Proof concepts visualized step by step.',
   },
   {
+    name: 'zk-SNARKs Sandbox',
+    path: '/pages/visualizers/zk-snarks-sandbox/zk-snarks-sandbox.html',
+    category: 'Security & Crypto',
+    icon: 'fa-microchip',
+    desc: 'A cryptography sandbox demonstrating the core mechanism of zk-SNARKs.',
+  },
+  {
     name: 'Shamir Secret Sharing',
     path: '/pages/visualizers/shamir-visualizer/shamir-visualizer.html',
     category: 'Security & Crypto',
