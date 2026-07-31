@@ -175,11 +175,11 @@ const visualizers = [
     desc: 'Visualize binomial heap merge and extract-min operations.',
   },
   {
-  name: 'Interval Tree Visualizer',
-  path: '/pages/visualizers/interval-tree/interval-tree.html',
-  category: 'Data Structures',
-  icon: 'fa-ruler-horizontal',
-  desc: 'Augmented BST storing intervals — max-endpoint pruning, overlap queries, and calendar conflict detection in O(log n + k).',
+    name: 'Interval Tree Visualizer',
+    path: '/pages/visualizers/interval-tree/interval-tree.html',
+    category: 'Data Structures',
+    icon: 'fa-ruler-horizontal',
+    desc: 'Augmented BST storing intervals — max-endpoint pruning, overlap queries, and calendar conflict detection in O(log n + k).',
   },
 
   // ── Graph Algorithms ──
@@ -733,6 +733,13 @@ const visualizers = [
     category: 'Math & Geometry',
     icon: 'fa-earth-americas',
     desc: 'Traveling Salesman Problem solvers: nearest neighbor, 2-opt, and more.',
+  },
+  {
+    name: 'Bézier Curve & De Casteljau Sandbox',
+    path: '/pages/visualizers/bezier-curve/bezier-curve.html',
+    category: 'Math & Geometry',
+    icon: 'fa-bezier-curve',
+    desc: "Explore Bézier curves and De Casteljau's recursive linear interpolation algorithm step-by-step.",
   },
 
   // ── AI & Machine Learning ──
