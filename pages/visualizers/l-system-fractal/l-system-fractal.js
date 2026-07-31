@@ -11,10 +11,10 @@ const PRESETS = {
     angle: 25,
   },
   fractalCanopy: {
-    axiom: '0',
-    rules: { 1: '11', 0: '1[+0]-0' },
-    iterations: 8,
-    angle: 45,
+    axiom: 'F',
+    rules: { F: 'F[+F]F[-F]F' },
+    iterations: 5,
+    angle: 25,
   },
   barnsleyFern: {
     axiom: 'X',
@@ -145,6 +145,11 @@ function bindEvents() {
 async function growStep() {
   let axiom = currentString || els.axiomInput.value.trim();
   if (!axiom) return;
+
+  if (axiom.length >= 5000000) {
+    console.warn('L-System reached memory limit');
+    return;
+  }
 
   // Disable buttons
   els.drawBtn.disabled = true;
