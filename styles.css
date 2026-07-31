@@ -18,6 +18,14 @@
   --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+
+  /* ===== VISUALIZER PANEL THEME ===== */
+  --panel-bg: #1e293b;
+  --panel-border: #334155;
+  --panel-bg-dark: #0f172a;
+  --panel-text: #cbd5e1;
+  --panel-text-muted: #64748b;
+  --panel-card-bg: #0b1121;
 }
 
 /* ===== GLOBAL STYLES ===== */
@@ -10414,6 +10422,14 @@ html.light-mode {
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 0, 0, 0.1);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+
+  /* ===== VISUALIZER PANEL THEME ===== */
+  --panel-bg: #f8fafc;
+  --panel-border: #cbd5e1;
+  --panel-bg-dark: #e2e8f0;
+  --panel-text: #334155;
+  --panel-text-muted: #64748b;
+  --panel-card-bg: #ffffff;
 }
 
 /* ADD THIS BELOW — fixes navbar hardcoded backgrounds */
