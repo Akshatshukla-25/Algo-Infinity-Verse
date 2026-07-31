@@ -7,13 +7,14 @@ const userName = urlParams.get('user') || 'Anonymous Hacker';
 
 if (!roomId) {
     window.location.href = 'index.html';
-    return;
-}
+}else{
+    document.getElementById('room-id-display').innerText = `[ROOM: ${roomId}]`;
 
-document.getElementById('room-id-display').innerText = `[ROOM: ${roomId}]`;
-
-// Join the room
-socket.emit('escape-join', { roomId, userId: socket.id || Date.now().toString(), userName });
+    // Join the room
+    socket.emit('escape-join', {
+         roomId,
+          userId: socket.id || Date.now().toString(),
+           userName });
 
 // --- Chat Logic ---
 const chatMessages = document.getElementById('chat-messages');
@@ -148,3 +149,4 @@ const missionTimerId = setInterval(() => {
         clearInterval(missionTimerId);
     }
 }, 1000);
+}
