@@ -837,6 +837,13 @@ const visualizers = [
     desc: 'Load balance perfectly without using any Consistent Hash Rings.',
   },
   {
+    name: 'PoW vs PoS Sybil Simulator',
+    path: '/pages/visualizers/sybil-attack-simulator/sybil-attack-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-shield-alt',
+    desc: 'Visualize how Proof-of-Work and Proof-of-Stake defend against 51% Sybil attacks.',
+  },
+  {
     name: 'Raft Simulator',
     path: '/pages/ai-features/raft-simulator/raft-simulator.html',
     category: 'Distributed Systems',
