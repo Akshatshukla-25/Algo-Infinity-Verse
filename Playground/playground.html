@@ -1,32 +1,43 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Code Playground - Algo Infinity Verse</title>
 
     <!-- Styles -->
-    <link rel="stylesheet" href="playground.css">
-    <link rel="stylesheet" href="/styles.css">
-    
+    <link rel="stylesheet" href="playground.css" />
+    <link rel="stylesheet" href="/styles.css" />
+
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
     <!-- TypeScript Compiler -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/typescript/5.8.2/typescript.min.js"></script>
-    
+
+    <!-- Chart.js (lazy-loaded) -->
+    <script src="/modules/lazyVisualizer.js"></script>
+
     <!-- Ace Editor -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ext-language_tools.js"></script>
-    
+
     <!-- Ace Themes -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme/ambiance.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme/eclipse.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme/ambiance.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme/eclipse.css"
+    />
 
     <!-- Theme Initialization Script -->
     <script>
-      (function() {
+      (function () {
         try {
           var storedTheme = localStorage.getItem('theme');
           var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -39,83 +50,343 @@
         } catch (e) {}
       })();
     </script>
-</head>
+  </head>
 
-<body data-page="playground">
+  <body data-page="playground">
     <!-- Navbar -->
     <div id="navbar-placeholder"></div>
 
     <section class="playground-section">
-        <div class="playground-container">
-
-            <!-- Header -->
-            <div class="playground-header">
-                <div class="header-left">
-                    <h1>🚀 Code Playground</h1>
-                    <p>Write, Run and Learn instantly</p>
-                </div>
-                <div class="header-right">
-                    <span class="theme-indicator" id="themeIndicator">
-                        <i class="fas fa-moon"></i>
-                        <span>Dark Mode</span>
-                    </span>
-                </div>
-            </div>
-
-            <!-- Toolbar -->
-            <div class="playground-toolbar">
-                <div class="toolbar-left">
-                    <select id="language">
-                        <option value="javascript">JavaScript</option>
-                        <option value="typescript">TypeScript</option>
-                        <option value="dart">Dart</option>
-                        <option value="python">Python</option>
-                        <option value="java">Java</option>
-                        <option value="cpp">C++</option>
-                    </select>
-                </div>
-                <div class="toolbar-right">
-                    <button type="button" id="runBtn" class="btn-run">
-                        <i class="fas fa-play"></i>
-                        Run
-                    </button>
-                    <button type="button" id="clearBtn" class="btn-clear">
-                        <i class="fas fa-trash"></i>
-                        Clear
-                    </button>
-                    <button type="button" id="resetBtn" class="btn-reset">
-                        <i class="fas fa-rotate"></i>
-                        Reset
-                    </button>
-                </div>
-            </div>
-
-            <!-- Editor & Output Grid -->
-            <div class="playground-grid">
-                <!-- Editor Card -->
-                <div class="editor-card">
-                    <div class="card-header">
-                        <i class="fas fa-file-code"></i>
-                        Editor
-                        <span class="language-badge" id="languageBadge">JavaScript</span>
-                    </div>
-                    <div id="editor"></div>
-                </div>
-
-                <!-- Output Card -->
-                <div class="output-card">
-                    <div class="card-header">
-                        <i class="fas fa-terminal"></i>
-                        Console Output
-                        <button type="button" id="clearOutputBtn" class="btn-clear-output" title="Clear output">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <pre id="output">▶ Run your code to see output here</pre>
-                </div>
-            </div>
-
+      <div class="playground-container">
+        <!-- Header -->
+        <div class="playground-header">
+          <div class="header-left">
+            <h1>🚀 Code Playground</h1>
+            <p>Write, Run and Learn instantly</p>
+          </div>
+          <div class="header-right">
+            <span
+              class="wasm-badge"
+              id="wasmStatusBadge"
+              title="Offline Client-Side WebAssembly Execution Engine Enabled"
+              style="
+                margin-right: 12px;
+                background: rgba(16, 185, 129, 0.15);
+                border: 1px solid rgba(16, 185, 129, 0.4);
+                color: #10b981;
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 500;
+              "
+            >
+              <i class="fas fa-bolt"></i>
+              <span>WASM Engine Ready</span>
+            </span>
+            <span class="theme-indicator" id="themeIndicator">
+              <i class="fas fa-moon"></i>
+              <span>Dark Mode</span>
+            </span>
+          </div>
         </div>
+
+        <!-- Toolbar -->
+        <div class="playground-toolbar">
+          <div class="toolbar-left">
+            <select id="language" aria-label="Select programming language">
+              <option value="javascript">JavaScript</option>
+              <option value="typescript">TypeScript</option>
+              <option value="dart">Dart</option>
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+              <option value="lisp">Common Lisp</option>
+              <option value="groovy">Groovy</option>
+              <option value="vbnet">VB.NET</option>
+              <option value="fsharp">F#</option>
+              <option value="prolog">Prolog</option>
+              <option value="elixir">Elixir</option>
+            </select>
+          </div>
+          <div class="toolbar-right">
+            <button type="button" id="runBtn" class="btn-run">
+              <i class="fas fa-play"></i>
+              Run
+            </button>
+            <button
+              type="button"
+              id="profileBtn"
+              class="btn-profile"
+              style="
+                background: linear-gradient(135deg, #3b82f6, #60a5fa);
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              <i class="fas fa-chart-line"></i>
+              Profile Complexity
+            </button>
+            <button type="button" id="clearBtn" class="btn-clear">
+              <i class="fas fa-trash"></i>
+              Clear
+            </button>
+            <button type="button" id="resetBtn" class="btn-reset">
+              <i class="fas fa-rotate"></i>
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Profiler Modal -->
+        <div
+          id="profilerModal"
+          class="profiler-modal"
+          style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+          "
+        >
+          <div
+            class="profiler-content"
+            style="
+              background: var(--card-bg, #111827);
+              padding: 25px;
+              border-radius: 16px;
+              max-width: 650px;
+              width: 95%;
+              border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+              color: var(--text-color, #fff);
+            "
+          >
+            <div
+              class="profiler-header"
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+              "
+            >
+              <h2 style="margin: 0; font-size: 1.5em">📈 Time Complexity Profiler</h2>
+              <button
+                class="profiler-close"
+                id="closeProfilerBtn"
+                aria-label="Close Profiler"
+                style="
+                  background: none;
+                  border: none;
+                  font-size: 1.5em;
+                  cursor: pointer;
+                  color: var(--text-muted, #94a3b8);
+                "
+              >
+                &times;
+              </button>
+            </div>
+            <div
+              class="profiler-stats"
+              style="
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin-bottom: 20px;
+              "
+            >
+              <div
+                class="stat-box"
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  padding: 12px;
+                  border-radius: 8px;
+                  text-align: center;
+                  border: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                <div
+                  class="label"
+                  style="
+                    font-size: 0.8em;
+                    color: #94a3b8;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                  "
+                >
+                  Estimated Complexity
+                </div>
+                <div
+                  class="value"
+                  id="profComplexity"
+                  style="font-size: 1.4em; font-weight: 700; margin-top: 4px"
+                >
+                  O(?)
+                </div>
+              </div>
+              <div
+                class="stat-box"
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  padding: 12px;
+                  border-radius: 8px;
+                  text-align: center;
+                  border: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                <div
+                  class="label"
+                  style="
+                    font-size: 0.8em;
+                    color: #94a3b8;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                  "
+                >
+                  Average Time
+                </div>
+                <div
+                  class="value"
+                  id="profAvgTime"
+                  style="font-size: 1.4em; font-weight: 700; margin-top: 4px"
+                >
+                  - ms
+                </div>
+              </div>
+              <div
+                class="stat-box"
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  padding: 12px;
+                  border-radius: 8px;
+                  text-align: center;
+                  border: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                <div
+                  class="label"
+                  style="
+                    font-size: 0.8em;
+                    color: #94a3b8;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                  "
+                >
+                  Fastest Run (N=10)
+                </div>
+                <div
+                  class="value"
+                  id="profFastest"
+                  style="font-size: 1.4em; font-weight: 700; margin-top: 4px"
+                >
+                  - ms
+                </div>
+              </div>
+              <div
+                class="stat-box"
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  padding: 12px;
+                  border-radius: 8px;
+                  text-align: center;
+                  border: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                <div
+                  class="label"
+                  style="
+                    font-size: 0.8em;
+                    color: #94a3b8;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                  "
+                >
+                  Slowest Run (N=5000)
+                </div>
+                <div
+                  class="value"
+                  id="profSlowest"
+                  style="font-size: 1.4em; font-weight: 700; margin-top: 4px"
+                >
+                  - ms
+                </div>
+              </div>
+            </div>
+            <div
+              class="chart-container"
+              style="position: relative; height: 300px; margin-bottom: 15px"
+            >
+              <canvas id="profilerChart"></canvas>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span id="profilerStatus" style="font-size: 0.85rem; color: #94a3b8"
+                >Execution benchmark datasets: N = 10, 100, 1000, 5000</span
+              >
+              <button
+                id="rerunProfileBtn"
+                class="btn-profile"
+                style="
+                  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+                  color: white;
+                  border: none;
+                  padding: 8px 16px;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                "
+              >
+                <i class="fas fa-sync"></i> Rerun Profiler
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Editor & Output Grid -->
+        <div class="playground-grid">
+          <!-- Editor Card -->
+          <div class="editor-card">
+            <div class="card-header">
+              <i class="fas fa-file-code"></i>
+              Editor
+              <span class="language-badge" id="languageBadge">JavaScript</span>
+            </div>
+            <div id="editor"></div>
+          </div>
+
+          <!-- Output Card -->
+          <div class="output-card">
+            <div class="card-header">
+              <i class="fas fa-terminal"></i>
+              Console Output
+              <button
+                type="button"
+                id="clearOutputBtn"
+                class="btn-clear-output"
+                title="Clear output"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <pre id="output">▶ Run your code to see output here</pre>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Footer -->
@@ -128,16 +399,15 @@
 
     <script src="/script.js"></script>
     <script type="module" src="/dist/legacy-bundle.mjs"></script>
-    
-    <script>
-        // Load partials
-        if (typeof loadPartial === 'function') {
-            loadPartial('navbar-placeholder', '/partials/navbar.html').then(() => {
-                if (typeof initNavbar === 'function') initNavbar();
-            });
-            loadPartial('footer-placeholder', '/partials/footer.html');
-        }
-    </script>
-</body>
 
+    <script>
+      // Load partials
+      if (typeof loadPartial === 'function') {
+        loadPartial('navbar-placeholder', '/partials/navbar.html').then(() => {
+          if (typeof initNavbar === 'function') initNavbar();
+        });
+        loadPartial('footer-placeholder', '/partials/footer.html');
+      }
+    </script>
+  </body>
 </html>

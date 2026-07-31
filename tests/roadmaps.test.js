@@ -35,10 +35,52 @@ describe('/api/roadmaps registry endpoint', () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data).toHaveProperty('beginner');
+    expect(data).toHaveProperty('intermediate');
     expect(data).toHaveProperty('advanced');
     expect(data.beginner.title).toBe('Beginner DSA Roadmap');
+    expect(data.intermediate.title).toBe('Intermediate DSA Roadmap');
     expect(data.advanced.title).toBe('Advanced DSA Roadmap');
     expect(data.beginner.steps.length).toBe(10);
+    expect(data.intermediate.steps.length).toBe(8);
     expect(data.advanced.steps.length).toBe(10);
+  });
+
+  it('has valid roadmaps HTML, CSS and JS files', async () => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    const htmlPath = path.join(process.cwd(), 'pages', 'roadmaps', 'roadmaps.html');
+    const cssPath = path.join(process.cwd(), 'pages', 'roadmaps', 'roadmaps.css');
+    const jsPath = path.join(process.cwd(), 'pages', 'roadmaps', 'roadmaps.js');
+    const dataPath = path.join(process.cwd(), 'data', 'roadmaps.json');
+
+    await expect(fs.access(htmlPath)).resolves.not.toThrow();
+    await expect(fs.access(cssPath)).resolves.not.toThrow();
+    await expect(fs.access(jsPath)).resolves.not.toThrow();
+    await expect(fs.access(dataPath)).resolves.not.toThrow();
+  });
+
+  it('standalone roadmap pages redirect to consolidated hub', async () => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    // Check that standalone pages now contain redirect JS
+    const beginnerPath = path.join(process.cwd(), 'beginner-roadmap.html');
+    const advancedPath = path.join(process.cwd(), 'advanced-roadmap.html');
+    const intermediatePath = path.join(
+      process.cwd(),
+      'pages',
+      'learning',
+      'intermediate-roadmap',
+      'intermediate-roadmap.html'
+    );
+
+    const beginnerContent = await fs.readFile(beginnerPath, 'utf8');
+    const advancedContent = await fs.readFile(advancedPath, 'utf8');
+    const intermediateContent = await fs.readFile(intermediatePath, 'utf8');
+
+    expect(beginnerContent).toContain('roadmaps.html?tab=beginner');
+    expect(advancedContent).toContain('roadmaps.html?tab=advanced');
+    expect(intermediateContent).toContain('roadmaps.html?tab=intermediate');
   });
 });

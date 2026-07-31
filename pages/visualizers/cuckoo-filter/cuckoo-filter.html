@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cuckoo Filter Visualizer | Algo Infinity Verse</title>
+  <meta name="description" content="Cuckoo Filter — fingerprint-based probabilistic set with deletion support, XOR dual-bucket scheme, eviction chains, and Bloom Filter comparison." />
+  <link rel="stylesheet" href="../../../styles.css" />
+  <link rel="stylesheet" href="cuckoo-filter.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+</head>
+<body data-page="cuckoo-filter">
+  <button id="scrollTopBtn" aria-label="Scroll to top" class="scroll-top-btn">
+    <i class="fas fa-circle-chevron-up"></i>
+  </button>
+
+  <div id="navbar-placeholder"></div>
+
+  <section class="hero ckf-hero">
+    <div class="hero-background">
+      <div class="stars"></div>
+      <div class="stars2"></div>
+      <div class="stars3"></div>
+    </div>
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="title-line">Bloom Filters Can Never Delete — Cuckoo Filters Can</span>
+        <span class="main-title ckf-gradient">Cuckoo Filter</span>
+        <span class="subtitle">Fingerprints · XOR Dual Buckets · Eviction Chains · Deletion</span>
+      </h1>
+      <p class="section-subtitle">
+        Watch small fingerprints cuckoo-kick each other into alternate buckets, see deletions that are impossible in a Bloom Filter, trigger false positives, and compare space efficiency at the crossover point.
+      </p>
+      <div class="hero-buttons">
+        <a href="#simulator" class="btn btn-primary ckf-btn-primary">
+          <i class="fas fa-filter"></i> Open Visualizer
+        </a>
+        <a href="#learn" class="btn btn-secondary">
+          <i class="fas fa-graduation-cap"></i> How It Works
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="simulator" class="section">
+    <div class="container">
+
+      <div class="ckf-control-card">
+
+        <div class="ckf-config-row">
+          <div class="ckf-config-group">
+            <span class="ckf-config-label">Buckets (B)</span>
+            <div class="ckf-slider-row">
+              <input type="range" id="ckfBucketSlider" min="8" max="32" step="4" value="16" class="ckf-slider" />
+              <span class="ckf-slider-val" id="ckfBucketVal">16</span>
+            </div>
+          </div>
+          <div class="ckf-config-group">
+            <span class="ckf-config-label">Slots / Bucket</span>
+            <div class="ckf-slider-row">
+              <input type="range" id="ckfSlotSlider" min="2" max="4" step="1" value="4" class="ckf-slider" />
+              <span class="ckf-slider-val" id="ckfSlotVal">4</span>
+            </div>
+          </div>
+          <div class="ckf-config-group">
+            <span class="ckf-config-label">Fingerprint (bits)</span>
+            <div class="ckf-slider-row">
+              <input type="range" id="ckfFpSlider" min="4" max="12" step="4" value="8" class="ckf-slider" />
+              <span class="ckf-slider-val" id="ckfFpVal">8 bits</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ckf-ops-row">
+          <div class="ckf-op-group">
+            <input type="text" id="ckfItemInput" class="ckf-text-input" placeholder="Item (e.g. alice)" maxlength="20" />
+            <button class="btn ckf-btn-primary ckf-action-btn" id="ckfInsertBtn">
+              <i class="fas fa-plus"></i> Insert
+            </button>
+            <button class="btn ckf-btn-query ckf-action-btn" id="ckfLookupBtn">
+              <i class="fas fa-magnifying-glass"></i> Lookup
+            </button>
+            <button class="btn ckf-btn-delete ckf-action-btn" id="ckfDeleteBtn">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+          <div class="ckf-op-group">
+            <button class="btn ckf-btn-fp ckf-action-btn" id="ckfFpDemoBtn">
+              <i class="fas fa-triangle-exclamation"></i> False Positive Demo
+            </button>
+            <button class="btn ckf-btn-compare ckf-action-btn" id="ckfCompareBtn">
+              <i class="fas fa-scale-balanced"></i> Space Comparison
+            </button>
+            <button class="btn ckf-btn-batch ckf-action-btn" id="ckfBatchBtn">
+              <i class="fas fa-bolt"></i> Batch Insert
+            </button>
+            <button class="btn btn-secondary ckf-action-btn" id="ckfResetBtn">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ckf-status" id="ckfStatus">
+        Configure the filter, then insert items to see the fingerprint and XOR dual-bucket scheme in action.
+      </div>
+
+      <div class="ckf-main-layout">
+
+        <div class="ckf-canvas-col">
+          <div class="ckf-panel-card ckf-canvas-card">
+            <div class="ckf-panel-title">
+              <i class="fas fa-table-cells"></i> Cuckoo Filter — Bucket Table
+              <div class="ckf-canvas-legend">
+                <span class="ckf-ldot" style="background:#7c3aed"></span>Occupied
+                <span class="ckf-ldot" style="background:#22c55e"></span>Active
+                <span class="ckf-ldot" style="background:#f59e0b"></span>Evicted
+                <span class="ckf-ldot" style="background:rgba(255,255,255,0.06)"></span>Empty
+              </div>
+            </div>
+            <div class="ckf-canvas-wrap">
+              <canvas id="ckfCanvas" class="ckf-canvas"></canvas>
+            </div>
+          </div>
+
+          <div class="ckf-panel-card ckf-compare-card" id="ckfCompareCard" style="display:none">
+            <div class="ckf-panel-title"><i class="fas fa-scale-balanced"></i> Space: Cuckoo Filter vs Bloom Filter</div>
+            <div class="ckf-compare-body" id="ckfCompareBody"></div>
+          </div>
+        </div>
+
+        <div class="ckf-right-col">
+
+          <div class="ckf-panel-card ckf-stats-card">
+            <div class="ckf-panel-title"><i class="fas fa-chart-simple"></i> Filter Stats</div>
+            <div class="ckf-stats-grid">
+              <div class="ckf-stat-box">
+                <div class="ckf-stat-val" id="ckfStatItems">0</div>
+                <div class="ckf-stat-lbl">Items</div>
+              </div>
+              <div class="ckf-stat-box">
+                <div class="ckf-stat-val ckf-val-load" id="ckfStatLoad">0%</div>
+                <div class="ckf-stat-lbl">Load</div>
+              </div>
+              <div class="ckf-stat-box">
+                <div class="ckf-stat-val ckf-val-evict" id="ckfStatEvict">0</div>
+                <div class="ckf-stat-lbl">Evictions</div>
+              </div>
+              <div class="ckf-stat-box">
+                <div class="ckf-stat-val ckf-val-fp" id="ckfStatFP">0</div>
+                <div class="ckf-stat-lbl">False Pos.</div>
+              </div>
+            </div>
+            <div class="ckf-load-bar-wrap">
+              <div class="ckf-load-bar" id="ckfLoadBar"></div>
+              <div class="ckf-load-thresh"></div>
+            </div>
+            <div class="ckf-load-note">Load factor (90% safe threshold shown)</div>
+          </div>
+
+          <div class="ckf-panel-card ckf-fp-card">
+            <div class="ckf-panel-title"><i class="fas fa-fingerprint"></i> Last Operation Detail</div>
+            <div class="ckf-fp-detail" id="ckfFpDetail">
+              <span class="ckf-empty-text">Run an operation to see fingerprint details.</span>
+            </div>
+          </div>
+
+          <div class="ckf-panel-card ckf-log-card">
+            <div class="ckf-panel-title"><i class="fas fa-list"></i> Operation Log</div>
+            <div class="ckf-log-area" id="ckfLog">
+              <span class="ckf-empty-text">Operations appear here.</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <section id="learn" class="section">
+    <div class="container">
+      <h2 class="section-title"><span class="title-icon">🦆</span> Cuckoo Filter Explained</h2>
+      <div class="ckf-learn-grid">
+
+        <div class="ckf-learn-card ckf-learn-fp">
+          <div class="ckf-learn-icon">🔢</div>
+          <h3>Fingerprints, Not Bits</h3>
+          <p>Instead of setting individual bits like a Bloom Filter, a Cuckoo Filter stores a small hash (fingerprint) of each item. Because the fingerprint can be read back out, you can check it and remove it — something fundamentally impossible in a Bloom Filter.</p>
+        </div>
+
+        <div class="ckf-learn-card ckf-learn-xor">
+          <div class="ckf-learn-icon">⊕</div>
+          <h3>XOR Dual-Bucket Trick</h3>
+          <p>Each item has two candidate buckets: b₁ = hash(item) % B and b₂ = b₁ ⊕ hash(fingerprint) % B. The XOR means: given only the fingerprint and one bucket index, you can always compute the other — enabling eviction without knowing the original item.</p>
+        </div>
+
+        <div class="ckf-learn-card ckf-learn-evict">
+          <div class="ckf-learn-icon">🥊</div>
+          <h3>Cuckoo Eviction</h3>
+          <p>If both candidate buckets for a new item are full, kick out a random occupant from one bucket and relocate it to its alternate bucket (computed via XOR). Repeat up to MAX_KICKS times. This is why it's called a "cuckoo" filter — like a cuckoo bird evicting eggs.</p>
+        </div>
+
+        <div class="ckf-learn-card ckf-learn-delete">
+          <div class="ckf-learn-icon">🗑️</div>
+          <h3>Deletion Works!</h3>
+          <p>To delete an item, compute its fingerprint and two candidate buckets, then scan both for the fingerprint and remove it. No rebuild, no false negatives for other items. The trade-off: if you insert an item twice, deleting once removes one copy — caller must be careful.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="../../../auth.js"></script>
+  <script src="../../../script.js"></script>
+  <script src="../../../theme.js"></script>
+  <script src="../../../auth-gate.js"></script>
+  <script src="cuckoo-filter.js"></script>
+  <script>
+    if (typeof loadPartial === 'function') {
+      loadPartial('navbar-placeholder', '/partials/navbar.html').then(function () {
+        if (typeof initNavbar === 'function') initNavbar();
+      });
+      loadPartial('footer-placeholder', '/partials/footer.html');
+    }
+  </script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+</body>
+</html>

@@ -1,20 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Community - Algo Infinity Verse</title>
-
+    <title>Discussions — Algo Infinity Verse</title>
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="community.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
         rel="stylesheet">
-
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -39,309 +33,144 @@
       })();
     </script>
 </head>
-
 <body data-page="community">
     <!-- Navigation Bar -->
     <div id="navbar-placeholder"></div>
 
     <div class="spacer"></div>
 
-    <!-- Community Section -->
-    <section id="community" class="section community-section">
-        <div class="container">
-            <div class="community-header">
-                <h2 class="section-title">
-                    <span class="title-icon">🌐</span>
-                    Community
-                </h2>
-                <p class="section-subtitle">Connect, share, and learn with other DSA enthusiasts</p>
+    <!-- Community Discussions Section -->
+    <section id="community" class="cm-section">
+        <div class="cm-container">
+            <div class="cm-header">
+                <h2 class="cm-title">Discussions</h2>
+                <p class="cm-subtitle">Connect, share, and learn with other DSA enthusiasts</p>
             </div>
 
-            <div class="community-layout">
+            <div class="cm-layout">
                 <!-- Main Content (Posts) -->
-                <div class="community-main">
-                    <!-- Create Post Section -->
-                    <div class="create-post-card glass-card">
-                        <h3><i class="fas fa-pen"></i> Create a Post</h3>
-                        <form id="createPostForm" class="create-post-form">
+                <div class="cm-main">
+                    <!-- Create Post -->
+                    <div class="cm-card cm-create-card">
+                        <h3 class="cm-card-heading">Create a Post</h3>
+                        <form id="createPostForm" class="cm-create-form">
                             <input
                                 type="text"
                                 id="postTitle"
-                                placeholder="Post Title"
-                                required
-                            >
+                                class="cm-input"
+                                placeholder="Post title"
+                                required>
                             <textarea
                                 id="postContent"
-                                placeholder="What's on your mind? Share a resource, ask a question..."
+                                class="cm-input cm-textarea"
+                                placeholder="What is on your mind? Share a resource, ask a question..."
                                 rows="4"
-                                required
-                            ></textarea>
-
+                                required></textarea>
                             <input
                                 type="text"
                                 id="postTags"
-                                placeholder="Tags (e.g., dp, graphs, arrays) - comma separated"
-                            >
-
-                            <button type="submit" class="post-submit-btn">
-                                <i class="fas fa-paper-plane"></i>
+                                class="cm-input"
+                                placeholder="Tags (e.g. dp, graphs, arrays) — comma separated">
+                            <button type="submit" class="cm-btn cm-btn-primary">
                                 Post
                             </button>
                         </form>
                     </div>
 
-                    <!-- Feed Section -->
-                    <div class="community-feed">
-                        <div class="feed-header-wrapper">
+                    <!-- Feed -->
+                    <div class="cm-feed">
+                        <div class="cm-feed-header">
                             <h3>Recent Discussions</h3>
-                            <div class="search-filter-container">
+                            <div class="cm-feed-controls">
                                 <input
                                     type="text"
                                     id="searchInput"
-                                    placeholder="Search posts..."
-                                    class="search-input">
-                                <button id="clearFilterBtn" class="btn btn-secondary btn-sm hidden-filter-btn">
-                                    <i class="fas fa-times"></i> Clear Filter
+                                    class="cm-input cm-search-input"
+                                    placeholder="Search posts...">
+                                <button type="button" id="clearFilterBtn" class="cm-btn cm-btn-sm cm-btn-ghost hidden-filter-btn">
+                                    Clear filter
                                 </button>
                             </div>
                         </div>
-                        <div id="postsContainer" class="posts-container">
-                            <!-- Posts will be generated by JS -->
+                        <div id="postsContainer" class="cm-posts">
+                            <!-- Posts rendered by JS -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Sidebar Section -->
-                <div class="community-sidebar">
-                    <div class="sidebar-card glass-card">
-                        <h3><i class="fas fa-book-open"></i> Community Guidelines</h3>
-                        <ul class="guidelines-list">
-                            <li><i class="fas fa-check-circle text-success"></i> Be respectful and supportive</li>
-                            <li><i class="fas fa-check-circle text-success"></i> Stay on-topic (DSA, Tech, Learning)
-                            </li>
-                            <li><i class="fas fa-check-circle text-success"></i> Help others understand concepts</li>
-                            <li><i class="fas fa-times-circle text-danger"></i> No spam or self-promotion</li>
-                            <li><i class="fas fa-times-circle text-danger"></i> Do not post direct solutions without
-                                explanation</li>
-                        </ul>
-                    </div>
-
-                    <div class="sidebar-card glass-card mt-4">
-                        <h3><i class="fas fa-fire"></i> Trending Tags</h3>
-                        <div class="tags-cloud" id="trendingTagsContainer">
-                            <!-- Dynamic tags will be generated by JS -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <div id="footer-placeholder"></div>
-
-    <script src="/auth.js"></script>
-    <script src="/theme.js"></script>
-    <script type="module" src="/modules/domSanitizer.js"></script>
-    <script src="community.js"></script>
-    <script src="/script.js"></script>
-    <script>
-      loadPartial('navbar-placeholder', '/partials/navbar.html');
-      loadPartial('footer-placeholder', '/partials/footer.html');
-    </script>
-  </body>
-
-</html>
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Community - Algo Infinity Verse</title>
-
-    <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="community.css">
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
-        rel="stylesheet">
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Markdown & Sanitization Libraries -->
-    <script src="/utils/markdownParser.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-
-    <!-- Theme Initialization Script -->
-    <script>
-      (function() {
-        try {
-          var storedTheme = localStorage.getItem('theme');
-          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-          var theme = storedTheme || (prefersLight ? 'light' : 'dark');
-          if (theme === 'light') {
-            document.documentElement.classList.add('light-mode');
-          } else {
-            document.documentElement.classList.remove('light-mode');
-          }
-        } catch (e) {}
-      })();
-    </script>
-</head>
-
-<body data-page="community">
-    <!-- Navigation Bar -->
-    <div id="navbar-placeholder"></div>
-
-    <div class="spacer"></div>
-
-    <!-- Community Section -->
-    <section id="community" class="section community-section">
-        <div class="container">
-            <div class="community-header">
-                <h2 class="section-title">
-                    <span class="title-icon">🌐</span>
-                    Community
-                </h2>
-                <p class="section-subtitle">Connect, share, and learn with other DSA enthusiasts</p>
-            </div>
-
-            <div class="community-layout">
-                <!-- Main Content (Posts) -->
-                <div class="community-main">
-                    <!-- Create Post Section -->
-                    <div class="create-post-card glass-card">
-                        <h3><i class="fas fa-pen"></i> Create a Post</h3>
-                        <form id="createPostForm" class="create-post-form">
-                            <input
-                                type="text"
-                                id="postTitle"
-                                placeholder="Post Title"
-                                required
-                            >
-                            <textarea
-                                id="postContent"
-                                placeholder="What's on your mind? Share a resource, ask a question..."
-                                rows="4"
-                                required
-                            ></textarea>
-
-                            <input
-                                type="text"
-                                id="postTags"
-                                placeholder="Tags (e.g., dp, graphs, arrays) - comma separated"
-                            >
-
-                            <button type="submit" class="post-submit-btn">
-                                <i class="fas fa-paper-plane"></i>
-                                Post
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Feed Section -->
-                    <div class="community-feed">
-                        <div class="feed-header-wrapper">
-                            <h3>Recent Discussions</h3>
-                            <div class="search-filter-container">
-                                <input
-                                    type="text"
-                                    id="searchInput"
-                                    placeholder="Search posts..."
-                                    class="search-input">
-                                <button type="button" id="clearFilterBtn" class="btn btn-secondary btn-sm hidden-filter-btn">
-                                    <i class="fas fa-times"></i> Clear Filter
-                                </button>
+                <!-- Sidebar -->
+                <div class="cm-sidebar">
+                    <!-- Stats -->
+                    <div class="cm-card">
+                        <h3 class="cm-card-heading">Community Stats</h3>
+                        <div class="cm-stats">
+                            <div class="cm-stat">
+                                <span class="cm-stat-value" id="totalPostsCount">0</span>
+                                <span class="cm-stat-label">Posts</span>
                             </div>
-                        </div>
-                        <div id="postsContainer" class="posts-container">
-                            <!-- Posts will be generated by JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sidebar Section -->
-   <div class="community-sidebar">
-
-                    <!-- Stats Card -->
-                    <div class="sidebar-card glass-card">
-                        <h3><i class="fas fa-chart-bar"></i> Community Stats</h3>
-                        <div class="community-stats">
-                            <div class="stat-item">
-                                <span class="stat-value" id="totalPostsCount">0</span>
-                                <span class="stat-label">Total Posts</span>
+                            <div class="cm-stat">
+                                <span class="cm-stat-value" id="totalCommentsCount">0</span>
+                                <span class="cm-stat-label">Comments</span>
                             </div>
-                            <div class="stat-item">
-                                <span class="stat-value" id="totalCommentsCount">0</span>
-                                <span class="stat-label">Comments</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value" id="totalVotesCount">0</span>
-                                <span class="stat-label">Total Votes</span>
+                            <div class="cm-stat">
+                                <span class="cm-stat-value" id="totalVotesCount">0</span>
+                                <span class="cm-stat-label">Votes</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Topic Filter Card -->
-                    <div class="sidebar-card glass-card mt-4">
-                        <h3><i class="fas fa-filter"></i> Filter by Topic</h3>
-                        <div class="topic-filters">
-                            <button class="topic-filter-btn active" data-topic="all">All</button>
-                            <button class="topic-filter-btn" data-topic="arrays">Arrays</button>
-                            <button class="topic-filter-btn" data-topic="strings">Strings</button>
-                            <button class="topic-filter-btn" data-topic="dp">DP</button>
-                            <button class="topic-filter-btn" data-topic="graphs">Graphs</button>
-                            <button class="topic-filter-btn" data-topic="trees">Trees</button>
-                            <button class="topic-filter-btn" data-topic="help">Help</button>
-                            <button class="topic-filter-btn" data-topic="resources">Resources</button>
+                    <!-- Topic Filters -->
+                    <div class="cm-card">
+                        <h3 class="cm-card-heading">Filter by Topic</h3>
+                        <div class="cm-topic-filters">
+                            <button class="cm-topic-btn active" data-topic="all">All</button>
+                            <button class="cm-topic-btn" data-topic="arrays">Arrays</button>
+                            <button class="cm-topic-btn" data-topic="strings">Strings</button>
+                            <button class="cm-topic-btn" data-topic="dp">DP</button>
+                            <button class="cm-topic-btn" data-topic="graphs">Graphs</button>
+                            <button class="cm-topic-btn" data-topic="trees">Trees</button>
+                            <button class="cm-topic-btn" data-topic="help">Help</button>
+                            <button class="cm-topic-btn" data-topic="resources">Resources</button>
                         </div>
                     </div>
 
                     <!-- Top Contributors -->
-                    <div class="sidebar-card glass-card mt-4">
-                        <h3><i class="fas fa-trophy"></i> Top Contributors</h3>
-                        <div class="contributors-list" id="contributorsList">
-                            <!-- Generated by JS -->
+                   <!-- Top Contributors -->
+                    <div class="cm-card">
+                        <h3 class="cm-card-heading">Top Contributors</h3>
+                        <div class="cm-contributors" id="contributorsList">
+                            <!-- Rendered by JS -->
                         </div>
+                        <a href="/pages/community/contributor-heatmap/contributor-heatmap.html" class="cm-btn cm-btn-sm cm-btn-ghost" style="margin-top:8px;display:inline-block;">
+                            View Contributor Heatmap
+                        </a>
                     </div>
 
-                    <div class="sidebar-card glass-card">
-                        <h3><i class="fas fa-book-open"></i> Community Guidelines</h3>
-                        <ul class="guidelines-list">
-                            <li><i class="fas fa-check-circle text-success"></i> Be respectful and supportive</li>
-                            <li><i class="fas fa-check-circle text-success"></i> Stay on-topic (DSA, Tech, Learning)</li>
-                            <li><i class="fas fa-check-circle text-success"></i> Help others understand concepts</li>
-                            <li><i class="fas fa-times-circle text-danger"></i> No spam or self-promotion</li>
-                            <li><i class="fas fa-times-circle text-danger"></i> Do not post direct solutions without explanation</li>
-                        </ul>
+                    <!-- Study Together -->
+                    <div class="cm-card">
+                        <h3 class="cm-card-heading">Study Together</h3>
+                        <a href="/pages/community/peer-coding-rooms/peer-coding-rooms.html" class="cm-btn cm-btn-sm cm-btn-primary" style="display:inline-block;">
+                            Join a Peer Coding Room
+                        </a>
                     </div>
-                    <div class="sidebar-card glass-card mt-4">
-                        <h3><i class="fas fa-fire"></i> Trending Tags</h3>
-                        <div class="tags-cloud" id="trendingTagsContainer">
-                            <!-- Dynamic tags will be generated by JS -->
-                        </div>
-                    </div>
-                </div>
-                        <ul class="guidelines-list">
-                            <li><i class="fas fa-check-circle text-success"></i> Be respectful and supportive</li>
-                            <li><i class="fas fa-check-circle text-success"></i> Stay on-topic (DSA, Tech, Learning)
-                            </li>
-                            <li><i class="fas fa-check-circle text-success"></i> Help others understand concepts</li>
-                            <li><i class="fas fa-times-circle text-danger"></i> No spam or self-promotion</li>
-                            <li><i class="fas fa-times-circle text-danger"></i> Do not post direct solutions without
-                                explanation</li>
+
+                    <!-- Guidelines -->
+                    <div class="cm-card">
+                        <h3 class="cm-card-heading">Guidelines</h3>
+                        <ul class="cm-guidelines">
+                            <li>Be respectful and supportive</li>
+                            <li>Stay on-topic (DSA, Tech, Learning)</li>
+                            <li>Help others understand concepts</li>
+                            <li>No spam or self-promotion</li>
+                            <li>Do not post direct solutions without explanation</li>
                         </ul>
                     </div>
 
-                    <div class="sidebar-card glass-card mt-4">
-                        <h3><i class="fas fa-fire"></i> Trending Tags</h3>
-                        <div class="tags-cloud" id="trendingTagsContainer">
-                            <!-- Dynamic tags will be generated by JS -->
+                    <!-- Trending Tags -->
+                    <div class="cm-card">
+                        <h3 class="cm-card-heading">Trending Tags</h3>
+                        <div class="cm-tags" id="trendingTagsContainer">
+                            <!-- Rendered by JS -->
                         </div>
                     </div>
                 </div>
@@ -349,20 +178,13 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <div id="footer-placeholder"></div>
-
     <script src="/auth.js"></script>
     <script src="/theme.js"></script>
-    <script type="module" src="/modules/domSanitizer.js"></script>
+    <script src="/modules/domSanitizer.js"></script>
     <script src="community.js"></script>
     <script src="/script.js"></script>
-    <script type="module" src="/dist/legacy-bundle.mjs"></script>
     <script>
       loadPartial('navbar-placeholder', '/partials/navbar.html');
-      loadPartial('footer-placeholder', '/partials/footer.html');
     </script>
-  </body>
-
+</body>
 </html>
-

@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalman Filter Visualizer | Algo Infinity Verse</title>
+  <meta name="description" content="Kalman Filter — 1D state estimation, predict/update steps, Kalman gain, Gaussian uncertainty, and sensor noise comparison." />
+  <link rel="stylesheet" href="../../../styles.css" />
+  <link rel="stylesheet" href="kalman-filter.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+</head>
+<body data-page="kalman-filter">
+
+  <div id="loading-screen">
+    <div class="loader">
+      <div class="infinity-loader">∞</div>
+      <h2>Algo Infinity Verse</h2>
+      <div class="loading-bar"><div class="loading-progress"></div></div>
+    </div>
+  </div>
+
+  <button id="scrollTopBtn" aria-label="Scroll to top" class="scroll-top-btn">
+    <i class="fas fa-circle-chevron-up"></i>
+  </button>
+
+  <div id="navbar-placeholder"></div>
+
+  <section class="hero klm-hero">
+    <div class="hero-background">
+      <div class="stars"></div>
+      <div class="stars2"></div>
+      <div class="stars3"></div>
+    </div>
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="title-line">How Does GPS Know Where You Are When Every Sensor Lies?</span>
+        <span class="main-title klm-gradient">Kalman Filter</span>
+        <span class="subtitle">Predict · Update · Converge — Optimal Estimation Under Noise</span>
+      </h1>
+      <p class="section-subtitle">
+        Watch a drone's true altitude, noisy sensor readings, and the Kalman estimate live. Tune sensor noise and see the Kalman gain shift trust between prediction and measurement in real time.
+      </p>
+      <div class="hero-buttons">
+        <a href="#simulator" class="btn btn-primary klm-btn-primary">
+          <i class="fas fa-chart-line"></i> Open Visualizer
+        </a>
+        <a href="#learn" class="btn btn-secondary">
+          <i class="fas fa-graduation-cap"></i> How It Works
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="simulator" class="section">
+    <div class="container">
+
+      <div class="klm-control-card">
+
+        <div class="klm-config-grid">
+
+          <div class="klm-config-group">
+            <div class="klm-config-label">
+              <i class="fas fa-satellite-dish"></i>
+              Sensor Noise (R)
+            </div>
+            <div class="klm-slider-row">
+              <input type="range" id="klmSensorNoise" min="1" max="200" step="1" value="30" class="klm-slider klm-slider-r" aria-label="Sensor Noise (R)" />
+              <span class="klm-slider-val klm-val-r" id="klmSensorNoiseVal">30</span>
+            </div>
+            <div class="klm-config-hint">Higher R → trust prediction more</div>
+          </div>
+
+          <div class="klm-config-group">
+            <div class="klm-config-label">
+              <i class="fas fa-cog"></i>
+              Process Noise (Q)
+            </div>
+            <div class="klm-slider-row">
+              <input type="range" id="klmProcessNoise" min="0.1" max="20" step="0.1" value="2" class="klm-slider klm-slider-q" aria-label="Process Noise (Q)" />
+              <span class="klm-slider-val klm-val-q" id="klmProcessNoiseVal">2.0</span>
+            </div>
+            <div class="klm-config-hint">Higher Q → uncertainty grows faster</div>
+          </div>
+
+          <div class="klm-config-group">
+            <div class="klm-config-label">
+              <i class="fas fa-gauge"></i>
+              Steps to Simulate
+            </div>
+            <div class="klm-slider-row">
+              <input type="range" id="klmSteps" min="20" max="100" step="5" value="50" class="klm-slider klm-slider-n" aria-label="Steps to Simulate" />
+              <span class="klm-slider-val klm-val-n" id="klmStepsVal">50</span>
+            </div>
+            <div class="klm-config-hint">Time steps in simulation</div>
+          </div>
+
+          <div class="klm-config-group">
+            <div class="klm-config-label">
+              <i class="fas fa-wave-square"></i>
+              Trajectory
+            </div>
+            <div class="klm-seg" id="klmTrajSeg" role="group" aria-label="Trajectory type">
+              <button type="button" class="klm-seg-btn active" data-traj="sine" aria-pressed="true">Sine Wave</button>
+              <button type="button" class="klm-seg-btn" data-traj="linear" aria-pressed="false">Linear</button>
+              <button type="button" class="klm-seg-btn" data-traj="step" aria-pressed="false">Step</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="klm-actions-row">
+          <button class="btn klm-btn-primary klm-action-btn" id="klmRunBtn">
+            <i class="fas fa-play"></i> Run Simulation
+          </button>
+          <button class="btn klm-btn-step klm-action-btn" id="klmStepBtn" disabled>
+            <i class="fas fa-step-forward"></i> Step
+          </button>
+          <button class="btn klm-btn-auto klm-action-btn" id="klmAutoBtn" disabled>
+            <i class="fas fa-forward"></i> Auto-Play
+          </button>
+          <button class="btn btn-secondary klm-action-btn" id="klmResetBtn">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <label class="klm-speed-label">
+            Speed
+            <input type="range" id="klmAutoSpeed" min="100" max="1500" step="50" value="600" />
+          </label>
+        </div>
+
+      </div>
+
+      <div class="klm-status" id="klmStatus">
+        Configure noise parameters and trajectory, then click Run Simulation.
+      </div>
+
+      <div class="klm-main-layout">
+
+        <div class="klm-left-col">
+
+          <div class="klm-panel-card klm-main-chart-card">
+            <div class="klm-panel-title">
+              <i class="fas fa-chart-line"></i> Altitude Estimate Over Time
+              <div class="klm-chart-legend">
+                <span><span class="klm-legend-dot" style="background:#22c55e"></span>True</span>
+                <span><span class="klm-legend-dot" style="background:#ef4444"></span>Sensor</span>
+                <span><span class="klm-legend-dot" style="background:#06b6d4"></span>Kalman</span>
+                <span><span class="klm-legend-dot klm-legend-band"></span>±σ Uncertainty</span>
+              </div>
+            </div>
+            <div class="klm-canvas-wrap">
+              <canvas id="klmMainCanvas" class="klm-canvas"></canvas>
+            </div>
+          </div>
+
+          <div class="klm-two-col">
+
+            <div class="klm-panel-card klm-bell-card">
+              <div class="klm-panel-title"><i class="fas fa-chart-area"></i> Belief Distribution (Gaussian)</div>
+              <div class="klm-canvas-wrap">
+                <canvas id="klmBellCanvas" class="klm-canvas klm-bell-canvas"></canvas>
+              </div>
+            </div>
+
+            <div class="klm-panel-card klm-gain-card">
+              <div class="klm-panel-title"><i class="fas fa-sliders"></i> Kalman Gain Over Time</div>
+              <div class="klm-canvas-wrap">
+                <canvas id="klmGainCanvas" class="klm-canvas klm-gain-canvas"></canvas>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="klm-right-col">
+
+          <div class="klm-panel-card klm-equations-card">
+            <div class="klm-panel-title"><i class="fas fa-function"></i> Current Step Equations</div>
+            <div class="klm-equations" id="klmEquations">
+              <div class="klm-eq-section">
+                <div class="klm-eq-phase klm-eq-predict">Predict Phase</div>
+                <div class="klm-eq-row">
+                  <span class="klm-eq-label">x̂⁻</span>
+                  <span class="klm-eq-sep">=</span>
+                  <span class="klm-eq-val" id="klmEqXpred">—</span>
+                </div>
+                <div class="klm-eq-row">
+                  <span class="klm-eq-label">P⁻</span>
+                  <span class="klm-eq-sep">=</span>
+                  <span class="klm-eq-val" id="klmEqPpred">—</span>
+                </div>
+              </div>
+              <div class="klm-eq-divider"></div>
+              <div class="klm-eq-section">
+                <div class="klm-eq-phase klm-eq-update">Update Phase</div>
+                <div class="klm-eq-row">
+                  <span class="klm-eq-label">z</span>
+                  <span class="klm-eq-sep">=</span>
+                  <span class="klm-eq-val" id="klmEqZ">—</span>
+                </div>
+                <div class="klm-eq-row klm-eq-gain-row">
+                  <span class="klm-eq-label">K</span>
+                  <span class="klm-eq-sep">=</span>
+                  <span class="klm-eq-val klm-eq-k-val" id="klmEqK">—</span>
+                </div>
+                <div class="klm-eq-row">
+                  <span class="klm-eq-label">x̂</span>
+                  <span class="klm-eq-sep">=</span>
+                  <span class="klm-eq-val" id="klmEqXpost">—</span>
+                </div>
+                <div class="klm-eq-row">
+                  <span class="klm-eq-label">P</span>
+                  <span class="klm-eq-sep">=</span>
+                  <span class="klm-eq-val" id="klmEqPpost">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="klm-panel-card klm-stats-card">
+            <div class="klm-panel-title"><i class="fas fa-chart-simple"></i> Running Metrics</div>
+            <div class="klm-stats-grid">
+              <div class="klm-stat-box">
+                <div class="klm-stat-val klm-val-step" id="klmMetStep">0</div>
+                <div class="klm-stat-lbl">Step</div>
+              </div>
+              <div class="klm-stat-box">
+                <div class="klm-stat-val klm-val-k" id="klmMetK">—</div>
+                <div class="klm-stat-lbl">Kalman Gain K</div>
+              </div>
+              <div class="klm-stat-box">
+                <div class="klm-stat-val klm-val-p" id="klmMetP">—</div>
+                <div class="klm-stat-lbl">Uncertainty P</div>
+              </div>
+              <div class="klm-stat-box">
+                <div class="klm-stat-val klm-val-err" id="klmMetErr">—</div>
+                <div class="klm-stat-lbl">|Kalman Error|</div>
+              </div>
+              <div class="klm-stat-box">
+                <div class="klm-stat-val klm-val-serr" id="klmMetSErr">—</div>
+                <div class="klm-stat-lbl">|Sensor Error|</div>
+              </div>
+              <div class="klm-stat-box">
+                <div class="klm-stat-val klm-val-r" id="klmMetR">—</div>
+                <div class="klm-stat-lbl">Sensor Noise R</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="klm-panel-card klm-log-card">
+            <div class="klm-panel-title"><i class="fas fa-list"></i> Step Log</div>
+            <div class="klm-log-area" id="klmLog">
+              <span class="klm-empty-text">Steps appear here during simulation.</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <section id="learn" class="section">
+    <div class="container">
+      <h2 class="section-title"><span class="title-icon">🛰️</span> Kalman Filter Explained</h2>
+      <div class="klm-learn-grid">
+
+        <div class="klm-learn-card klm-learn-predict">
+          <div class="klm-learn-icon">⏩</div>
+          <h3>Predict Step</h3>
+          <p>Using the motion model, propagate the current state estimate forward in time. Mean stays on the expected trajectory; variance <em>P</em> grows because without new data, uncertainty can only increase. x̂⁻ = x̂, P⁻ = P + Q.</p>
+        </div>
+
+        <div class="klm-learn-card klm-learn-update">
+          <div class="klm-learn-icon">🎯</div>
+          <h3>Update Step</h3>
+          <p>A new measurement <em>z</em> arrives. Kalman gain K = P⁻/(P⁻ + R) decides how much to trust it. New estimate = prediction + K × (measurement − prediction). Uncertainty shrinks: P = (1 − K) × P⁻.</p>
+        </div>
+
+        <div class="klm-learn-card klm-learn-gain">
+          <div class="klm-learn-icon">⚖️</div>
+          <h3>Kalman Gain Intuition</h3>
+          <p>K lives in [0, 1]. K≈0 means R is huge relative to P — the sensor is very noisy, trust the prediction almost completely. K≈1 means P is huge relative to R — you've been predicting a long time without data, trust the measurement almost completely.</p>
+        </div>
+
+        <div class="klm-learn-card klm-learn-why">
+          <div class="klm-learn-icon">🚀</div>
+          <h3>Why It's Optimal</h3>
+          <p>Under Gaussian noise assumptions, the Kalman Filter produces the minimum mean squared error (MMSE) estimate — no other linear estimator can do better. It powered Apollo mission guidance, modern GPS receivers, drone PID stabilization, and radar tracking.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="../../../auth.js"></script>
+  <script src="../../../script.js"></script>
+  <script src="../../../theme.js"></script>
+  <script src="../../../auth-gate.js"></script>
+  <script src="kalman-filter.js"></script>
+  <script>
+    if (typeof loadPartial === 'function') {
+      loadPartial('navbar-placeholder', '/partials/navbar.html').then(function () {
+        if (typeof initNavbar === 'function') initNavbar();
+      });
+      loadPartial('footer-placeholder', '/partials/footer.html');
+    }
+  </script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+</body>
+</html>

@@ -249,6 +249,26 @@
           </div>
         </div>
 
+        <!-- Purchase confirmation overlay -->
+        <div class="xp-confirm-overlay" id="xpConfirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="xpConfirmTitle">
+          <div class="xp-confirm-card">
+            <div class="xp-confirm-icon-wrap">
+              <i class="fas fa-shopping-bag" id="xpConfirmIcon"></i>
+            </div>
+            <h3 class="xp-confirm-title" id="xpConfirmTitle">Confirm Purchase</h3>
+            <p class="xp-confirm-item" id="xpConfirmItem"></p>
+            <p class="xp-confirm-price">
+              <span class="xp-confirm-price-label">Cost:</span>
+              <span class="xp-confirm-price-value" id="xpConfirmPrice"></span>
+              <span class="xp-confirm-price-unit">XP</span>
+            </p>
+            <div class="xp-confirm-actions">
+              <button type="button" class="xp-confirm-btn xp-confirm-btn--cancel" id="xpConfirmCancel">Cancel</button>
+              <button type="button" class="xp-confirm-btn xp-confirm-btn--buy" id="xpConfirmBuy">Buy</button>
+            </div>
+          </div>
+        </div>
+
         <div class="xp-store-footer">
           <p class="xp-store-footer-text">
             Items are saved to your account and accessible across sessions.

@@ -61,22 +61,37 @@
     return cachedNavbar;
   }
 
-  function syncIcons() {
-    const toggles = document.querySelectorAll('[data-theme-toggle], #darkModeToggle');
-    const isLight = document.documentElement.classList.contains('light-mode');
-    toggles.forEach(function (toggle) {
-      const icon = toggle.querySelector('i');
-      if (!icon) return;
-      if (isLight) {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-      } else {
+function syncIcons() {
+  const toggles = document.querySelectorAll('[data-theme-toggle], #darkModeToggle');
+  const isLight = document.documentElement.classList.contains('light-mode');
+
+  toggles.forEach(function (toggle) {
+    const icon = toggle.querySelector('i');
+    const text = toggle.querySelector('span'); // 1. Grab the span element
+
+    if (isLight) {
+      // If CURRENTLY Light Mode -> Button should offer DARK Mode
+      if (icon) {
         icon.classList.remove('fa-sun');
         icon.classList.add('fa-moon');
       }
-      toggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
-    });
-  }
+      if (text) {
+        text.textContent = 'Dark Mode'; // 2. Update the text
+      }
+      toggle.setAttribute('aria-label', 'Switch to dark mode');
+    } else {
+      // If CURRENTLY Dark Mode -> Button should offer LIGHT Mode
+      if (icon) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      }
+      if (text) {
+        text.textContent = 'Light Mode'; // 2. Update the text
+      }
+      toggle.setAttribute('aria-label', 'Switch to light mode');
+    }
+  });
+}
 
   function syncNavbar() {
     const navbar = getNavbar();
@@ -162,17 +177,105 @@
     }
   }
 
+  const TRANSITION_DURATION = 800;
+
   function toggleTheme() {
     const isLight = document.documentElement.classList.contains('light-mode');
-    if (isLight) {
-      document.documentElement.classList.remove('light-mode');
-      setStoredTheme('dark');
-    } else {
-      document.documentElement.classList.add('light-mode');
-      setStoredTheme('light');
+    const newThemeIsLight = !isLight;
+
+    /* find the clicked button — ripple originates from its center */
+    var sourceEl = document.activeElement;
+    if (!sourceEl || sourceEl === document.body || sourceEl === document.documentElement) {
+      sourceEl = document.querySelector('[data-theme-toggle], #darkModeToggle');
     }
-    syncIcons();
-    syncNavbar();
+    var rect = sourceEl
+      ? sourceEl.getBoundingClientRect()
+      : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+
+    /* radius that covers the farthest viewport corner from the button */
+    var dCorner1 = Math.hypot(cx, cy);
+    var dCorner2 = Math.hypot(window.innerWidth - cx, cy);
+    var dCorner3 = Math.hypot(cx, window.innerHeight - cy);
+    var dCorner4 = Math.hypot(window.innerWidth - cx, window.innerHeight - cy);
+    var maxRadius = Math.max(dCorner1, dCorner2, dCorner3, dCorner4) + 2;
+
+    /* shared: apply the new theme and sync UI */
+    function applyTheme() {
+      if (newThemeIsLight) {
+        document.documentElement.classList.add('light-mode');
+        setStoredTheme('light');
+      } else {
+        document.documentElement.classList.remove('light-mode');
+        setStoredTheme('dark');
+      }
+      syncIcons();
+      syncNavbar();
+    }
+
+    /* ── Overlay fallback (used when View Transition API unavailable or throws) ── */
+    function runOverlayAnimation() {
+      const newColor = newThemeIsLight ? '#ffffff' : '#0a0a1a';
+
+      var overlay = document.createElement('div');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.style.cssText =
+        'position:fixed;top:0;left:0;width:100%;height:100%;' +
+        'z-index:99999;pointer-events:none;' +
+        'background:' + newColor + ';' +
+        'will-change:clip-path;' +
+        'clip-path:circle(0px at ' + cx + 'px ' + cy + 'px);' +
+        'transition:clip-path ' + TRANSITION_DURATION + 'ms cubic-bezier(0.16,1,0.3,1);';
+      document.body.appendChild(overlay);
+
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          overlay.style.clipPath =
+            'circle(' + maxRadius + 'px at ' + cx + 'px ' + cy + 'px)';
+        });
+      });
+
+      setTimeout(function () {
+        applyTheme();
+        overlay.remove();
+      }, TRANSITION_DURATION + 50);
+    }
+
+    /* ── View Transition API: outward ripple from click point ── */
+    if (document.startViewTransition) {
+      document.documentElement.style.setProperty('--ripple-x', cx + 'px');
+      document.documentElement.style.setProperty('--ripple-y', cy + 'px');
+      document.documentElement.style.setProperty('--ripple-max-r', maxRadius + 'px');
+
+      try {
+        var transition = document.startViewTransition(function () {
+          applyTheme();
+        });
+        transition.finished.then(function () {
+          document.documentElement.style.removeProperty('--ripple-x');
+          document.documentElement.style.removeProperty('--ripple-y');
+          document.documentElement.style.removeProperty('--ripple-max-r');
+        }).catch(function () {
+          /* skipped / aborted — clean up anyway */
+          document.documentElement.style.removeProperty('--ripple-x');
+          document.documentElement.style.removeProperty('--ripple-y');
+          document.documentElement.style.removeProperty('--ripple-max-r');
+        });
+        return; /* View Transition started successfully — CSS pseudo-elements handle the animation */
+      } catch (__ignore__) {
+        /* transition already in progress — clean CSS vars, use overlay fallback below */
+        document.documentElement.style.removeProperty('--ripple-x');
+        document.documentElement.style.removeProperty('--ripple-y');
+        document.documentElement.style.removeProperty('--ripple-max-r');
+        /* fall through to overlay approach */
+      }
+      runOverlayAnimation();
+      return;
+    }
+
+    /* if we reach here, no View Transition API — use overlay */
+    runOverlayAnimation();
   }
 
   function initTheme() {
@@ -311,5 +414,6 @@
     waitForToggle();
   }
 
+  window.toggleTheme = toggleTheme;
   window.cleanupThemeManager = cleanupThemeManager;
 })();

@@ -55,7 +55,7 @@ const DEFAULT_PRIORITY = '0.8';
  */
 const PRIORITY_OVERRIDES = [
   { patterns: ['index.html'],                     priority: '1.0', changefreq: 'weekly' },
-  { patterns: ['beginner-roadmap.html', 'advanced-roadmap.html'], priority: '0.9', changefreq: 'weekly' },
+  { patterns: ['pages/roadmaps/roadmaps.html'], priority: '0.9', changefreq: 'weekly' },
   { patterns: ['code-playground.html', 'cp-patterns.html'],     priority: '0.9', changefreq: 'weekly' },
   { patterns: ['execution-history.html'],          priority: '0.7', changefreq: 'monthly' },
   { patterns: ['intent-detector.html'],            priority: '0.6', changefreq: 'monthly' },

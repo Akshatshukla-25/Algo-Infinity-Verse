@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Time Complexity Tycoon</title>
+    <meta name="auth-required" content="true" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link
+      rel="stylesheet"
+      href="/pages/learning/time-complexity-tycoon/time-complexity-tycoon.css"
+    />
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="page-header__title">
+        <h1>Time Complexity Tycoon</h1>
+        <p>
+          Choose the right algorithm for real workloads. Watch CPU, memory, and response time change
+          instantly.
+        </p>
+      </div>
+      <div class="page-header__meta">
+        <div class="meta-pill" id="tcUserPill">Loading…</div>
+        <div class="meta-pill">Best: <span id="tcBestScore">0</span></div>
+      </div>
+    </header>
+
+    <main class="tc-container">
+      <section class="tc-card tc-game">
+        <div class="tc-topbar">
+          <div class="tc-level">Level <span id="tcLevel">1</span></div>
+          <div class="tc-score">Score: <span id="tcScore">0</span></div>
+          <div class="tc-streak">Streak: <span id="tcStreak">0</span></div>
+        </div>
+
+        <div class="tc-grid">
+          <section class="tc-scenario">
+            <div class="tc-section-title">Incoming Requests</div>
+            <div class="tc-scenario-body">
+              <div class="tc-scenario-row">
+                <span class="label">Request type</span><span id="tcReqType">—</span>
+              </div>
+              <div class="tc-scenario-row">
+                <span class="label">Workload size (n)</span><span id="tcN">—</span>
+              </div>
+              <div class="tc-scenario-row">
+                <span class="label">Request rate</span><span id="tcRate">—</span>
+              </div>
+              <div class="tc-scenario-row">
+                <span class="label">Cache hit rate</span><span id="tcCache">—</span>
+              </div>
+              <div class="tc-scenario-note" id="tcScenarioNote">—</div>
+            </div>
+
+            <div class="tc-section-title" style="margin-top: 16px">Choose your approach</div>
+            <div class="tc-options" id="tcOptions"></div>
+          </section>
+
+          <section class="tc-resources">
+            <div class="tc-section-title">Server Telemetry</div>
+
+            <div class="tc-bar">
+              <div class="tc-bar-head"><span>CPU Usage</span><span id="tcCpuVal">0%</span></div>
+              <div class="progress" aria-hidden="true">
+                <div class="progress__fill" id="tcCpuFill"></div>
+              </div>
+            </div>
+
+            <div class="tc-bar">
+              <div class="tc-bar-head"><span>Memory</span><span id="tcMemVal">0 MB</span></div>
+              <div class="progress" aria-hidden="true">
+                <div class="progress__fill progress__fill--mem" id="tcMemFill"></div>
+              </div>
+            </div>
+
+            <div class="tc-bar">
+              <div class="tc-bar-head">
+                <span>Response Time</span><span id="tcRtVal">0 ms</span>
+              </div>
+              <div class="progress" aria-hidden="true">
+                <div class="progress__fill progress__fill--rt" id="tcRtFill"></div>
+              </div>
+            </div>
+
+            <div class="tc-bar">
+              <div class="tc-bar-head"><span>Server Load</span><span id="tcLoadVal">0</span></div>
+              <div class="progress" aria-hidden="true">
+                <div class="progress__fill progress__fill--load" id="tcLoadFill"></div>
+              </div>
+            </div>
+
+            <div class="tc-feedback" id="tcFeedback"></div>
+
+            <div class="tc-actions">
+              <button class="btn" id="tcNextBtn" disabled>Next scenario</button>
+              <button class="btn btn-secondary" id="tcRestartBtn">Restart</button>
+            </div>
+
+            <div class="tc-educator" id="tcComplexityExplain">
+              <div class="tc-educator-title">Time Complexity Insight</div>
+              <div class="tc-educator-body">
+                Pick an option to see Big-O and how it affects system resources.
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tc-card tc-legend">
+        <div class="tc-section-title">How scoring works</div>
+        <ul>
+          <li>Lower CPU + lower response time = higher score.</li>
+          <li>Slow growth rates (like O(log n) / O(n)) scale better under load.</li>
+          <li>Overly expensive choices (like O(n²)) quickly degrade server health.</li>
+        </ul>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/pages/learning/time-complexity-tycoon/time-complexity-tycoon.js"
+    ></script>
+  </body>
+</html>

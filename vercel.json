@@ -1,16 +1,37 @@
-{  
-  
+{
   "outputDirectory": ".",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": null,
+  "functions": {
+    "api/execute/problem.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/login",
       "destination": "/pages/auth/login.html"
     },
     {
+      "source": "/login.html",
+      "destination": "/pages/auth/login.html"
+    },
+
+    {
+      "source": "/login.html/:query*",
+      "destination": "/pages/auth/login.html"
+    },
+    {
+      "source": "/signup.html/:query*",
+      "destination": "/pages/auth/login.html"
+    },
+    {
       "source": "/signup",
+      "destination": "/pages/auth/signup.html"
+    },
+    {
+      "source": "/signup.html",
       "destination": "/pages/auth/signup.html"
     },
     {
@@ -32,6 +53,10 @@
     {
       "source": "/practice",
       "destination": "/pages/practice/problems.html"
+    },
+    {
+      "source": "/practice/editor",
+      "destination": "/pages/practice/editor.html"
     },
     {
       "source": "/cplusplus-learning",
@@ -74,17 +99,41 @@
       "destination": "/algorithm-timeline.html"
     },
     {
+      "source": "/roadmaps",
+      "destination": "/pages/roadmaps/roadmaps.html"
+    },
+    {
+      "source": "/leaderboard",
+      "destination": "/pages/leaderboard/leaderboard.html"
+    },
+    {
+      "source": "/leaderboard/preview",
+      "destination": "/pages/leaderboard/preview.html"
+    },
+    {
+      "source": "/code-explainer",
+      "destination": "/pages/tools/code-explainer/code-explainer.html"
+    },
+    {
+      "source": "/streaks",
+      "destination": "/pages/streaks/streak-dashboard.html"
+    },
+    {
       "source": "/api/battles/:path*",
       "destination": "/api/battles"
     }
   ],
   "headers": [
-    {
+  {
       "source": "/(.*)",
       "headers": [
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
         }
       ]
     },

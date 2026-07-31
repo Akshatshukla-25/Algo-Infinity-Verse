@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dyson Sphere Energy Grid Orchestrator | Algo Infinity Verse</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Monaco Editor -->
+    <script src="https://unpkg.com/monaco-editor@0.36.1/min/vs/loader.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
+      .app-container { display: flex; height: 100vh; }
+      
+      .sidebar { width: 450px; background: rgba(15, 23, 42, 0.95); border-right: 1px solid #f59e0b; display: flex; flex-direction: column; z-index: 10; }
+      .header { padding: 20px; border-bottom: 1px solid #334155; }
+      .header h2 { margin: 0; color: #f59e0b; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; }
+      .header p { margin: 5px 0 0 0; font-size: 0.8rem; color: #94a3b8; }
+      
+      #editor-container { flex: 1; min-height: 300px; }
+      
+      .controls { padding: 20px; border-top: 1px solid #334155; background: rgba(0,0,0,0.5); }
+      .btn { background: linear-gradient(90deg, #d97706, #b45309); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+      .btn:hover { background: #f59e0b; transform: translateY(-2px); box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+      
+      .sim-container { flex: 1; position: relative; background: radial-gradient(circle at center, #1e1b4b 0%, #000 100%); overflow: hidden; display: flex; justify-content: center; align-items: center; }
+      
+      canvas { position: absolute; z-index: 1; filter: contrast(1.2); }
+      
+      .hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #f59e0b; width: 280px; z-index: 10; pointer-events: none; }
+      .hud h3 { margin: 0 0 10px 0; color: #f59e0b; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
+      .metric { display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
+      .val { font-weight: bold; font-family: monospace; }
+      .val-power { color: #fcd34d; }
+      .val-temp { color: #ef4444; }
+    </style>
+  </head>
+  <body>
+    
+    <div class="app-container">
+      <div class="sidebar">
+        <div class="header">
+          <h2><i class="fas fa-sun"></i> Dyson Sphere Grid</h2>
+          <p>Orchestrate exawatts of stellar energy without meltdown</p>
+        </div>
+        
+        <div id="editor-container"></div>
+        
+        <div class="controls">
+          <button class="btn" onclick="startGrid()"><i class="fas fa-network-wired"></i> Initialize Load Balancing</button>
+        </div>
+      </div>
+      
+      <div class="sim-container">
+        <!-- Background stars -->
+        <div style="position: absolute; inset:0; z-index: 0; background: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=2693&auto=format&fit=crop') center/cover; opacity: 0.3;"></div>
+            
+        <canvas id="dysonCanvas" style="position: relative; z-index: 1;"></canvas>
+        
+        <div class="hud">
+          <h3>Swarm Telemetry</h3>
+          <div class="metric"><span>Power Generated:</span> <span class="val val-power" id="powerVal">0 EW</span></div>
+          <div class="metric"><span>Max Node Temp:</span> <span class="val val-temp" id="tempVal">3 K</span></div>
+          <div class="metric"><span>Transmission Efficiency:</span> <span class="val" id="effVal" style="color:#60a5fa">0.00%</span></div>
+          <div class="metric" style="margin-top: 10px; border-top: 1px solid #334155; padding-top: 5px;">
+            <span>Grid Status:</span> <span class="val" id="statusVal" style="color:#94a3b8">OFFLINE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let editor;
+      require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.36.1/min/vs' }});
+      require(['vs/editor/editor.main'], function() {
+        editor = monaco.editor.create(document.getElementById('editor-container'), {
+          value: `// Dyson Sphere Load Balancer
+// Distribute energy across the satellite swarm to Earth node.
+// Warning: Routing too much power through a single node will cause a thermal meltdown.
+
+function optimizeGridRouting(nodes, totalPowerDemand) {
+    // nodes: array of objects { id, maxCapacity, currentTemp }
+    // Return an array of { nodeId, allocatedPower }
+    
+    // Naive logic: Send all power through node 0!
+    // This will cause a catastrophic meltdown.
+    return [
+        { nodeId: nodes[0].id, allocatedPower: totalPowerDemand }
+    ];
+}`,
+          language: 'javascript',
+          theme: 'vs-dark',
+          minimap: { enabled: false },
+          automaticLayout: true
+        });
+      });
+
+      const canvas = document.getElementById('dysonCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      function resize() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; }
+      window.addEventListener('resize', resize);
+      resize();
+
+      let isSimulating = false;
+      let powerGenerated = 0; // Exawatts
+      let targetPower = 400; 
+      let time = 0;
+      
+      // Node architecture
+      let nodes = [];
+      for(let i=0; i<30; i++) {
+          nodes.push({
+              id: i,
+              angle: (i / 30) * Math.PI * 2,
+              orbitRadius: 150 + Math.random() * 50,
+              maxCapacity: 20, // Max EW per node before heating up rapidly
+              currentTemp: 3, // Kelvin
+              powerPassing: 0
+          });
+      }
+
+      function animate() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          let cx = canvas.width / 2;
+          let cy = canvas.height / 2;
+
+          time += 0.01;
+
+          // Draw the Star
+          let starGradient = ctx.createRadialGradient(cx, cy, 10, cx, cy, 100);
+          starGradient.addColorStop(0, '#ffffff');
+          starGradient.addColorStop(0.2, '#fde047');
+          starGradient.addColorStop(0.8, '#ea580c');
+          starGradient.addColorStop(1, 'transparent');
+          
+          ctx.fillStyle = starGradient;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 120, 0, Math.PI*2);
+          ctx.fill();
+
+          // Central Star Glow Pulse
+          ctx.shadowBlur = 40 + Math.sin(time*5)*10;
+          ctx.shadowColor = '#f59e0b';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 80, 0, Math.PI*2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          if (isSimulating) {
+              powerGenerated += (targetPower - powerGenerated) * 0.02; // Spool up
+              
+              // Reset node power passing
+              nodes.forEach(n => { n.powerPassing = 0; });
+              
+              try {
+                  eval(editor.getValue());
+                  let routing = optimizeGridRouting(nodes, powerGenerated);
+                  
+                  if(routing && Array.isArray(routing)) {
+                      routing.forEach(r => {
+                          let node = nodes.find(n => n.id === r.nodeId);
+                          if(node) node.powerPassing += r.allocatedPower;
+                      });
+                  }
+              } catch(e) {}
+          }
+
+          let maxTemp = 3;
+          let activeNodes = 0;
+          let isMeltdown = false;
+
+          // Draw and update satellites (Dyson Swarm Nodes)
+          for(let i=0; i<nodes.length; i++) {
+              let n = nodes[i];
+              
+              // Orbit movement
+              n.angle += 0.002;
+              let nx = cx + Math.cos(n.angle) * n.orbitRadius;
+              let ny = cy + Math.sin(n.angle) * n.orbitRadius;
+              
+              // Thermodynamics
+              if (isSimulating) {
+                  // Heating
+                  if (n.powerPassing > n.maxCapacity) {
+                      n.currentTemp += (n.powerPassing - n.maxCapacity) * 5; // Rapid heating
+                  } else if (n.powerPassing > 0) {
+                      n.currentTemp += (n.powerPassing / n.maxCapacity); // Normal operational heating
+                  }
+                  
+                  // Cooling (radiating to space)
+                  n.currentTemp -= (n.currentTemp - 3) * 0.05;
+                  
+                  if(n.currentTemp > maxTemp) maxTemp = n.currentTemp;
+                  if(n.currentTemp > 2000) isMeltdown = true;
+                  if(n.powerPassing > 0) activeNodes++;
+              }
+              
+              // Draw Node
+              ctx.beginPath();
+              ctx.arc(nx, ny, 4, 0, Math.PI*2);
+              
+              // Color based on temperature
+              if(n.currentTemp < 100) ctx.fillStyle = '#60a5fa'; // Cool
+              else if(n.currentTemp < 1000) ctx.fillStyle = '#facc15'; // Warm
+              else ctx.fillStyle = '#ef4444'; // Overheating
+              
+              if(n.powerPassing > 0 && n.currentTemp < 2000) {
+                  ctx.shadowBlur = 10;
+                  ctx.shadowColor = ctx.fillStyle;
+              } else {
+                  ctx.shadowBlur = 0;
+              }
+              ctx.fill();
+              ctx.shadowBlur = 0;
+              
+              // Draw power beam to Earth Node (bottom of screen)
+              if(n.powerPassing > 0 && n.currentTemp < 2000) {
+                  ctx.beginPath();
+                  ctx.moveTo(nx, ny);
+                  ctx.lineTo(cx, canvas.height); // Fake earth node at bottom
+                  ctx.lineWidth = Math.min(n.powerPassing / 5, 5);
+                  ctx.strokeStyle = \`rgba(252, 211, 77, \${Math.min(n.powerPassing/20, 0.8)})\`;
+                  ctx.stroke();
+              }
+          }
+          
+          // Draw Earth Receiver Node
+          ctx.beginPath();
+          ctx.arc(cx, canvas.height, 20, 0, Math.PI, true);
+          ctx.fillStyle = '#3b82f6';
+          ctx.fill();
+
+          // HUD Updates
+          document.getElementById('powerVal').innerText = powerGenerated.toFixed(0) + " EW";
+          document.getElementById('tempVal').innerText = maxTemp.toFixed(0) + " K";
+          
+          if(maxTemp > 1000) document.getElementById('tempVal').style.color = "#ef4444";
+          else document.getElementById('tempVal').style.color = "#60a5fa";
+          
+          if (isSimulating) {
+              if (isMeltdown) {
+                  document.getElementById('statusVal').innerText = "CASCADING THERMAL MELTDOWN";
+                  document.getElementById('statusVal').style.color = "#ef4444";
+                  document.getElementById('effVal').innerText = "0.00%";
+                  isSimulating = false; // abort
+              } else {
+                  // Calculate efficiency (punish for unused nodes, reward for perfectly balanced load)
+                  let eff = Math.min((activeNodes / nodes.length) * 100, 99.999);
+                  document.getElementById('effVal').innerText = eff.toFixed(3) + "%";
+                  
+                  if(powerGenerated > targetPower - 5) {
+                      document.getElementById('statusVal').innerText = "GRID STABLE. EXAWATT ROUTING.";
+                      document.getElementById('statusVal').style.color = "#10b981";
+                  }
+              }
+          }
+
+          requestAnimationFrame(animate);
+      }
+      animate();
+
+      function startGrid() {
+          if(isSimulating) return;
+          
+          nodes.forEach(n => { n.currentTemp = 3; });
+          powerGenerated = 0;
+          isSimulating = true;
+          
+          document.getElementById('statusVal').innerText = "SPOOLING GENERATORS...";
+          document.getElementById('statusVal').style.color = "#f59e0b";
+      }
+    </script>
+  </body>
+</html>

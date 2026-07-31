@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TypeScript Playground – Live Editor with Type Checking | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Write TypeScript in the browser with live compilation, real type checking, error diagnostics, and auto-completion. No setup, no installs."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="typescript-playground.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Theme Initialization Script -->
+    <script>
+      (function () {
+        try {
+          var storedTheme = localStorage.getItem('theme');
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          var theme = storedTheme || (prefersLight ? 'light' : 'dark');
+          if (theme === 'light') {
+            document.documentElement.classList.add('light-mode');
+          } else {
+            document.documentElement.classList.remove('light-mode');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body data-page="typescript-playground" data-no-loading>
+    <div id="loading-screen" class="hidden">
+      <div class="loader">
+        <div class="infinity-loader">∞</div>
+        <h2>Algo Infinity Verse</h2>
+        <div class="loading-bar"><div class="loading-progress"></div></div>
+      </div>
+    </div>
+
+    <button type="button" id="scrollTopBtn" class="scroll-top-btn" aria-label="Scroll to top">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <div id="navbar-placeholder"></div>
+
+    <section class="hero tsp-hero">
+      <div class="hero-background">
+        <div class="stars"></div>
+        <div class="stars2"></div>
+        <div class="stars3"></div>
+      </div>
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span class="title-line">Write TypeScript.</span>
+          <span class="main-title tsp-title-gradient">Catch Bugs Before You Run.</span>
+          <span class="subtitle">In-Browser TypeScript Playground</span>
+        </h1>
+        <p class="tsp-hero-desc">
+          Real type checking, error diagnostics, and auto-completion powered by the TypeScript
+          language service — running entirely in your browser.
+        </p>
+      </div>
+    </section>
+
+    <main class="editor-container">
+      <div class="editor-wrapper">
+        <div class="editor-header">
+          <div class="editor-info">
+            <i class="fas fa-code tsp-accent-icon"></i>
+            <span id="tspActiveFileName">index.ts</span>
+            <span id="tspStatusBadge" class="tsp-status-badge tsp-status-ready">Ready</span>
+          </div>
+          <div class="editor-actions">
+            <select id="tspExampleSelect" class="tsp-select" aria-label="Load sample project">
+              <option value="hello">Hello World</option>
+              <option value="interfaces">Interfaces &amp; Generics</option>
+              <option value="classes">Classes &amp; Enums</option>
+              <option value="multiFile">Multi-file Utils Project</option>
+            </select>
+            <label class="tsp-auto-toggle">
+              <input type="checkbox" id="tspAutoRun" />
+              Auto-run
+            </label>
+            <label class="tsp-auto-toggle">
+              <input type="checkbox" id="tspVimToggle" />
+              Vim Mode
+            </label>
+            <button
+              type="button"
+              id="tspCopyBtn"
+              class="tsp-icon-btn"
+              title="Copy Active File"
+              aria-label="Copy Active File"
+            >
+              <i class="fas fa-copy"></i>
+            </button>
+            <button
+              type="button"
+              id="tspSaveBtn"
+              class="tsp-icon-btn"
+              title="Save Project"
+              aria-label="Save Project"
+            >
+              <i class="fas fa-save"></i>
+            </button>
+            <button
+              type="button"
+              id="tspResetBtn"
+              class="tsp-icon-btn"
+              title="Reset to Example"
+              aria-label="Reset to Example"
+            >
+              <i class="fas fa-undo"></i>
+            </button>
+            <button type="button" id="tspRunBtn" class="tsp-run-btn">
+              <i class="fas fa-play"></i> Run
+            </button>
+          </div>
+        </div>
+
+        <div class="editor-main">
+          <!-- File Explorer Sidebar -->
+          <aside class="file-explorer">
+            <div class="explorer-header">
+              <span><i class="fas fa-folder-open"></i> FILES</span>
+              <button
+                type="button"
+                id="tspNewFileBtn"
+                class="explorer-action-btn"
+                title="New File"
+                aria-label="New File"
+              >
+                <i class="fas fa-file-circle-plus"></i>
+              </button>
+            </div>
+            <div id="tspFileList" class="file-list">
+              <!-- Dynamically populated -->
+            </div>
+          </aside>
+
+          <!-- Monaco Editor Workspace -->
+          <div class="code-editor-workspace">
+            <div class="tsp-monaco-loading" id="tspMonacoLoading">
+              <i class="fas fa-spinner fa-spin"></i> Loading editor…
+            </div>
+            <div id="tspMonacoContainer" class="tsp-monaco-container"></div>
+            <div class="editor-shortcuts">
+              <span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Run Code</span>
+              <span><kbd>Ctrl</kbd>+<kbd>S</kbd> Save Project</span>
+              <span><kbd>Ctrl</kbd>+<kbd>Space</kbd> Trigger Autocomplete</span>
+            </div>
+            <div id="vim-status-bar" class="vim-status-bar hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panels-container">
+        <div class="panel">
+          <div class="panel-header">
+            <i class="fas fa-file-code tsp-accent-icon"></i>
+            <span>Compiled JavaScript</span>
+          </div>
+          <div id="tspOutputBody" class="panel-body">
+            <span class="tsp-output-placeholder"
+              >Compiled output will appear here after running...</span
+            >
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <i class="fas fa-terminal tsp-success-icon"></i>
+            <span>Console</span>
+            <button
+              type="button"
+              id="tspConsoleClear"
+              class="console-clear-btn"
+              title="Clear Console"
+              aria-label="Clear Console"
+            >
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+          <div id="tspConsoleBody" class="panel-body">
+            <span class="tsp-console-placeholder"
+              >Console output will appear here after running...</span
+            >
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <i class="fas fa-exclamation-triangle tsp-warning-icon"></i>
+            <span>Problems</span>
+            <span id="tspProblemsCount" class="tsp-problems-count">0</span>
+          </div>
+          <div id="tspProblemsBody" class="panel-body">
+            <span class="tsp-problems-placeholder"
+              >No problems detected yet. Start typing to see live diagnostics.</span
+            >
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Monaco Editor AMD Loader (same version already used by code-playground.html) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+    <script src="https://unpkg.com/monaco-vim/dist/monaco-vim.js"></script>
+
+    <script src="typescript-playground.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/bootstrap-legacy.js"></script>
+
+    <script src="/script.js"></script>
+    <script type="module" src="/dist/legacy-bundle.mjs"></script>
+    <script src="/theme.js"></script>
+    <script>
+      loadPartial('navbar-placeholder', '/partials/navbar.html');
+      loadPartial('footer-placeholder', '/partials/footer.html');
+    </script>
+  </body>
+</html>

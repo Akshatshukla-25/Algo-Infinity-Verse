@@ -21,6 +21,12 @@ function saveProfileChanges() {
     if (typeof showNotification === 'function') showNotification('Please enter a display name.', 'error');
     return;
   }
+  const bioInput = document.getElementById('profileBioInput');
+  const bioVal = bioInput ? bioInput.value.trim() : '';
+  if (bioVal.length > 120) {
+    if (typeof showNotification === 'function') showNotification('Bio cannot exceed 120 characters.', 'error');
+    return;
+  }
   const userLangs = [];
   document.querySelectorAll('.lang-edit-checkbox').forEach(cb => {
     if (cb.checked) userLangs.push(cb.value);
@@ -29,20 +35,28 @@ function saveProfileChanges() {
   const selectedBorder = document.querySelector('input[name="avatarBorder"]:checked');
   const selectedTheme = document.querySelector('input[name="avatarTheme"]:checked');
 
-  const progress = loadProgress();
-  progress.name = nameVal;
-  progress.languages = userLangs;
-  if (!progress.avatarCustomization) progress.avatarCustomization = { border: 'none', theme: 'default' };
-  if (selectedBorder) progress.avatarCustomization.border = selectedBorder.value;
-  if (selectedTheme) progress.avatarCustomization.theme = selectedTheme.value;
-  saveProgress(progress);
-  if (typeof window.saveUserData === 'function') window.saveUserData();
-  if (typeof window.userProgress !== 'undefined') {
-    window.userProgress.name = nameVal;
-    window.userProgress.languages = userLangs;
-    if (!window.userProgress.avatarCustomization) window.userProgress.avatarCustomization = { border: 'none', theme: 'default' };
-    if (selectedBorder) window.userProgress.avatarCustomization.border = selectedBorder.value;
-    if (selectedTheme) window.userProgress.avatarCustomization.theme = selectedTheme.value;
+  const applyUpdates = (target) => {
+    target.name = nameVal;
+    target.bio = bioVal;
+    target.languages = userLangs;
+    if (!target.avatarCustomization) target.avatarCustomization = { border: 'none', theme: 'default' };
+    if (selectedBorder) target.avatarCustomization.border = selectedBorder.value;
+    if (selectedTheme) target.avatarCustomization.theme = selectedTheme.value;
+  };
+
+  if (typeof window !== 'undefined' && window.userProgress) {
+    applyUpdates(window.userProgress);
+  }
+
+  if (typeof window !== 'undefined' && typeof window.saveUserData === 'function') {
+    window.saveUserData();
+  } else {
+    // Fallback when script.js's saveUserData isn't available: persist
+    // directly via the same localStorage read/merge/write helpers this
+    // module already uses.
+    const progress = loadProgress();
+    applyUpdates(progress);
+    saveProgress(progress);
   }
   updateProfileViews();
   closeProfileModal();
@@ -100,8 +114,10 @@ function setupProfileListeners() {
 function openProfileModal() {
   const modal = document.getElementById('profileEditModal');
   const nameInput = document.getElementById('profileNameInput');
+  const bioInput = document.getElementById('profileBioInput');
   const progress = loadProgress();
   if (nameInput) nameInput.value = progress.name || 'Learner';
+  if (bioInput) bioInput.value = progress.bio || '';
   const userLangs = progress.languages || [];
   document.querySelectorAll('.lang-edit-checkbox').forEach(cb => {
     cb.checked = userLangs.includes(cb.value);
@@ -131,9 +147,13 @@ function openProfileModal() {
 export function initProfileEdit() {
   setupProfileListeners();
 }
-window.initProfileEdit = initProfileEdit;
-window.closeProfileModal = closeProfileModal;
-window.saveProfileChanges = saveProfileChanges;
-window.renderLanguageChips = renderLanguageChips;
-window.updateProfileViews = updateProfileViews;
-window.openProfileModal = openProfileModal;
+
+export { saveProfileChanges, loadProgress };
+if (typeof window !== 'undefined') {
+  window.initProfileEdit = initProfileEdit;
+  window.closeProfileModal = closeProfileModal;
+  window.saveProfileChanges = saveProfileChanges;
+  window.renderLanguageChips = renderLanguageChips;
+  window.updateProfileViews = updateProfileViews;
+  window.openProfileModal = openProfileModal;
+}

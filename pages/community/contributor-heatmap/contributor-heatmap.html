@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contributor Heatmap | Algo Infinity Verse</title>
+  <meta name="description" content="GitHub contribution calendar plus shareable AIV-style SVG stats card." />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="contributor-heatmap.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        if (t === 'light') document.documentElement.classList.add('light-mode');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="cth-body" data-page="contributor-heatmap">
+  <a href="#cth-main" class="cth-skip">Skip to main content</a>
+  <div id="navbar-placeholder"></div>
+
+  <header class="cth-hero">
+    <div class="cth-badge"><i class="fas fa-users" aria-hidden="true"></i> Community</div>
+    <h1>Contributor <span>Heatmap</span></h1>
+    <p>Fetch a GitHub username’s public contributions, view a year calendar, and download an AIV-branded SVG stats card.</p>
+  </header>
+
+  <main id="cth-main" class="cth-main">
+    <section class="cth-card">
+      <form id="cth-form" class="cth-form">
+        <label for="cth-user">GitHub username</label>
+        <div class="cth-row">
+          <input id="cth-user" type="text" placeholder="octocat" required autocomplete="username" />
+          <button type="submit" class="cth-btn" id="cth-search"><i class="fas fa-search" aria-hidden="true"></i> Search</button>
+        </div>
+      </form>
+      <p id="cth-status" class="cth-status" role="status" aria-live="polite">Enter a username to load contributions.</p>
+    </section>
+
+    <section class="cth-card">
+      <h2>Contribution calendar</h2>
+      <div id="cth-heatmap" class="cth-heatmap" aria-label="GitHub contribution calendar"></div>
+      <div class="cth-legend"><span>Less</span><i data-l="0"></i><i data-l="1"></i><i data-l="2"></i><i data-l="3"></i><i data-l="4"></i><span>More</span></div>
+    </section>
+
+    <section class="cth-card">
+      <h2>Summary</h2>
+      <div id="cth-stats" class="cth-stats"><div class="cth-empty">No data yet.</div></div>
+    </section>
+
+    <section class="cth-card">
+      <div class="cth-card-head">
+        <h2>AIV stats card</h2>
+        <div class="cth-actions">
+          <button type="button" id="cth-dl" class="cth-btn ghost" disabled><i class="fas fa-download" aria-hidden="true"></i> Download SVG</button>
+          <button type="button" id="cth-copy" class="cth-btn ghost" disabled><i class="fas fa-copy" aria-hidden="true"></i> Copy SVG</button>
+        </div>
+      </div>
+      <div id="cth-svg-wrap" class="cth-svg-wrap" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="/theme.js"></script>
+  <script src="contributor-heatmap.js"></script>
+</body>
+</html>

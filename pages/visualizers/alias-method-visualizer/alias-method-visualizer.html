@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alias Method Visualizer | Algo Infinity Verse</title>
+    <meta name="description" content="Sample from any weighted distribution in true O(1) — watch Vose's Alias Method build a probability/alias table and confirm the sampled frequencies converge to the input weights." />
+    <link rel="stylesheet" href="../../../styles.css" />
+    <link rel="stylesheet" href="alias-method-visualizer.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+  </head>
+  <body data-page="alias-method-visualizer">
+
+    <div id="navbar-placeholder"></div>
+
+    <button id="scrollTopBtn" aria-label="Scroll to top" class="scroll-top-btn">
+      <i class="fas fa-circle-chevron-up"></i>
+    </button>
+
+    <section class="am-hero">
+      <div class="hero-background">
+        <div class="stars"></div><div class="stars2"></div><div class="stars3"></div>
+      </div>
+      <div class="am-hero-inner">
+        <div class="am-hero-eyebrow">🎲 Loot Tables · Weighted Load Balancers · ML Sampling Layers</div>
+        <h1 class="am-hero-title">Alias Method Visualizer</h1>
+        <p class="am-hero-sub">Preprocess once. Sample forever at true O(1) — no scanning, ever.</p>
+        <p class="am-hero-desc">The naive way to sample from a weighted distribution scans a cumulative sum until it finds where a random number lands — O(N) per sample. Vose's Alias Method spends O(N) once building two small tables, after which EVERY future sample costs exactly one random index and one coin flip.</p>
+        <a href="#lab" class="btn btn-primary am-btn-primary"><i class="fas fa-dice"></i> Open the Lab</a>
+      </div>
+    </section>
+
+    <section id="lab" class="section am-section">
+      <div class="container">
+
+        <div class="am-control-card">
+          <div class="am-panel-title"><i class="fas fa-weight-hanging"></i> Weighted Distribution (Loot Table)</div>
+          <div class="am-items-row" id="amItemsRow"></div>
+          <div class="am-row">
+            <button class="btn am-btn-primary am-build-btn" id="amBuildBtn"><i class="fas fa-hammer"></i> Build Alias Table</button>
+            <button class="btn btn-secondary am-randomize-btn" id="amRandomizeBtn"><i class="fas fa-shuffle"></i> Randomize Weights</button>
+          </div>
+        </div>
+
+        <div class="am-status" id="amStatus">Adjust weights, then build the alias table to see the preprocessing step by step.</div>
+
+        <div class="am-main-layout">
+
+          <div class="am-tables-section">
+            <div class="am-panel-title"><i class="fas fa-table-cells"></i> Probability Table &amp; Alias Table</div>
+            <div class="am-table-wrap" id="amTableWrap"><div class="am-empty">Build the table to see it here.</div></div>
+            <div class="am-legend">
+              <span class="am-leg"><span class="am-leg-dot am-leg-prob"></span>prob[i]: chance to keep item i</span>
+              <span class="am-leg"><span class="am-leg-dot am-leg-alias"></span>alias[i]: fallback item if coin fails</span>
+            </div>
+          </div>
+
+          <div class="am-right-panel">
+
+            <div class="am-panel-card">
+              <div class="am-panel-title"><i class="fas fa-bolt"></i> Single O(1) Sample</div>
+              <button class="btn am-btn-primary am-sample-btn" id="amSampleBtn"><i class="fas fa-play"></i> Draw One Sample</button>
+              <div class="am-sample-trace" id="amSampleTrace">Build the table first.</div>
+            </div>
+
+            <div class="am-panel-card">
+              <div class="am-panel-title"><i class="fas fa-scale-balanced"></i> Naive vs Alias — Operations per Sample</div>
+              <div class="am-stat-rows">
+                <div class="am-stat-row"><span>Naive (cumulative scan)</span><span id="amNaiveOps">—</span></div>
+                <div class="am-stat-row"><span>Alias method</span><span id="amAliasOps">2 (always)</span></div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="am-verify-card">
+          <div class="am-panel-title"><i class="fas fa-chart-bar"></i> Verification — 10,000 Samples vs Expected Weights</div>
+          <button class="btn am-btn-primary am-verify-btn" id="amVerifyBtn"><i class="fas fa-play"></i> Run 10,000 Samples</button>
+          <canvas id="amVerifyCanvas" class="am-verify-canvas" role="img" aria-label="Bar chart comparing expected versus empirical weight distributions"></canvas>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="learn" class="section">
+      <div class="container">
+        <h2 class="section-title"><span class="title-icon">🎲</span> How the Table Actually Works</h2>
+        <div class="am-learn-grid">
+          <div class="am-learn-card" style="--lc:#06b6d4">
+            <div class="am-learn-icon">📏</div>
+            <h3>Scale, Don't Normalize</h3>
+            <p>Weights are scaled so their average is exactly 1 (multiply each probability by N). Items below 1 are "small" and need help filling their slot; items above 1 are "large" and have surplus probability to donate.</p>
+          </div>
+          <div class="am-learn-card" style="--lc:#a855f7">
+            <div class="am-learn-icon">🔗</div>
+            <h3>Pairing Small with Large</h3>
+            <p>Each small item's slot is filled with its own probability plus a borrowed slice from a large item — recorded as that slot's "alias." The large item's remaining surplus is re-classified and the process repeats until every slot sums to exactly 1.</p>
+          </div>
+          <div class="am-learn-card" style="--lc:#22c55e">
+            <div class="am-learn-icon">🪙</div>
+            <h3>Sampling Is Just a Coin Flip</h3>
+            <p>Pick a uniformly random slot i, then flip a coin weighted by prob[i]. Heads keeps item i; tails redirects to alias[i]. No scanning, no cumulative sum walk — exactly one array lookup and one comparison.</p>
+          </div>
+          <div class="am-learn-card" style="--lc:#f59e0b">
+            <div class="am-learn-icon">🎮</div>
+            <h3>Real Deployments</h3>
+            <p>Game engines use this for loot drop tables sampled millions of times per session. Load balancers use it to pick weighted backend servers. ML negative-sampling layers (like word2vec) use alias tables to draw from skewed vocabulary frequency distributions at scale.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="../../../auth.js"></script>
+    <script src="../../../script.js"></script>
+    <script src="../../../theme.js"></script>
+    <script src="../../../auth-gate.js"></script>
+    <script src="alias-method-visualizer.js"></script>
+    <script>
+      if (typeof loadPartial === 'function') {
+        loadPartial('navbar-placeholder', '/partials/navbar.html').then(function() {
+          if (typeof initNavbar === 'function') initNavbar();
+        });
+        loadPartial('footer-placeholder', '/partials/footer.html');
+      }
+    </script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+  </body>
+</html>

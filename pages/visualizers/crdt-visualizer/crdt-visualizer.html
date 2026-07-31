@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRDT Sequence Interleaving Sandbox | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Visualize Conflict-free Replicated Data Types (CRDTs). Simulate offline edits and concurrent conflict resolution."
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="/modules/lazyVisualizer.js"></script>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="crdt-visualizer.css" />
+    <script src="/theme.js"></script>
+    <script src="/modules/toast.js"></script>
+  </head>
+  <body class="crdt-body">
+    <nav class="navbar crdt-nav">
+      <div class="nav-logo">
+        <span class="logo-text">∞</span>
+        <span class="logo-title">Algo Infinity Verse</span>
+      </div>
+      <div class="engine-badge" id="engineBadge">
+        <i class="fas fa-network-wired"></i> CRDT Sandbox
+      </div>
+    </nav>
+
+    <main class="crdt-workspace">
+      <!-- Top controls -->
+      <div class="crdt-controls">
+        <div class="network-toggle">
+          <label class="switch">
+            <input type="checkbox" id="networkToggle" checked />
+            <span class="slider round"></span>
+          </label>
+          <span id="networkStatusText">Network: Connected</span>
+        </div>
+        <button id="btnSync" class="btn btn-primary" style="display: none">
+          <i class="fas fa-sync"></i> Sync Now
+        </button>
+      </div>
+
+      <div class="crdt-layout">
+        <!-- Client A Panel -->
+        <div class="client-panel" id="clientA">
+          <h3><i class="fas fa-laptop"></i> Client A</h3>
+
+          <div class="client-actions">
+            <input type="text" id="inputA" placeholder="Enter item..." />
+            <button class="btn btn-success btn-sm" id="btnAddA">Add</button>
+          </div>
+
+          <div class="crdt-state">
+            <h4>LWW-Element-Set State</h4>
+            <div class="state-tables">
+              <div class="state-col">
+                <h5>Add Set</h5>
+                <ul id="addSetA" class="state-list"></ul>
+              </div>
+              <div class="state-col">
+                <h5>Remove Set</h5>
+                <ul id="removeSetA" class="state-list"></ul>
+              </div>
+            </div>
+            <h4>Result View</h4>
+            <ul id="resultA" class="result-list"></ul>
+          </div>
+        </div>
+
+        <!-- Connection visualizer -->
+        <div class="connection-panel">
+          <div class="connection-line" id="connectionLine">
+            <i class="fas fa-wifi" id="wifiIcon"></i>
+          </div>
+        </div>
+
+        <!-- Client B Panel -->
+        <div class="client-panel" id="clientB">
+          <h3><i class="fas fa-laptop"></i> Client B</h3>
+
+          <div class="client-actions">
+            <input type="text" id="inputB" placeholder="Enter item..." />
+            <button class="btn btn-success btn-sm" id="btnAddB">Add</button>
+          </div>
+
+          <div class="crdt-state">
+            <h4>LWW-Element-Set State</h4>
+            <div class="state-tables">
+              <div class="state-col">
+                <h5>Add Set</h5>
+                <ul id="addSetB" class="state-list"></ul>
+              </div>
+              <div class="state-col">
+                <h5>Remove Set</h5>
+                <ul id="removeSetB" class="state-list"></ul>
+              </div>
+            </div>
+            <h4>Result View</h4>
+            <ul id="resultB" class="result-list"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-panel">
+        <h4><i class="fas fa-info-circle"></i> How LWW-Element-Set Works</h4>
+        <p>
+          A Last-Writer-Wins (LWW) Element Set uses two sets: an <strong>Add Set</strong> and a
+          <strong>Remove Set</strong>, each storing items with their logical timestamps. An item is
+          considered present if it's in the Add Set and either not in the Remove Set, or its
+          timestamp in the Add Set is strictly greater than its timestamp in the Remove Set.
+        </p>
+        <p>
+          Turn off the network, add/remove items on both clients independently, and then Sync to see
+          conflict-free resolution.
+        </p>
+      </div>
+    </main>
+
+    <script src="crdt-visualizer.js"></script>
+  </body>
+</html>

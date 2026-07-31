@@ -134,17 +134,6 @@ body {
     position: relative;
 }
 
-.module-list::before {
-    content: '';
-    position: absolute;
-    left: 28px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #e2e8f0;
-    z-index: 0;
-}
-
 .module-list li {
     position: relative;
     padding-left: 0;

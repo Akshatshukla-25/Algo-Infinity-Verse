@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prolog Playground – Live Logic Programming | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Explore logic programming, facts, rules, unification, backtracking, and recursive predicates in Prolog directly in your browser."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="prolog-playground.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Tau Prolog JS Library for In-Browser Logic Execution -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tau-prolog/0.3.4/tau-prolog.js"></script>
+
+    <!-- Theme Initialization Script -->
+    <script>
+      (function () {
+        try {
+          var storedTheme = localStorage.getItem('theme');
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          var theme = storedTheme || (prefersLight ? 'light' : 'dark');
+          if (theme === 'light') {
+            document.documentElement.classList.add('light-mode');
+          } else {
+            document.documentElement.classList.remove('light-mode');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body data-page="prolog-playground" data-no-loading>
+    <div id="loading-screen" class="hidden">
+      <div class="loader">
+        <div class="infinity-loader">∞</div>
+        <h2>Algo Infinity Verse</h2>
+        <div class="loading-bar"><div class="loading-progress"></div></div>
+      </div>
+    </div>
+
+    <button type="button" id="scrollTopBtn" class="scroll-top-btn" aria-label="Scroll to top">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <div id="navbar-placeholder"></div>
+
+    <section class="hero prolog-hero">
+      <div class="hero-background">
+        <div class="stars"></div>
+        <div class="stars2"></div>
+        <div class="stars3"></div>
+      </div>
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span class="title-line">Explore Logic Programming.</span>
+          <span
+            class="main-title"
+            style="
+              background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+            "
+            >Prolog Playground.</span
+          >
+          <span class="subtitle">Query Facts, Rules & Unification Live in Your Browser</span>
+        </h1>
+      </div>
+    </section>
+
+    <main class="editor-container">
+      <div class="editor-wrapper">
+        <div class="editor-header">
+          <div class="editor-info">
+            <i class="fas fa-diagram-project" style="color: #c084fc"></i>
+            <span id="prologActiveFileName">main.pl</span>
+            <span id="prologStatusBadge" class="prolog-status-badge prolog-status-ready"
+              >Ready</span
+            >
+          </div>
+          <div class="editor-actions">
+            <select
+              id="prologExampleSelect"
+              class="prolog-select"
+              aria-label="Load example logic program"
+            >
+              <option value="family">Family Tree Knowledge Base</option>
+              <option value="listops">List Operations & Append</option>
+              <option value="math">Recursion & Math</option>
+              <option value="graph">Graph Traversal & Pathfinding</option>
+              <option value="nqueens">N-Queens Solver</option>
+            </select>
+            <button
+              type="button"
+              id="prologCopyBtn"
+              class="prolog-icon-btn"
+              title="Copy Code"
+              aria-label="Copy Code"
+            >
+              <i class="fas fa-copy"></i>
+            </button>
+            <button
+              type="button"
+              id="prologSaveBtn"
+              class="prolog-icon-btn"
+              title="Save Project"
+              aria-label="Save Project"
+            >
+              <i class="fas fa-save"></i>
+            </button>
+            <button
+              type="button"
+              id="prologResetBtn"
+              class="prolog-icon-btn prolog-reset-btn"
+              title="Reset Editor"
+              aria-label="Reset Editor"
+            >
+              <i class="fas fa-undo"></i>
+            </button>
+            <button type="button" id="prologRunBtn" class="prolog-run-btn">
+              <i class="fas fa-play"></i> Consult & Run
+            </button>
+          </div>
+        </div>
+
+        <div class="prolog-query-bar">
+          <span class="query-prompt">?-</span>
+          <input
+            type="text"
+            id="prologQueryInput"
+            class="prolog-query-input"
+            placeholder="Enter Prolog goal/query (e.g. ancestor(X, bob).)"
+            aria-label="Prolog query input"
+          />
+          <button type="button" id="prologQueryBtn" class="prolog-query-btn">
+            <i class="fas fa-search"></i> Query Goal
+          </button>
+        </div>
+
+        <div class="editor-main">
+          <!-- File Explorer Sidebar -->
+          <aside class="file-explorer">
+            <div class="explorer-header">
+              <span><i class="fas fa-folder-open"></i> FILES</span>
+              <button
+                type="button"
+                id="prologNewFileBtn"
+                class="explorer-action-btn"
+                title="New File (.pl)"
+                aria-label="New File"
+              >
+                <i class="fas fa-file-circle-plus"></i>
+              </button>
+            </div>
+            <div id="prologFileList" class="file-list">
+              <!-- Dynamically populated -->
+            </div>
+          </aside>
+
+          <!-- Code Editor Workspace -->
+          <div class="code-editor-workspace">
+            <div class="code-editor">
+              <div class="line-numbers" id="prologLineNumbers">1</div>
+              <textarea
+                id="prologEditor"
+                class="code-textarea"
+                spellcheck="false"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                aria-label="Prolog code editor"
+                placeholder="% Write Prolog facts and rules here..."
+              ></textarea>
+              <div class="syntax-highlight" id="prologHighlight"></div>
+            </div>
+            <div class="editor-shortcuts">
+              <span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Consult & Run</span>
+              <span><kbd>Ctrl</kbd>+<kbd>S</kbd> Save Project</span>
+              <span><kbd>Tab</kbd> Indent (2 Spaces)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panels-container">
+        <div class="panel output-panel">
+          <div class="panel-header">
+            <i class="fas fa-terminal" style="color: #c084fc"></i>
+            <span>Prolog Query Results & Output</span>
+          </div>
+          <div id="prologOutputBody" class="panel-body">
+            <span class="prolog-output-placeholder"
+              >Query solutions will appear here after running...</span
+            >
+          </div>
+        </div>
+
+        <div class="panel console-panel">
+          <div class="panel-header">
+            <i class="fas fa-exclamation-triangle" style="color: #ea580c"></i>
+            <span>Prolog Engine / Syntax Warnings</span>
+            <button
+              type="button"
+              id="prologConsoleClear"
+              class="console-clear-btn"
+              title="Clear Console"
+              aria-label="Clear Console"
+            >
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+          <div id="prologConsoleBody" class="panel-body">
+            <span class="prolog-console-placeholder">No syntax errors.</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="prolog-playground.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/bootstrap-legacy.js"></script>
+
+    <script src="/script.js"></script>
+    <script type="module" src="/dist/legacy-bundle.mjs"></script>
+    <script src="/theme.js"></script>
+    <script>
+      loadPartial('navbar-placeholder', '/partials/navbar.html');
+      loadPartial('footer-placeholder', '/partials/footer.html');
+    </script>
+  </body>
+</html>

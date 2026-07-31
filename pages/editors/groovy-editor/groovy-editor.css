@@ -1,0 +1,429 @@
+/* ─────────────────────────────────────────────
+   Groovy Editor – Scoped Styles
+   ───────────────────────────────────────────── */
+
+.groovy-hero {
+  min-height: 40vh;
+  padding-bottom: 2rem;
+  background: linear-gradient(135deg, #091a24 0%, #153243 50%, #1d4e68 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.groovy-status-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.groovy-status-ready {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.groovy-status-running {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.groovy-status-error {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Editor Container */
+.editor-container {
+  max-width: 1400px;
+  margin: -50px auto 4rem;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 10;
+}
+
+.editor-wrapper {
+  background: var(--dark-surface, #0f172a);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.editor-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-primary, #f8fafc);
+  font-weight: 600;
+}
+
+.editor-info i {
+  font-size: 1.2rem;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.groovy-select {
+  background: var(--dark-card, #1e293b);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  color: var(--text-primary, #f8fafc);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.groovy-icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  color: var(--text-secondary, #94a3b8);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.groovy-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #61b5d4;
+  border-color: #61b5d4;
+}
+
+.groovy-run-btn {
+  background: linear-gradient(135deg, #2b7a9b 0%, #4298b8 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.groovy-run-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(66, 152, 184, 0.4);
+}
+
+/* Editor Main & File Explorer */
+.editor-main {
+  display: flex;
+  height: 550px;
+  background: #0d1117;
+}
+
+.file-explorer {
+  width: 230px;
+  background: rgba(0, 0, 0, 0.25);
+  border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.explorer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.explorer-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+  padding: 2px;
+}
+
+.explorer-action-btn:hover {
+  color: #61b5d4;
+}
+
+.file-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary, #94a3b8);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+}
+
+.file-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary, #f8fafc);
+}
+
+.file-item.active {
+  background: rgba(66, 152, 184, 0.15);
+  border-left: 3px solid #4298b8;
+  color: var(--text-primary, #f8fafc);
+  font-weight: 500;
+}
+
+.file-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-name-container i {
+  color: #61b5d4;
+}
+
+.file-item-actions {
+  display: none;
+  gap: 0.4rem;
+}
+
+.file-item:hover .file-item-actions {
+  display: flex;
+}
+
+.file-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px;
+  transition: color 0.15s;
+}
+
+.file-action-btn:hover {
+  color: var(--text-primary, #f8fafc);
+}
+
+.file-action-btn.delete:hover {
+  color: #ef4444;
+}
+
+.file-action-btn.edit:hover {
+  color: #61b5d4;
+}
+
+/* New/Rename Input */
+.file-item-input-wrapper {
+  padding: 0.2rem 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.file-item-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #2b7a9b;
+  border-radius: 4px;
+  color: white;
+  padding: 0.35rem 0.5rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Workspace */
+.code-editor-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.code-editor-workspace .code-textarea,
+.code-editor-workspace .syntax-highlight {
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: 'Fira Code', Consolas, Monaco, monospace;
+}
+
+/* Output Panels */
+.panels-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.panel {
+  background: var(--dark-surface, #0f172a);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 320px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.panel-body {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  color: #e6edf3;
+  background: #0d1117;
+}
+
+.groovy-output-placeholder,
+.groovy-console-placeholder {
+  color: #4b5563;
+  font-style: italic;
+}
+
+.groovy-output-line {
+  display: block;
+  margin-bottom: 0.25rem;
+  white-space: pre-wrap;
+}
+
+.groovy-console-line {
+  display: block;
+  color: #ef4444;
+  margin-bottom: 0.25rem;
+  white-space: pre-wrap;
+}
+
+.console-clear-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #4b5563;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.console-clear-btn:hover {
+  color: #ef4444;
+}
+
+/* ─── Syntax Highlighting Tokens (Groovy) ─── */
+.syntax-highlight .token.keyword {
+  color: #c084fc; /* Purple for keywords (def, class, import, package, return, if, else) */
+  font-weight: 700;
+}
+
+.syntax-highlight .token.type {
+  color: #fbbf24; /* Amber for types (String, Integer, List, Map, Object) */
+  font-weight: 600;
+}
+
+.syntax-highlight .token.gstring {
+  color: #38bdf8; /* Cyan for GStrings "${...}" */
+  font-weight: 500;
+}
+
+.syntax-highlight .token.string {
+  color: #4ade80; /* Green for regular strings */
+}
+
+.syntax-highlight .token.number {
+  color: #fb923c; /* Orange for numbers */
+}
+
+.syntax-highlight .token.comment {
+  color: #64748b; /* Slate gray for comments */
+  font-style: italic;
+}
+
+.syntax-highlight .token.annotation {
+  color: #f43f5e; /* Red-pink for annotations (@CompileStatic, @ToString) */
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .panels-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .editor-main {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .file-explorer {
+    width: 100%;
+    height: 180px;
+    border-right: none;
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  }
+
+  .code-editor-workspace {
+    height: 400px;
+  }
+}
+
+[class*='line-numbers'],
+[class*='code-textarea'] {
+  white-space: pre !important;
+  word-wrap: normal !important;
+}
+[class*='line-numbers'] {
+  overflow: hidden !important;
+}

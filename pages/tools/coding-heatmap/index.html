@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Platform Coding Heatmap | Algo Infinity Verse</title>
+  <meta name="description" content="Unified GitHub + LeetCode + Codeforces contribution heatmap with platform filters and stats." />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        if (t === 'light') document.documentElement.classList.add('light-mode');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="ch-body" data-page="coding-heatmap">
+  <a href="#ch-main" class="ch-skip">Skip to main content</a>
+  <div id="navbar-placeholder"></div>
+
+  <header class="ch-hero">
+    <div class="ch-badge"><i class="fas fa-fire" aria-hidden="true"></i> Activity Aggregator</div>
+    <h1>Multi-Platform <span>Coding Heatmap</span></h1>
+    <p>Combine GitHub, LeetCode, and Codeforces activity into one year calendar. Toggle platforms, compare stats, and cache results locally.</p>
+  </header>
+
+  <main id="ch-main" class="ch-main">
+    <section class="ch-card">
+      <h2>Usernames</h2>
+      <form id="ch-form" class="ch-form" autocomplete="off">
+        <label>GitHub <input id="ch-gh" type="text" placeholder="octocat" /></label>
+        <label>LeetCode <input id="ch-lc" type="text" placeholder="leetcode_id" /></label>
+        <label>Codeforces <input id="ch-cf" type="text" placeholder="tourist" /></label>
+        <button type="submit" class="ch-btn" id="ch-load"><i class="fas fa-sync" aria-hidden="true"></i> Load heatmap</button>
+      </form>
+      <p id="ch-status" class="ch-status" role="status" aria-live="polite">Enter at least one username to begin.</p>
+    </section>
+
+    <section class="ch-card">
+      <div class="ch-filters" role="group" aria-label="Platform filters">
+        <label><input type="checkbox" id="ch-tog-gh" checked data-platform="github" /> GitHub</label>
+        <label><input type="checkbox" id="ch-tog-lc" checked data-platform="leetcode" /> LeetCode</label>
+        <label><input type="checkbox" id="ch-tog-cf" checked data-platform="codeforces" /> Codeforces</label>
+      </div>
+      <div id="ch-heatmap" class="ch-heatmap" aria-label="Contribution calendar"></div>
+      <div class="ch-legend">
+        <span>Less</span>
+        <i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i>
+        <span>More</span>
+      </div>
+      <div id="ch-tooltip" class="ch-tooltip hidden" role="tooltip"></div>
+    </section>
+
+    <section class="ch-card">
+      <h2>Stats</h2>
+      <div id="ch-stats" class="ch-stats">
+        <div class="ch-empty">No data yet.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/theme.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diffie-Hellman Key Exchange | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Playground for visualizing the Diffie-Hellman Key Exchange math and paint color analogy."
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="diffie-hellman-visualizer.css" />
+    <script src="/theme.js"></script>
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+  </head>
+  <body class="dh-body">
+    <nav class="navbar dh-nav">
+      <div class="nav-logo">
+        <span class="logo-text">∞</span>
+        <span class="logo-title">Algo Infinity Verse</span>
+      </div>
+      <div class="engine-badge"><i class="fas fa-key"></i> Key Exchange Protocol</div>
+    </nav>
+
+    <main class="dh-workspace">
+      <header class="workspace-header">
+        <h1>Diffie-Hellman Key Exchange</h1>
+        <p class="subtitle">
+          Securely share a secret over an insecure channel. Toggle between Math and Colors.
+        </p>
+
+        <div class="control-panel">
+          <button id="btnNextStep" class="btn btn-primary">
+            Start Exchange <i class="fas fa-arrow-right"></i>
+          </button>
+          <div class="mode-toggle">
+            <label class="switch">
+              <input type="checkbox" id="modeToggle" />
+              <span class="slider round"></span>
+            </label>
+            <span id="modeLabel">Mode: <strong>Math</strong> (g^a mod p)</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="visualizer-content">
+        <!-- ALICE -->
+        <section class="actor-panel alice-panel">
+          <div class="actor-header">
+            <h2><i class="fas fa-user"></i> Alice</h2>
+          </div>
+          <div class="actor-body">
+            <div class="secret-box">
+              <div class="label">Private Secret (a)</div>
+              <div class="value math-val">6</div>
+              <div class="value color-val hidden" style="background-color: #ef4444"></div>
+            </div>
+            <div class="mix-box" id="aliceMixBox">
+              <div class="label">Calculation (A)</div>
+              <div class="calc-text math-val">Waiting...</div>
+              <div class="calc-color color-val hidden"></div>
+            </div>
+            <div class="result-box" id="aliceResultBox">
+              <div class="label">Shared Secret</div>
+              <div class="final-text math-val">?</div>
+              <div class="final-color color-val hidden"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- EVE (Public Channel) -->
+        <section class="actor-panel eve-panel">
+          <div class="actor-header">
+            <h2><i class="fas fa-user-secret"></i> Public Channel (Eve)</h2>
+          </div>
+          <div class="actor-body">
+            <div class="public-params">
+              <div class="param">
+                <span class="label">Prime (p):</span>
+                <span class="value math-val">23</span>
+              </div>
+              <div class="param">
+                <span class="label">Base (g):</span>
+                <span class="value math-val">5</span>
+                <span class="value color-val hidden" style="background-color: #f59e0b"></span>
+              </div>
+            </div>
+
+            <div class="traffic-monitor">
+              <h3>Intercepted Traffic</h3>
+              <div class="traffic-log" id="eveTrafficLog">
+                <div class="log-entry empty">Waiting for transmission...</div>
+              </div>
+            </div>
+
+            <div id="eveConclusion" class="eve-conclusion">
+              Eve has: <br />
+              <strong>p, g, A, B</strong><br />
+              But cannot easily compute <strong>s</strong>.
+            </div>
+          </div>
+        </section>
+
+        <!-- BOB -->
+        <section class="actor-panel bob-panel">
+          <div class="actor-header">
+            <h2><i class="fas fa-user"></i> Bob</h2>
+          </div>
+          <div class="actor-body">
+            <div class="secret-box">
+              <div class="label">Private Secret (b)</div>
+              <div class="value math-val">15</div>
+              <div class="value color-val hidden" style="background-color: #3b82f6"></div>
+            </div>
+            <div class="mix-box" id="bobMixBox">
+              <div class="label">Calculation (B)</div>
+              <div class="calc-text math-val">Waiting...</div>
+              <div class="calc-color color-val hidden"></div>
+            </div>
+            <div class="result-box" id="bobResultBox">
+              <div class="label">Shared Secret</div>
+              <div class="final-text math-val">?</div>
+              <div class="final-color color-val hidden"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="diffie-hellman-visualizer.js"></script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+  </body>
+</html>

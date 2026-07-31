@@ -1017,8 +1017,24 @@ class RedisAcademy {
     const lesson = curriculum[mIdx].lessons[lIdx];
 
     this.dom.lessonTitle.textContent = lesson.title;
-    this.dom.lessonBody.innerHTML = lesson.content;
 
+    /* ── ELI5: wrap content in data-technical / data-simple ── */
+    const eli5 = window.eli5Toggle;
+    const simpleContent =
+      window.eli5RedisData && lesson.id ? (window.eli5RedisData[lesson.id] || '') : '';
+    this.dom.lessonBody.innerHTML = eli5
+      ? eli5.wrapContent(lesson.content, simpleContent)
+      : lesson.content;
+
+    /* Remove old toggle if present, then re-init */
+    const oldToggle = this.dom.lessonBody.querySelector('.eli5-toggle');
+    if (oldToggle) oldToggle.remove();
+
+    if (eli5) {
+      eli5.initToggle('redis', this.dom.lessonBody);
+    }
+
+    copyCode.init(this.dom.lessonBody);
     const id = lesson.id;
     const done = this.completedLessons.has(id);
     this.dom.btnComplete.disabled = done;

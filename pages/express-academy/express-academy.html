@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="express-academy.css">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/styles/eli5-toggle.css">
+    <link rel="stylesheet" href="/styles/copy-code.css">
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
 
@@ -71,7 +73,7 @@
 
         <!-- Content Area -->
         <div class="flex-1 overflow-hidden bg-gray-50 p-4 md:p-6 relative">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 w-full h-full overflow-hidden relative">
+            <div class="visualizer-panel visualizer-panel-interactive">
                 
                 <!-- Lesson Viewer Wrapper -->
                 <div id="tab-lesson" class="tab-content h-full overflow-y-auto p-6 md:p-10 active">
@@ -85,7 +87,7 @@
                     <div class="w-full lg:w-1/2 h-1/2 lg:h-full flex flex-col border-b lg:border-b-0 lg:border-r border-gray-300">
                         <div class="bg-gray-800 text-gray-200 text-xs py-2 px-4 flex justify-between items-center font-mono border-b border-gray-700">
                             <span>app.js (Express Server)</span>
-                            <button id="run-server-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded shadow text-xs font-sans transition-colors font-semibold">
+                            <button id="run-server-btn" class="btn-simulator btn-simulator-primary text-xs font-sans font-semibold">
                                 <i class="fa-solid fa-play mr-1"></i> Start Server
                             </button>
                         </div>
@@ -160,6 +162,9 @@
         </div>
     </main>
 
+    <script src="/modules/eli5-toggle.js"></script>
+    <script src="/modules/eli5-express-data.js"></script>
+    <script src="express-academy-data.js"></script>
     <script src="express-academy.js"></script>
 </body>
 </html>

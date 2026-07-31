@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fractional Cascading Visualizer | Algo Infinity Verse</title>
+    <meta name="description" content="Search K sorted lists with a single binary search plus O(1) pointer-following per list — watch promoted elements build bridges between cascaded tracks." />
+    <link rel="stylesheet" href="../../../styles.css" />
+    <link rel="stylesheet" href="fractional-cascading-visualizer.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+  </head>
+  <body data-page="fractional-cascading-visualizer">
+
+    <div id="navbar-placeholder"></div>
+
+    <button id="scrollTopBtn" aria-label="Scroll to top" class="scroll-top-btn">
+      <i class="fas fa-circle-chevron-up"></i>
+    </button>
+
+    <section class="fc-hero">
+      <div class="fc-hero-bg"><canvas id="fcHeroCanvas" class="fc-hero-canvas" aria-hidden="true"></canvas></div>
+      <div class="fc-hero-inner">
+        <div class="fc-hero-eyebrow">🌉 Computational Geometry · One Binary Search, Then Free Rides</div>
+        <h1 class="fc-hero-title">Fractional<br />Cascading</h1>
+        <p class="fc-hero-sub">Search K sorted lists. Pay for exactly ONE binary search.</p>
+        <p class="fc-hero-desc">Promote every other element from each list into the previous one, building bridges between them. One binary search in the first cascaded track, then follow bridges — O(1) per remaining list, no more binary searches needed.</p>
+        <a href="#lab" class="btn btn-primary fc-btn-primary"><i class="fas fa-diagram-project"></i> Build the Bridges</a>
+      </div>
+    </section>
+
+    <section id="lab" class="section fc-section">
+      <div class="container">
+
+        <div class="fc-control-card">
+          <div class="fc-row">
+            <span class="fc-row-label">Lists (K)</span>
+            <div class="fc-k-btns">
+              <button class="fc-k-btn" data-k="3">3</button>
+              <button class="fc-k-btn active" data-k="4">4</button>
+              <button class="fc-k-btn" data-k="5">5</button>
+            </div>
+            <button class="btn btn-secondary fc-randomize-btn" id="fcRandomizeBtn"><i class="fas fa-shuffle"></i> Randomize Lists</button>
+          </div>
+          <div class="fc-row">
+            <label class="fc-row-label" for="fcQueryInput">Query value</label>
+            <input type="number" id="fcQueryInput" class="fc-num-input" value="12" min="0" max="99" />
+            <button class="btn fc-btn-primary fc-search-btn" id="fcSearchBtn"><i class="fas fa-magnifying-glass"></i> Search All Lists</button>
+          </div>
+        </div>
+
+        <div class="fc-status" id="fcStatus">Build cascaded tracks, then search — watch one binary search followed by O(1) bridge-hops answer all K lists.</div>
+
+        <div class="fc-tracks-wrap">
+          <div class="fc-panel-title"><i class="fas fa-road"></i> Cascaded Tracks — Solid = Original Element, Ghost = Promoted (Bridge)</div>
+          <div class="fc-tracks-canvas-wrap"><canvas id="fcTracksCanvas" class="fc-tracks-canvas" role="img" aria-label="Cascaded tracks diagram: solid circles are original elements, dotted circles are promoted bridge elements, arcs show bridges between tracks."></canvas></div>
+        </div>
+
+        <div class="fc-main-layout">
+
+          <div class="fc-results-section">
+            <div class="fc-panel-title"><i class="fas fa-list-check"></i> Successor Found Per List</div>
+            <div class="fc-results-row" id="fcResultsRow"></div>
+          </div>
+
+          <div class="fc-right-panel">
+
+            <div class="fc-panel-card">
+              <div class="fc-panel-title"><i class="fas fa-gauge-high"></i> Operations Comparison</div>
+              <div class="fc-stat-rows">
+                <div class="fc-stat-row"><span>Fractional Cascading</span><span id="fcCascadeOps">—</span></div>
+                <div class="fc-stat-row"><span>Naive (binary search per list)</span><span id="fcNaiveOps">—</span></div>
+              </div>
+            </div>
+
+            <div class="fc-panel-card">
+              <div class="fc-panel-title"><i class="fas fa-list-ol"></i> Search Trace</div>
+              <div class="fc-log" id="fcLog"><div class="fc-empty">Run a search to see the trace.</div></div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <section id="learn" class="section">
+      <div class="container">
+        <h2 class="section-title"><span class="title-icon">🌉</span> Why the Bridges Never Break</h2>
+        <div class="fc-learn-grid">
+          <div class="fc-learn-card" style="--lc:#06b6d4">
+            <div class="fc-learn-icon">👻</div>
+            <h3>Promoting Every Other Element</h3>
+            <p>Each cascaded track is built from the list below it: take every other element and merge it into the track above, tagged as a "ghost." This roughly doubles each track's size but keeps total space linear across all K lists.</p>
+          </div>
+          <div class="fc-learn-card" style="--lc:#a855f7">
+            <div class="fc-learn-icon">🔗</div>
+            <h3>The Bridge Pointer</h3>
+            <p>Every element in a cascaded track — original or ghost — stores a "bridge": the index of its own successor in the track below. This pointer is built once, in O(1) amortized per element, during construction.</p>
+          </div>
+          <div class="fc-learn-card" style="--lc:#22c55e">
+            <div class="fc-learn-icon">🎯</div>
+            <h3>Why One Binary Search Is Enough</h3>
+            <p>Because every OTHER element was promoted, the position a bridge points to in the next track is never more than 1 slot away from the true answer — a tiny local scan, not a fresh binary search. This bounded drift is the entire trick.</p>
+          </div>
+          <div class="fc-learn-card" style="--lc:#f59e0b">
+            <div class="fc-learn-icon">🗺️</div>
+            <h3>Where This Shows Up</h3>
+            <p>Fractional cascading was invented for computational geometry problems — answering "which of these K line segments does a query ray cross first" across many slabs — and shows up in database range-query indexes and multi-layer map data structures.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="../../../auth.js"></script>
+    <script src="../../../script.js"></script>
+    <script src="../../../theme.js"></script>
+    <script src="../../../auth-gate.js"></script>
+    <script src="fractional-cascading-visualizer.js"></script>
+    <script>
+      if (typeof loadPartial === 'function') {
+        loadPartial('navbar-placeholder', '/partials/navbar.html').then(function() {
+          if (typeof initNavbar === 'function') initNavbar();
+        });
+        loadPartial('footer-placeholder', '/partials/footer.html');
+      }
+    </script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+  </body>
+</html>

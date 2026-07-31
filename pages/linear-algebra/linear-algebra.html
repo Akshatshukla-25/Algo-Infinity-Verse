@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Linear Algebra for Programmers | Algo Infinity Verse</title>
+
+    <meta
+      name="description"
+      content="Linear algebra for programmers — vectors, matrices, matrix multiplication, determinants, eigenvalues, transformations, and competitive programming applications."
+    />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Algo Infinity Verse" />
+    <meta property="og:title" content="Linear Algebra for Programmers" />
+    <meta
+      property="og:description"
+      content="Vectors, matrices, determinants, eigenvalues, transformations — explained for coders, with competitive programming applications."
+    />
+    <meta property="og:image" content="/images/banner.png" />
+
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/images/icon-192x192.svg" />
+    <link rel="shortcut icon" href="/images/icon-192x192.svg" />
+    <meta name="theme-color" content="#38bdf8" />
+
+    <link rel="stylesheet" href="/Algo-Infinity-Verse/styles.css" />
+    <link rel="stylesheet" href="/Algo-Infinity-Verse/pages/learning/linear-algebra/linear-algebra.css" />
+    
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Theme Initialization Script (matches index.html) -->
+    <script>
+      (function () {
+        try {
+          var storedTheme = localStorage.getItem('theme');
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          var theme = storedTheme || (prefersLight ? 'light' : 'dark');
+          if (theme === 'light') {
+            document.documentElement.classList.add('light-mode');
+          } else {
+            document.documentElement.classList.remove('light-mode');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body data-page="linear-algebra">
+    <!-- Navigation Bar (loaded from partial) -->
+    <div id="navbar-placeholder"></div>
+
+    <main id="main" tabindex="-1">
+      <!-- Page Hero -->
+      <section class="la-hero">
+        <div class="container la-hero-grid">
+          <div class="la-hero-copy">
+            <div class="la-hero-top">
+              <span class="la-hero-icon">📐</span>
+              <div>
+                <h1 class="la-title">Linear Algebra for Programmers</h1>
+                <p class="la-subtitle">
+                  The math foundation behind graphics, machine learning, and competitive
+                  programming — explained for coders, not mathematicians.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Signature visual: a vector grid being reshaped by a rotation matrix -->
+          <div class="la-hero-visual" aria-hidden="true">
+            <svg viewBox="0 0 300 300" class="la-matrix-svg">
+              <defs>
+                <linearGradient id="laVecGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#a78bfa" />
+                </linearGradient>
+              </defs>
+              <g class="la-grid-static">
+                <!-- faint reference grid (untransformed) -->
+                <g stroke="rgba(148,163,184,0.18)" stroke-width="1">
+                  <line x1="30" y1="30" x2="30" y2="270" />
+                  <line x1="90" y1="30" x2="90" y2="270" />
+                  <line x1="150" y1="30" x2="150" y2="270" />
+                  <line x1="210" y1="30" x2="210" y2="270" />
+                  <line x1="270" y1="30" x2="270" y2="270" />
+                  <line x1="30" y1="30" x2="270" y2="30" />
+                  <line x1="30" y1="90" x2="270" y2="90" />
+                  <line x1="30" y1="150" x2="270" y2="150" />
+                  <line x1="30" y1="210" x2="270" y2="210" />
+                  <line x1="30" y1="270" x2="270" y2="270" />
+                </g>
+              </g>
+              <g class="la-grid-transformed" stroke="url(#laVecGrad)" stroke-width="1.4" fill="none">
+                <line x1="30" y1="30" x2="30" y2="270" />
+                <line x1="90" y1="30" x2="90" y2="270" />
+                <line x1="150" y1="30" x2="150" y2="270" />
+                <line x1="210" y1="30" x2="210" y2="270" />
+                <line x1="270" y1="30" x2="270" y2="270" />
+                <line x1="30" y1="30" x2="270" y2="30" />
+                <line x1="30" y1="90" x2="270" y2="90" />
+                <line x1="30" y1="150" x2="270" y2="150" />
+                <line x1="30" y1="210" x2="270" y2="210" />
+                <line x1="30" y1="270" x2="270" y2="270" />
+              </g>
+              <g class="la-vector-arrow">
+                <line x1="150" y1="150" x2="230" y2="90" stroke="#f1f5f9" stroke-width="2.5" />
+                <polygon points="230,90 216,94 222,104" fill="#f1f5f9" />
+                <circle cx="150" cy="150" r="3.5" fill="#f1f5f9" />
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- Table of contents -->
+      <section class="la-toc-section">
+        <div class="container">
+          <nav class="la-toc" aria-label="Table of contents">
+            <a href="#vectors"><span class="la-toc-num">01</span>Vectors</a>
+            <a href="#matrices"><span class="la-toc-num">02</span>Matrices</a>
+            <a href="#matrix-multiplication"><span class="la-toc-num">03</span>Matrix Multiplication</a>
+            <a href="#determinants"><span class="la-toc-num">04</span>Determinants</a>
+            <a href="#eigenvalues"><span class="la-toc-num">05</span>Eigenvalues</a>
+            <a href="#transformations"><span class="la-toc-num">06</span>Transformations</a>
+            <a href="#competitive-programming"><span class="la-toc-num">07</span>Competitive Programming</a>
+          </nav>
+        </div>
+      </section>
+
+      <!-- Content -->
+      <section class="la-content section">
+        <div class="container la-content-grid">
+          <article class="la-card" id="vectors">
+            <span class="la-card-index">01</span>
+            <h2><i class="fas fa-arrows-alt"></i> Vectors</h2>
+            <p>
+              A vector is a quantity with both <strong>magnitude</strong> and
+              <strong>direction</strong> — think of it as an arrow, or in code, a fixed-size
+              array of numbers.
+            </p>
+            <ul>
+              <li><strong>Magnitude:</strong> <code>|v| = sqrt(x² + y² + z² + ...)</code></li>
+              <li>
+                <strong>Dot product:</strong> <code>a · b = Σ aᵢbᵢ</code> — measures how much two
+                vectors point in the same direction. Zero means perpendicular.
+              </li>
+              <li>
+                <strong>Cross product</strong> (3D only): produces a vector perpendicular to both
+                inputs — used for normals in graphics and physics.
+              </li>
+            </ul>
+            <div class="la-tip">
+              <i class="fas fa-lightbulb"></i>
+              Dot product sign tells you the angle: positive = same-ish direction, negative =
+              opposite-ish, zero = perpendicular.
+            </div>
+            <div class="la-links">
+              <a href="https://www.youtube.com/watch?v=fNk_zzaMoSs" target="_blank" rel="noopener">
+                <i class="fab fa-youtube"></i> 3Blue1Brown — Vectors, what even are they?
+              </a>
+              <a href="https://en.wikipedia.org/wiki/Dot_product" target="_blank" rel="noopener">
+                <i class="fas fa-book"></i> Wikipedia — Dot product
+              </a>
+            </div>
+          </article>
+
+          <article class="la-card" id="matrices">
+            <span class="la-card-index">02</span>
+            <h2><i class="fas fa-table-cells"></i> Matrices</h2>
+            <p>
+              A matrix is a 2D grid of numbers. In code it's usually a
+              <code>number[][]</code>. Matrices represent
+              <strong>linear transformations</strong> — functions that map vectors to other
+              vectors while preserving straight lines and the origin.
+            </p>
+            <ul>
+              <li><strong>Addition:</strong> element-wise, requires matching dimensions.</li>
+              <li>
+                <strong>Scalar multiplication:</strong> multiply every entry by a constant.
+              </li>
+              <li>
+                <strong>Identity matrix:</strong> the "do nothing" transformation — 1s on the
+                diagonal, 0s elsewhere.
+              </li>
+            </ul>
+            <div class="la-links">
+              <a href="https://www.youtube.com/watch?v=kYB8IZa5AuE" target="_blank" rel="noopener">
+                <i class="fab fa-youtube"></i> 3Blue1Brown — Linear transformations and matrices
+              </a>
+              <a href="https://en.wikipedia.org/wiki/Matrix_(mathematics)" target="_blank" rel="noopener">
+                <i class="fas fa-book"></i> Wikipedia — Matrix (mathematics)
+              </a>
+            </div>
+          </article>
+
+          <article class="la-card" id="matrix-multiplication">
+            <span class="la-card-index">03</span>
+            <h2><i class="fas fa-layer-group"></i> Matrix Multiplication</h2>
+            <p>
+              Multiplying two matrices <strong>composes</strong> their transformations — applying
+              B then A is the same as applying the single matrix <code>A × B</code>.
+            </p>
+            <table class="la-table">
+              <thead>
+                <tr>
+                  <th>Operation</th>
+                  <th>Time Complexity</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Naive matrix multiply (n×n)</td>
+                  <td>O(n³)</td>
+                </tr>
+                <tr>
+                  <td>Strassen's algorithm</td>
+                  <td>O(n^2.807)</td>
+                </tr>
+                <tr>
+                  <td>Matrix-vector multiply</td>
+                  <td>O(n²)</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="la-tip">
+              <i class="fas fa-lightbulb"></i>
+              Matrix multiplication is <strong>not commutative</strong>: <code>A × B ≠ B × A</code>
+              in general. Order matters.
+            </div>
+            <div class="la-links">
+              <a href="https://www.youtube.com/watch?v=XkY2DOUCWMU" target="_blank" rel="noopener">
+                <i class="fab fa-youtube"></i> 3Blue1Brown — Matrix multiplication as composition
+              </a>
+              <a href="https://en.wikipedia.org/wiki/Strassen_algorithm" target="_blank" rel="noopener">
+                <i class="fas fa-book"></i> Wikipedia — Strassen's algorithm
+              </a>
+            </div>
+          </article>
+
+          <article class="la-card" id="determinants">
+            <span class="la-card-index">04</span>
+            <h2><i class="fas fa-calculator"></i> Determinants</h2>
+            <p>
+              The determinant of a matrix is a single number that tells you how much a
+              transformation scales area (2D) or volume (3D) — and whether it flips orientation.
+            </p>
+            <ul>
+              <li><strong>det = 0:</strong> the transformation collapses space — not invertible.</li>
+              <li><strong>det &lt; 0:</strong> orientation is flipped (mirrored).</li>
+              <li><strong>|det|:</strong> the area/volume scaling factor.</li>
+            </ul>
+            <div class="la-links">
+              <a href="https://www.youtube.com/watch?v=Ip3X9LOh2dk" target="_blank" rel="noopener">
+                <i class="fab fa-youtube"></i> 3Blue1Brown — The determinant
+              </a>
+              <a href="https://en.wikipedia.org/wiki/Determinant" target="_blank" rel="noopener">
+                <i class="fas fa-book"></i> Wikipedia — Determinant
+              </a>
+            </div>
+          </article>
+
+          <article class="la-card" id="eigenvalues">
+            <span class="la-card-index">05</span>
+            <h2><i class="fas fa-compass"></i> Eigenvalues &amp; Eigenvectors</h2>
+            <p>
+              An eigenvector of a matrix is a direction that <strong>doesn't rotate</strong> under
+              the transformation — it only gets stretched or shrunk. The scale factor is its
+              eigenvalue: <code>Av = λv</code>.
+            </p>
+            <div class="la-tip">
+              <i class="fas fa-lightbulb"></i>
+              Eigenvectors show up everywhere: PageRank's ranking vector, PCA in machine learning,
+              and stability analysis in physics simulations.
+            </div>
+            <div class="la-links">
+              <a href="https://www.youtube.com/watch?v=PFDu9oVAE-g" target="_blank" rel="noopener">
+                <i class="fab fa-youtube"></i> 3Blue1Brown — Eigenvectors and eigenvalues
+              </a>
+              <a href="https://en.wikipedia.org/wiki/Eigenvalues_and_eigenvectors" target="_blank" rel="noopener">
+                <i class="fas fa-book"></i> Wikipedia — Eigenvalues and eigenvectors
+              </a>
+            </div>
+          </article>
+
+          <article class="la-card" id="transformations">
+            <span class="la-card-index">06</span>
+            <h2><i class="fas fa-arrows-spin"></i> Transformations</h2>
+            <p>
+              Common 2D/3D transformations are just specific matrices applied to vectors:
+            </p>
+            <ul>
+              <li><strong>Scaling:</strong> diagonal matrix, multiplies each axis independently.</li>
+              <li><strong>Rotation:</strong> uses sine/cosine to rotate around an axis or origin.</li>
+              <li><strong>Shearing:</strong> slants shapes along an axis.</li>
+              <li><strong>Projection:</strong> collapses higher dimensions onto a lower one (e.g., 3D → 2D screen).</li>
+            </ul>
+            <div class="la-links">
+              <a href="https://en.wikipedia.org/wiki/Transformation_matrix" target="_blank" rel="noopener">
+                <i class="fas fa-book"></i> Wikipedia — Transformation matrix
+              </a>
+              <a href="https://en.wikipedia.org/wiki/Linear_map" target="_blank" rel="noopener">
+                <i class="fas fa-book"></i> Wikipedia — Linear map
+              </a>
+            </div>
+          </article>
+
+          <article class="la-card la-card-wide" id="competitive-programming">
+            <span class="la-card-index">07</span>
+            <h2><i class="fas fa-trophy"></i> Competitive Programming Applications</h2>
+            <p>
+              Linear algebra isn't just theory — it directly speeds up real contest problems:
+            </p>
+            <ul>
+              <li>
+                <strong>Matrix exponentiation:</strong> compute linear recurrences (like
+                Fibonacci) in <code>O(log n)</code> instead of <code>O(n)</code> by
+                repeated-squaring a transition matrix.
+              </li>
+              <li>
+                <strong>Gaussian elimination:</strong> solves systems of linear equations,
+                used in XOR-basis and linear-independence problems.
+              </li>
+              <li>
+                <strong>Computational geometry:</strong> cross products determine turn direction
+                and point orientation — the backbone of convex hull algorithms.
+              </li>
+            </ul>
+            <div class="la-tip">
+              <i class="fas fa-lightbulb"></i>
+              If a recurrence relation is linear (each term is a fixed combination of previous
+              terms), it can almost always be expressed as matrix exponentiation.
+            </div>
+            <div class="la-links">
+              <a href="https://cp-algorithms.com/algebra/fibonacci-numbers.html" target="_blank" rel="noopener">
+                <i class="fas fa-code"></i> cp-algorithms — Matrix exponentiation &amp; Fibonacci
+              </a>
+              <a href="https://cp-algorithms.com/linear_algebra/linear-system-gauss.html" target="_blank" rel="noopener">
+                <i class="fas fa-code"></i> cp-algorithms — Gaussian elimination
+              </a>
+              <a href="https://cp-algorithms.com/geometry/convex-hull.html" target="_blank" rel="noopener">
+                <i class="fas fa-code"></i> cp-algorithms — Convex hull construction
+              </a>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <div id="footer-placeholder"></div>
+
+    <script>
+      async function loadPartial(id, url) {
+        try {
+          const resp = await fetch(url + '?t=' + Date.now());
+          if (!resp.ok) throw new Error('HTTP error! status: ' + resp.status);
+          const html = await resp.text();
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = html;
+          if (typeof handleActiveNav === 'function') handleActiveNav();
+        } catch (e) {
+          /* fail silently, page still works without nav/footer */
+        }
+      }
+      (async function () {
+        await Promise.all([
+          loadPartial('navbar-placeholder', '/partials/navbar.html'),
+          loadPartial('footer-placeholder', '/partials/footer.html'),
+        ]);
+      })();
+    </script>
+  </body>
+</html>

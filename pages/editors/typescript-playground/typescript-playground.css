@@ -1,0 +1,544 @@
+/* ─────────────────────────────────────────────
+   TypeScript Playground – Scoped Styles
+   Prefix: tsp-
+   ───────────────────────────────────────────── */
+
+.tsp-hero {
+  min-height: 50vh;
+  padding-bottom: 2rem;
+}
+
+.tsp-title-gradient {
+  background-image: linear-gradient(135deg, #3178c6 0%, #7c3aed 100%);
+}
+
+.tsp-hero-desc {
+  max-width: 640px;
+  margin: 1rem auto 3.5rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.tsp-accent-icon {
+  color: #3178c6;
+}
+.tsp-success-icon {
+  color: #22c55e;
+}
+.tsp-warning-icon {
+  color: #f59e0b;
+}
+
+.tsp-status-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.tsp-status-ready {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.tsp-status-running {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.tsp-status-error {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Editor Container (shared shell classes reused from other editor pages) */
+.editor-container {
+  display: block;
+  max-width: 1400px;
+  margin: -50px auto 4rem;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 10;
+}
+
+.editor-wrapper {
+  background: var(--dark-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--glass-border);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.editor-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.editor-info i {
+  font-size: 1.2rem;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tsp-select {
+  background: var(--dark-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.tsp-icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tsp-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #3178c6;
+  border-color: #3178c6;
+}
+
+.tsp-auto-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.tsp-run-btn {
+  background: linear-gradient(135deg, #3178c6 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.tsp-run-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(49, 120, 198, 0.4);
+}
+
+.tsp-run-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Editor Main & File Explorer (shared shell classes reused from other editor pages) */
+.editor-main {
+  display: flex;
+  height: 550px;
+  background: #0d1117;
+}
+
+.file-explorer {
+  width: 230px;
+  background: rgba(0, 0, 0, 0.25);
+  border-right: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.explorer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.explorer-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+  padding: 2px;
+}
+
+.explorer-action-btn:hover {
+  color: #3178c6;
+}
+
+.file-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+}
+
+.file-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+
+.file-item.active {
+  background: rgba(49, 120, 198, 0.15);
+  border-left: 3px solid #3178c6;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.file-item.has-error .file-name-container i {
+  color: #ef4444;
+}
+
+.file-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-name-container i {
+  color: #3178c6;
+}
+
+.file-item-actions {
+  display: none;
+  gap: 0.4rem;
+}
+
+.file-item:hover .file-item-actions {
+  display: flex;
+}
+
+.file-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px;
+  transition: color 0.15s;
+}
+
+.file-action-btn:hover {
+  color: var(--text-primary);
+}
+
+.file-action-btn.delete:hover {
+  color: #ef4444;
+}
+
+.file-action-btn.edit:hover {
+  color: #3178c6;
+}
+
+.file-item-input-wrapper {
+  padding: 0.2rem 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.file-item-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #3178c6;
+  border-radius: 4px;
+  color: white;
+  padding: 0.35rem 0.5rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Monaco workspace */
+.code-editor-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+}
+
+.tsp-monaco-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.tsp-monaco-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  color: var(--text-secondary);
+  background: #0d1117;
+  font-size: 0.9rem;
+  z-index: 2;
+}
+
+.tsp-monaco-loading.hidden {
+  display: none;
+}
+
+.editor-shortcuts {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid var(--glass-border);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.editor-shortcuts kbd {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  font-family: 'Fira Code', monospace;
+}
+
+/* Output Panels (shared shell classes reused from other editor pages) */
+.panels-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.panel {
+  background: var(--dark-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 320px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tsp-problems-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.tsp-problems-count.has-errors {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.panel-body {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.tsp-output-placeholder,
+.tsp-console-placeholder,
+.tsp-problems-placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.tsp-compiled-output {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #e2e8f0;
+}
+
+.tsp-console-line {
+  display: block;
+  padding: 0.15rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tsp-log-log {
+  color: var(--text-primary);
+}
+.tsp-log-info {
+  color: #38bdf8;
+}
+.tsp-log-warn {
+  color: #f59e0b;
+}
+.tsp-log-error {
+  color: #ef4444;
+}
+.tsp-log-success {
+  color: #22c55e;
+}
+
+.tsp-problem-item {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.tsp-problem-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tsp-problem-icon.error {
+  color: #ef4444;
+}
+.tsp-problem-icon.warning {
+  color: #f59e0b;
+}
+
+.tsp-problem-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.tsp-problem-message {
+  color: var(--text-primary);
+}
+
+.tsp-problem-location {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+.console-clear-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: auto;
+  padding: 2px;
+  transition: color 0.15s;
+}
+
+.console-clear-btn:hover {
+  color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .panels-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .editor-main {
+    flex-direction: column;
+    height: auto;
+  }
+  .file-explorer {
+    width: 100%;
+    max-height: 180px;
+  }
+  .tsp-monaco-container {
+    height: 420px;
+  }
+  .code-editor-workspace {
+    min-height: 420px;
+  }
+}
+/* Vim Status Bar */
+.vim-status-bar {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-family: var(--code-font, 'Fira Code', monospace);
+  font-size: 13px;
+  padding: 4px 10px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+}
+.vim-status-bar.hidden {
+  display: none;
+}

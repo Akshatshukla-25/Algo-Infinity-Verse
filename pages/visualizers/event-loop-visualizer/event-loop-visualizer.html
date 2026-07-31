@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JavaScript Event Loop Visualizer | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Interactive JavaScript runtime visualizer: Call Stack, Web APIs, Microtask Queue, Macrotask Queue, and the Event Loop scheduler."
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="event-loop-visualizer.css" />
+    <script src="/theme.js"></script>
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+  </head>
+  <body class="el-body">
+    <nav class="navbar el-nav">
+      <div class="nav-logo">
+        <span class="logo-title">Algo Infinity Verse</span>
+      </div>
+      <div class="engine-badge" id="engineBadge">
+        <i class="fas fa-microchip"></i> JS Runtime: <span id="runtime-state">Idle</span>
+      </div>
+    </nav>
+
+    <header class="el-header">
+      <h1>
+        <i class="fas fa-loop"></i>
+        JavaScript Event Loop Visualizer
+      </h1>
+      <p class="el-tagline">
+        Step through <code>setTimeout</code>, <code>Promise</code>, <code>queueMicrotask</code>,
+        <code>async/await</code>, <code>setInterval</code>, and
+        <code>requestAnimationFrame</code> and watch the Call Stack, Web APIs, Microtask Queue, and
+        Macrotask Queue move callbacks in real time.
+      </p>
+    </header>
+
+    <main class="el-workspace">
+      <!-- ─── LEFT PANEL: Editor + Examples + Controls ─── -->
+      <section class="panel panel-left" aria-label="Editor and controls">
+        <div class="panel-header">
+          <h3><i class="fas fa-code"></i> Editor</h3>
+          <div class="example-row">
+            <label for="exampleSelect" class="visually-hidden">Built-in example</label>
+            <select id="exampleSelect" class="select">
+              <option value="intro">Example 1: Promise vs setTimeout</option>
+              <option value="await">Example 2: async/await order</option>
+              <option value="nested">Example 3: Nested microtasks</option>
+              <option value="raf">Example 4: requestAnimationFrame</option>
+              <option value="interval">Example 5: setInterval counter</option>
+              <option value="custom">Custom program</option>
+            </select>
+          </div>
+        </div>
+
+        <textarea
+          id="codeInput"
+          class="code-input"
+          rows="14"
+          spellcheck="false"
+          aria-label="Program to visualize"
+        ></textarea>
+
+        <div class="control-grid">
+          <button type="button" class="btn btn-primary" id="btnRun">
+            <i class="fas fa-play"></i> Run
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnStep">
+            <i class="fas fa-forward-step"></i> Step
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnPause">
+            <i class="fas fa-pause"></i> Pause
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnReset">
+            <i class="fas fa-rotate-left"></i> Reset
+          </button>
+        </div>
+
+        <div class="speed-row">
+          <label for="speedRange" class="speed-label">Speed</label>
+          <input type="range" id="speedRange" min="50" max="1200" value="450" step="50" />
+          <span class="speed-value" id="speedValue">450 ms / step</span>
+        </div>
+
+        <div class="legend">
+          <h4><i class="fas fa-palette"></i> Legend</h4>
+          <ul class="legend-list">
+            <li><span class="dot dot-call"></span> Call frame</li>
+            <li><span class="dot dot-web"></span> Web API timer</li>
+            <li><span class="dot dot-micro"></span> Microtask</li>
+            <li><span class="dot dot-macro"></span> Macrotask</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ─── MIDDLE PANEL: The runtime picture ─── -->
+      <section class="panel panel-center" aria-label="Runtime visualisation">
+        <div class="runtime-grid">
+          <div class="region column" id="regionCallStack">
+            <div
+              class="region-header"
+              style="background: linear-gradient(135deg, #ff8a3d, #ff5722)"
+            >
+              <i class="fas fa-layer-group"></i> Call Stack
+            </div>
+            <ul class="bucket" id="callStack" aria-label="Call stack"></ul>
+          </div>
+
+          <div class="region column" id="regionWebApi">
+            <div
+              class="region-header"
+              style="background: linear-gradient(135deg, #4dc4ff, #2196f3)"
+            >
+              <i class="fas fa-globe"></i> Web APIs
+            </div>
+            <ul class="bucket" id="webApis" aria-label="Web APIs in-flight"></ul>
+          </div>
+
+          <div class="queues-row">
+            <div class="region column" id="regionMicrotask">
+              <div
+                class="region-header"
+                style="background: linear-gradient(135deg, #9b8cff, #6d4fff)"
+              >
+                <i class="fas fa-bolt"></i> Microtask Queue
+              </div>
+              <ul class="bucket" id="microtaskQueue" aria-label="Microtask queue"></ul>
+            </div>
+            <div class="region column" id="regionMacrotask">
+              <div
+                class="region-header"
+                style="background: linear-gradient(135deg, #ffc861, #ff9800)"
+              >
+                <i class="fas fa-clock"></i> Macrotask Queue
+              </div>
+              <ul class="bucket" id="macrotaskQueue" aria-label="Macrotask queue"></ul>
+            </div>
+          </div>
+
+          <div class="event-loop-card" id="eventLoopCard" aria-live="polite">
+            <div class="event-loop-ring">
+              <i class="fas fa-arrows-rotate"></i>
+            </div>
+            <div class="event-loop-text">
+              <div class="el-name">Event Loop</div>
+              <div class="el-status" id="eventLoopStatus">Idle</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timer-bar">
+          <i class="fas fa-stopwatch"></i>
+          Tick: <strong id="tickCount">0</strong>
+          <span class="sep">|</span>
+          <i class="fas fa-clock"></i>
+          Simulated <strong id="simTime">0</strong> ms
+          <span class="sep">|</span>
+          <i class="fas fa-list-ol"></i>
+          Visited <strong id="visitCount">0</strong> ops
+        </div>
+      </section>
+
+      <!-- ─── RIGHT PANEL: Logs + Reason ─── -->
+      <aside class="panel panel-right" aria-label="Trace logs and explanations">
+        <div class="panel-header">
+          <h3><i class="fas fa-list"></i> Trace Log</h3>
+          <button type="button" class="btn btn-tertiary" id="btnClearLog">
+            <i class="fas fa-eraser"></i> Clear
+          </button>
+        </div>
+        <ol class="log" id="log" aria-live="polite" aria-atomic="false"></ol>
+
+        <div class="explain-card" id="explainCard" aria-live="polite">
+          <h4><i class="fas fa-circle-info"></i> What's happening here?</h4>
+          <p id="explainText" class="explain-text">
+            Press <strong>Run</strong> to start simulation, <strong>Step</strong> to walk forward
+            one tick at a time.
+          </p>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="el-footer">
+      <p>
+        A pedagogical simulator; the parser understands a strict subset of async APIs — see the
+        examples above. Real V8 has additional optimisations.
+      </p>
+    </footer>
+
+    <script src="event-loop-visualizer.js" defer></script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+  </body>
+</html>

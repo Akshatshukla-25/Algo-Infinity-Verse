@@ -5,6 +5,9 @@ import { VCSFactory } from '../vcs/VCSFactory.js';
 import { batchStore, redisAvailable, redisReady, redisClient } from './queue.js';
 
 let auditWorker = null;
+let reportWorker = null;
+let leaderboardWorker = null;
+let dsaBattleWorker = null;
 
 // The Redis availability probe in queue.js runs asynchronously, so `redisAvailable`
 // is still `false` at module-evaluation time. Reading it synchronously here would
@@ -24,42 +27,57 @@ async function startWorker() {
     maxRetriesPerRequest: null,
   });
 
-  auditWorker = new Worker('bulk-audit-queue', async (job) => {
-    const { repoUrl } = job.data;
+  auditWorker = new Worker(
+    'bulk-audit-queue',
+    async (job) => {
+      const { repoUrl } = job.data;
 
-    let parsedRepoUrl;
-    try {
-      parsedRepoUrl = new URL(repoUrl);
-    } catch {
-      throw new Error("Invalid GitHub URL");
-    }
-
-    if (
-      !['http:', 'https:'].includes(parsedRepoUrl.protocol) ||
-      !['github.com', 'www.github.com'].includes(parsedRepoUrl.hostname.toLowerCase())
-    ) {
-      throw new Error("Invalid GitHub URL");
-    }
-
-    try {
-      const provider = VCSFactory.getProvider(repoUrl);
-      const workflows = await provider.getNormalizedWorkflows();
-
-      let bestScore = 0;
-      for (const wf of workflows) {
-        const result = analyzeWorkflow(wf.commands);
-        if (result.score > bestScore) bestScore = result.score;
+      let parsedRepoUrl;
+      try {
+        parsedRepoUrl = new URL(repoUrl);
+      } catch {
+        throw new Error('Invalid repository URL');
       }
 
-      return { repoUrl, score: bestScore };
-    } catch (error) {
-      console.error(`Job ${job.id} failed for repo ${repoUrl}:`, error.message);
-      throw error;
+      const validHostnames = [
+        'github.com',
+        'www.github.com',
+        'gitlab.com',
+        'www.gitlab.com',
+        'bitbucket.org',
+        'www.bitbucket.org',
+      ];
+      if (
+        !['http:', 'https:'].includes(parsedRepoUrl.protocol) ||
+        !validHostnames.includes(parsedRepoUrl.hostname.toLowerCase())
+      ) {
+        throw new Error('Please provide a valid repository URL (GitHub, GitLab, or Bitbucket).');
+      }
+
+      try {
+        const provider = VCSFactory.getProvider(repoUrl);
+        const workflows = await provider.getNormalizedWorkflows();
+
+        let bestScore = 0;
+        for (const wf of workflows) {
+          const result = analyzeWorkflow(wf.commands);
+          if (result.score > bestScore) bestScore = result.score;
+        }
+
+        return { repoUrl, score: bestScore };
+      } catch (error) {
+        console.error(`Job ${job.id} failed for repo ${repoUrl}:`, error.message);
+        throw error;
+      }
+    },
+    {
+      connection: conn,
+      concurrency: 5,
+      lockDuration: 30000,
+      stalledInterval: 15000,
+      maxStalledCount: 2,
     }
-  }, {
-    connection: conn,
-    concurrency: 5,
-  });
+  );
 
   auditWorker.on('error', (_err) => {
     void 0;
@@ -100,8 +118,149 @@ async function startWorker() {
     }
   });
 
+  reportWorker = new Worker(
+    'report-queue',
+    async (job) => {
+      const { jobId, session, type } = job.data;
+      const { generateReportBuffer } = await import('../reports/reportGenerator.js');
+      try {
+        const buffer = await generateReportBuffer(session, type);
+        return buffer.toString('base64');
+      } catch (error) {
+        console.error(`Report generation failed for job ${jobId}:`, error.message);
+        throw error;
+      }
+    },
+    {
+      connection: conn,
+      concurrency: 2, // Puppeteer is heavy, limit concurrency
+      lockDuration: 60000,
+      stalledInterval: 30000,
+      maxStalledCount: 2,
+    }
+  );
+
+  reportWorker.on('error', (_err) => {
+    void 0;
+  });
+
+  reportWorker.on('completed', async (job, result) => {
+    const { jobId } = job.data;
+    if (redisClient) {
+      await redisClient.hset(`report:${jobId}`, {
+        status: 'completed',
+        data: result,
+      });
+    }
+  });
+
+  reportWorker.on('failed', async (job, err) => {
+    const { jobId } = job.data;
+    if (redisClient) {
+      await redisClient.hset(`report:${jobId}`, {
+        status: 'failed',
+        error: err.message,
+      });
+    }
+  });
+
+  leaderboardWorker = new Worker(
+    'leaderboard-queue',
+    async (job) => {
+      const { userId, xp } = job.data;
+      if (redisClient) {
+        await redisClient.zadd('leaderboard:xp', Number(xp), userId);
+      }
+    },
+    {
+      connection: conn,
+      concurrency: 5,
+    }
+  );
+
+  leaderboardWorker.on('error', (_err) => {
+    void 0;
+  });
+
+  // Set up periodic sync (every 1 hour)
+  setInterval(
+    async () => {
+      try {
+        const { syncDatabaseToRedis } = await import('../services/leaderboard.service.js');
+        await syncDatabaseToRedis();
+      } catch (err) {
+        console.error('[LEADERBOARD] Periodic sync failed:', err);
+      }
+    },
+    60 * 60 * 1000
+  ).unref?.();
+
+  // Run initial sync on startup
+  setImmediate(async () => {
+    try {
+      const { syncDatabaseToRedis } = await import('../services/leaderboard.service.js');
+      await syncDatabaseToRedis();
+    } catch (err) {
+      console.error('[LEADERBOARD] Initial startup sync failed:', err);
+    }
+  });
+
+  dsaBattleWorker = new Worker(
+    'dsa-battle-queue',
+    async (job) => {
+      // Lazy load to avoid circular dependencies
+      const { TEST_CASES } = await import('../../pages/Dsa-Battle/Battleservice.js');
+      const vm = (await import('vm')).default;
+      
+      const { code, title, socketId, userId, battleId } = job.data;
+      const problem = TEST_CASES[title];
+      
+      if (!problem) throw new Error(`Unsupported problem: ${title}`);
+      
+      const sandbox = { console, result: null };
+      const context = vm.createContext(sandbox);
+      
+      try {
+        // Evaluate the user's code first
+        vm.runInContext(code, context, { timeout: 1000 });
+        
+        let passed = 0;
+        const results = [];
+        for (const test of problem.cases) {
+          const argsStr = JSON.stringify(test.args).slice(1, -1);
+          try {
+            vm.runInContext(`result = ${problem.func}(${argsStr});`, context, { timeout: 1000 });
+            const isPass = JSON.stringify(sandbox.result) === JSON.stringify(test.expected);
+            results.push(isPass);
+            if (isPass) passed++;
+          } catch (err) {
+            results.push(false);
+          }
+        }
+        return { passed, total: problem.cases.length, results, socketId, userId, battleId, title };
+      } catch (err) {
+        return { passed: 0, total: problem.cases.length, results: problem.cases.map(() => false), error: err.message, socketId, userId, battleId, title };
+      }
+    },
+    {
+      connection: conn,
+      concurrency: 10,
+    }
+  );
+
+  dsaBattleWorker.on('completed', async (job, result) => {
+    // Publish result to redis so the web server can pick it up and emit via socket.io
+    if (redisClient) {
+      await redisClient.publish('dsa-battle-results', JSON.stringify(result));
+    }
+  });
+
+  dsaBattleWorker.on('error', (_err) => {
+    void 0;
+  });
+
   void 0;
-  return auditWorker;
+  return { auditWorker, reportWorker, leaderboardWorker, dsaBattleWorker };
 }
 
 // Kick off worker startup as a module side effect. Errors are swallowed so a
@@ -112,4 +271,4 @@ const workerReady = startWorker().catch((_err) => {
   return null;
 });
 
-export { auditWorker, startWorker, workerReady };
+export { auditWorker, reportWorker, leaderboardWorker, startWorker, workerReady };

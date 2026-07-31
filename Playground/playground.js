@@ -1,129 +1,5 @@
-/* eslint-disable */
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Playground - Algo Infinity Verse</title>
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="playground.css">
-    <link rel="stylesheet" href="/styles.css">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- TypeScript Compiler -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/typescript/5.8.2/typescript.min.js"></script>
-    
-    <!-- Ace Editor -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ext-language_tools.js"></script>
-    
-    <!-- Ace Themes -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme/ambiance.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme/eclipse.css" />
-
-    <!-- Theme Initialization Script -->
-    <script>
-      (function() {
-        try {
-          let storedTheme = localStorage.getItem('theme');
-          let prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-          let theme = storedTheme || (prefersLight ? 'light' : 'dark');
-          if (theme === 'light') {
-            document.documentElement.classList.add('light-mode');
-          } else {
-            document.documentElement.classList.remove('light-mode');
-          }
-        } catch (e) {}
-      })();
-    </script>
-
-    <style>
-        /* Save Indicator Styles */
-        .save-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: scale(0.9);
-            pointer-events: none;
-            margin-left: 12px;
-        }
-
-        .save-indicator.idle {
-            opacity: 0;
-            transform: scale(0.9);
-        }
-
-        .save-indicator.saving {
-            opacity: 1;
-            transform: scale(1);
-            background: rgba(251, 191, 36, 0.1);
-            border: 1px solid rgba(251, 191, 36, 0.2);
-        }
-
-        .save-indicator.saved {
-            opacity: 1;
-            transform: scale(1);
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            animation: savePop 0.3s ease;
-        }
-
-        .save-indicator.error {
-            opacity: 1;
-            transform: scale(1);
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .save-indicator.manual-save {
-            animation: saveFlash 0.6s ease;
-        }
-
-        .save-indicator i {
-            font-size: 0.9rem;
-        }
-
-        .save-indicator .save-text {
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        @keyframes savePop {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes saveFlash {
-            0% { background: rgba(34, 197, 94, 0.3); }
-            50% { background: rgba(34, 197, 94, 0.6); }
-            100% { background: rgba(34, 197, 94, 0.1); }
-        }
-
-        .toolbar-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Dark Theme Save Indicator */
-        .dark .save-indicator.saving {
-            background: rgba(251, 191, 36, 0.15);
-        }
-
-// Playground/playground.js
-
 import { executeSandboxedCode } from '../modules/code-executor.js';
+import { executeWasmPython, executeWasmCpp, isWasmSupported } from '../modules/wasm-executor.js';
 import { getCurrentTheme, onThemeChange, THEMES } from '../modules/theme.js';
 
 // DOM Elements
@@ -140,12 +16,18 @@ let currentTheme = getCurrentTheme();
 
 // Language templates
 const templates = {
-    javascript: `// JavaScript Playground\n\nfunction greet(name) {\n  return `Hello ${name}`;\n}\n\nconsole.log(greet("Learner"));\n`,
+    javascript: `// JavaScript Playground\n\nfunction greet(name) {\n  return \`Hello \${name}\`;\n}\n\nconsole.log(greet("Learner"));\n`,
     typescript: `// TypeScript Playground\n\ninterface User {\n  name: string;\n}\n\nconst user: User = {\n  name: "Learner"\n};\n\nconsole.log(user);\n`,
     dart: `// Dart Playground\n\nvoid main() {\n  print("Hello Learner");\n}\n`,
     python: `# Python Playground\n\ndef greet(name):\n    return f"Hello {name}"\n\nprint(greet("Learner"))\n`,
     java: `// Java Playground\n\npublic class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello Learner");\n  }\n}\n`,
-    cpp: `// C++ Playground\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n  cout << "Hello Learner" << endl;\n  return 0;\n}\n`
+    cpp: `// C++ Playground\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n  cout << "Hello Learner" << endl;\n  return 0;\n}\n`,
+    lisp: `;; Common Lisp Playground\n\n(defun greet (name)\n  (format nil "Hello ~a" name))\n\n(write-line (greet "Learner"))\n`,
+    groovy: `// Groovy Playground\n\ndef greet(name) {\n    return "Hello \${name}"\n}\n\nprintln greet("Learner")\n`,
+    vbnet: `' Visual Basic .NET Playground\nImports System\n\nModule Program\n    Sub Main()\n        Console.WriteLine("Hello Learner from VB.NET!")\n    End Sub\nEnd Module\n`,
+    fsharp: `// F# Playground\n\nlet greet name =\n    sprintf "Hello %s" name\n\n[<EntryPoint>]\nlet main argv =\n    printfn "%s" (greet "Learner")\n    0\n`,
+    prolog: `% Prolog Playground\n\nparent(john, bob).\nparent(bob, charlie).\n\nancestor(X, Y) :- parent(X, Y).\nancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).\n\n% Run query: ancestor(john, charlie).\n`,
+    elixir: `# Elixir Playground\n\ndefmodule Math do\n  def greet(name), do: "Hello, " <> name\nend\n\nIO.puts(Math.greet("Learner"))\n`
 };
 
 // Theme configurations for Ace
@@ -161,7 +43,13 @@ const codeStorage = {
     dart: templates.dart,
     python: templates.python,
     java: templates.java,
-    cpp: templates.cpp
+    cpp: templates.cpp,
+    lisp: templates.lisp,
+    groovy: templates.groovy,
+    vbnet: templates.vbnet,
+    fsharp: templates.fsharp,
+    prolog: templates.prolog,
+    elixir: templates.elixir
 };
 
 // --- INITIALIZATION ---
@@ -170,7 +58,6 @@ const codeStorage = {
  * Initialize editor with theme and language
  */
 function initEditor() {
-    // Set initial theme based on app theme
     const theme = getCurrentTheme();
     const aceTheme = theme === THEMES.DARK ? ACE_THEMES.dark : ACE_THEMES.light;
     
@@ -286,6 +173,19 @@ function updateThemeIndicator(theme) {
 function setupEventListeners() {
     // Run button
     document.getElementById("runBtn").addEventListener("click", runCode);
+
+    // Profile Complexity button
+    const profileBtn = document.getElementById("profileBtn");
+    if (profileBtn) profileBtn.addEventListener("click", runProfiler);
+
+    const rerunProfileBtn = document.getElementById("rerunProfileBtn");
+    if (rerunProfileBtn) rerunProfileBtn.addEventListener("click", runProfiler);
+
+    const closeProfilerBtn = document.getElementById("closeProfilerBtn");
+    if (closeProfilerBtn) closeProfilerBtn.addEventListener("click", () => {
+        const modal = document.getElementById("profilerModal");
+        if (modal) modal.style.display = "none";
+    });
     
     // Clear button
     document.getElementById("clearBtn").addEventListener("click", clearOutput);
@@ -332,7 +232,13 @@ function setupEventListeners() {
             dart: 'ace/mode/dart',
             python: 'ace/mode/python',
             java: 'ace/mode/java',
-            cpp: 'ace/mode/c_cpp'
+            cpp: 'ace/mode/c_cpp',
+            lisp: 'ace/mode/lisp',
+            groovy: 'ace/mode/groovy',
+            vbnet: 'ace/mode/vbscript',
+            fsharp: 'ace/mode/fsharp',
+            prolog: 'ace/mode/prolog',
+            elixir: 'ace/mode/elixir'
         };
         editor.session.setMode(modes[selectedLang] || 'ace/mode/javascript');
         
@@ -382,32 +288,10 @@ function saveCode() {
     }
 }
 
-
-        .dark .save-indicator.saved {
-            background: rgba(34, 197, 94, 0.15);
-        }
-
-
-        .dark .save-indicator.error {
-            background: rgba(239, 68, 68, 0.15);
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-            .save-indicator .save-text {
-                display: none;
-            }
-            
-            .save-indicator {
-                padding: 4px 8px;
-                margin-left: 8px;
-
 function resetEditor() {
-    if (false /* confirm removed */) {
-        editor.setValue(templates[currentLanguage] || templates.javascript, -1);
-        clearOutput();
-        saveCode();
-    }
+    editor.setValue(templates[currentLanguage] || templates.javascript, -1);
+    clearOutput();
+    saveCode();
 }
 
 function updateLanguageBadge(language) {
@@ -419,59 +303,22 @@ function updateLanguageBadge(language) {
             dart: 'Dart',
             python: 'Python',
             java: 'Java',
-            cpp: 'C++'
+            cpp: 'C++',
+            lisp: 'Common Lisp',
+            groovy: 'Groovy',
+            vbnet: 'VB.NET',
+            fsharp: 'F#',
+            prolog: 'Prolog',
+            elixir: 'Elixir'
         };
         badge.textContent = names[language] || language;
     }
 }
 
-// --- CONSOLE CAPTURE ---
-
-function formatValue(value) {
-    if (typeof value === "object" && value !== null) {
-        try {
-            return JSON.stringify(value, null, 2);
-        } catch {
-            return "[Object]";
-        }
+function clearOutput() {
+    if (output) {
+        output.textContent = "▶ Run your code to see output here";
     }
-    return String(value);
-}
-
-function createConsoleCapture() {
-    const logs = [];
-    const originalConsole = {
-        log: console.log,
-        warn: console.warn,
-        error: console.error,
-    };
-
-    console.log = (...args) => {
-        const message = args.map(formatValue).join(" ");
-        logs.push(message);
-        originalConsole.log(...args);
-    };
-
-    console.warn = (...args) => {
-        const message = "⚠️ " + args.map(formatValue).join(" ");
-        logs.push(message);
-        originalConsole.warn(...args);
-    };
-
-    console.error = (...args) => {
-        const message = "❌ " + args.map(formatValue).join(" ");
-        logs.push(message);
-        originalConsole.error(...args);
-    };
-
-    return {
-        logs,
-        restore() {
-            console.log = originalConsole.log;
-            console.warn = originalConsole.warn;
-            console.error = originalConsole.error;
-        },
-    };
 }
 
 // --- RUNNERS ---
@@ -482,7 +329,13 @@ const runners = {
     dart: runDart,
     python: runPython,
     java: runJava,
-    cpp: runCpp
+    cpp: runCpp,
+    lisp: runLisp,
+    groovy: runGroovy,
+    vbnet: runVbNet,
+    fsharp: runFSharp,
+    prolog: runProlog,
+    elixir: runElixir
 };
 
 function runCode() {
@@ -572,7 +425,20 @@ async function runDart(code) {
 
 async function runPython(code) {
     clearOutput();
-    output.textContent = "⏳ Running Python via Judge0...";
+    output.textContent = "⚡ Initializing Pyodide WASM Engine...";
+
+    if (isWasmSupported()) {
+        try {
+            output.textContent = "⚡ Running Python locally via Pyodide WASM...";
+            const res = await executeWasmPython(code);
+            const header = `⚡ Client-side WASM Engine (executed in ${res.executionTime}ms)\n----------------------------------------\n`;
+            output.textContent = header + res.logs.join("\n");
+            return;
+        } catch (wasmErr) {
+            console.warn("WASM Python execution failed/fallback:", wasmErr);
+            output.textContent = `⚠️ WASM Engine message: ${wasmErr.message}\n⏳ Falling back to Judge0 Remote API...\n`;
+        }
+    }
 
     try {
         const response = await fetch(
@@ -636,7 +502,20 @@ async function runJava(code) {
 
 async function runCpp(code) {
     clearOutput();
-    output.textContent = "⏳ Running C++ via Judge0...";
+    output.textContent = "⚡ Initializing C++ WASM Engine...";
+
+    if (isWasmSupported()) {
+        try {
+            output.textContent = "⚡ Running C++ locally via WASM Engine...";
+            const res = await executeWasmCpp(code);
+            const header = `⚡ Client-side WASM Engine (executed in ${res.executionTime}ms)\n----------------------------------------\n`;
+            output.textContent = header + res.logs.join("\n");
+            return;
+        } catch (wasmErr) {
+            console.warn("WASM C++ execution failed/fallback:", wasmErr);
+            output.textContent = `⚠️ WASM Engine message: ${wasmErr.message}\n⏳ Falling back to Judge0 Remote API...\n`;
+        }
+    }
 
     try {
         const response = await fetch(
@@ -650,142 +529,392 @@ async function runCpp(code) {
                     language_id: 54,
                     source_code: code
                 })
-
             }
-        }
-    </style>
-</head>
+        );
 
-<body data-page="playground">
-    <!-- Navbar -->
-    <div id="navbar-placeholder"></div>
+        const result = await response.json();
 
-    <section class="playground-section">
-        <div class="playground-container">
-
-            <!-- Header -->
-            <div class="playground-header">
-                <div class="header-left">
-                    <h1>🚀 Code Playground</h1>
-                    <p>Write, Run and Learn instantly</p>
-                </div>
-                <div class="header-right">
-                    <span class="theme-indicator" id="themeIndicator">
-                        <i class="fas fa-moon"></i>
-                        <span>Dark Mode</span>
-                    </span>
-                </div>
-            </div>
-
-            <!-- Toolbar with Save Indicator -->
-            <div class="playground-toolbar">
-                <div class="toolbar-left">
-                    <select id="language">
-                        <option value="javascript">JavaScript</option>
-                        <option value="typescript">TypeScript</option>
-                        <option value="dart">Dart</option>
-                        <option value="python">Python</option>
-                        <option value="java">Java</option>
-                        <option value="cpp">C++</option>
-                    </select>
-                    
-                    <!-- Save Indicator -->
-                    <span id="saveIndicator" class="save-indicator idle">
-                        <i class="fas fa-check-circle"></i>
-                        <span class="save-text">Saved</span>
-                    </span>
-                </div>
-                <div class="toolbar-right">
-                    <button id="runBtn" class="btn-run" title="Run Code (Ctrl+Enter)">
-                        <i class="fas fa-play"></i>
-                        Run
-                    </button>
-                    <button id="clearBtn" class="btn-clear" title="Clear Output">
-                        <i class="fas fa-trash"></i>
-                        Clear
-                    </button>
-                    <button id="resetBtn" class="btn-reset" title="Reset to Default">
-                        <i class="fas fa-rotate"></i>
-                        Reset
-                    </button>
-                    <button id="saveBtn" class="btn-save" title="Save Code (Ctrl+S)">
-                        <i class="fas fa-save"></i>
-                        Save
-                    </button>
-                </div>
-            </div>
-
-            <!-- Editor & Output Grid -->
-            <div class="playground-grid">
-                <!-- Editor Card -->
-                <div class="editor-card">
-                    <div class="card-header">
-                        <i class="fas fa-file-code"></i>
-                        Editor
-                        <span class="language-badge" id="languageBadge">JavaScript</span>
-                        <span style="margin-left: auto; font-size: 0.7rem; color: var(--text-secondary);">
-                            <kbd>Ctrl+S</kbd> to save
-                        </span>
-                    </div>
-                    <div id="editor"></div>
-                </div>
-
-                <!-- Output Card -->
-                <div class="output-card">
-                    <div class="card-header">
-                        <i class="fas fa-terminal"></i>
-                        Console Output
-                        <button id="clearOutputBtn" class="btn-clear-output" title="Clear output">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <pre id="output">▶ Run your code to see output here</pre>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <div id="footer-placeholder"></div>
-
-    <!-- Scripts -->
-    <script type="module" src="playground.js"></script>
-    <script src="/theme.js"></script>
-    <script src="/script.js"></script>
-    
-    <script>
-        // Load partials
-        if (typeof loadPartial === 'function') {
-            loadPartial('navbar-placeholder', '/partials/navbar.html').then(() => {
-                if (typeof initNavbar === 'function') initNavbar();
-            });
-            loadPartial('footer-placeholder', '/partials/footer.html');
-        }
-
-        // Manual save button
-        document.addEventListener('DOMContentLoaded', function() {
-            const saveBtn = document.getElementById('saveBtn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', function() {
-                    // Trigger save via the editor
-                    const event = new KeyboardEvent('keydown', {
-                        key: 's',
-                        ctrlKey: true,
-                        bubbles: true
-                    });
-                    document.dispatchEvent(event);
-                });
-            }
-        });
-    </script>
-</body>
-
-
-</html>
+        output.textContent =
+            result.stdout ||
+            result.stderr ||
+            result.compile_output ||
+            "✅ Code ran successfully with no terminal output.";
 
     } catch (err) {
         output.textContent = `❌ Network Error: ${err.message}`;
+    }
+}
+
+async function runLisp(code) {
+    clearOutput();
+    output.textContent = "⏳ Running Common Lisp via Piston...";
+
+    try {
+        const response = await fetch(
+            "https://emkc.org/api/v2/piston/execute",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    language: "lisp",
+                    version: "*",
+                    files: [{ content: code }]
+                })
+            }
+        );
+
+        const result = await response.json();
+
+        output.textContent =
+            result.run?.stdout ||
+            result.run?.stderr ||
+            result.compile?.stderr ||
+            "✅ Code ran successfully with no terminal output.";
+
+    } catch (err) {
+        output.textContent = `❌ Network Error: ${err.message}`;
+    }
+}
+
+async function runPistonLanguage(language, code) {
+    try {
+        const response = await fetch(
+            "https://emkc.org/api/v2/piston/execute",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    language: language,
+                    version: "*",
+                    files: [{ content: code }]
+                })
+            }
+        );
+
+        const result = await response.json();
+
+        output.textContent =
+            result.run?.stdout ||
+            result.run?.stderr ||
+            result.compile?.stderr ||
+            "✅ Code ran successfully with no terminal output.";
+
+    } catch (err) {
+        output.textContent = `❌ Network Error: ${err.message}`;
+    }
+}
+
+async function runGroovy(code) {
+    clearOutput();
+    output.textContent = "⏳ Running Groovy via Piston...";
+    await runPistonLanguage("groovy", code);
+}
+
+async function runVbNet(code) {
+    clearOutput();
+    output.textContent = "⏳ Running VB.NET via Piston...";
+    await runPistonLanguage("vb.net", code);
+}
+
+async function runFSharp(code) {
+    clearOutput();
+    output.textContent = "⏳ Running F# via Piston...";
+    await runPistonLanguage("fsharp", code);
+}
+
+async function runProlog(code) {
+    clearOutput();
+    output.textContent = "⏳ Running Prolog via Piston...";
+    await runPistonLanguage("prolog", code);
+}
+
+async function runElixir(code) {
+    clearOutput();
+    output.textContent = "⏳ Running Elixir via Piston...";
+    await runPistonLanguage("elixir", code);
+}
+
+// --- PROFILER FUNCTIONS ---
+
+let profilerChartInstance = null;
+
+function drawProfilerChart(canvas, results) {
+    if (!canvas) return;
+    if (!window.Chart) {
+        if (typeof lazyVisualizer !== 'undefined') {
+            lazyVisualizer.lazyLoadChartJS(canvas, function() {
+                drawProfilerChart(canvas, results);
+            });
+            return;
+        }
+        console.warn('Chart.js is not loaded.');
+        return;
+    }
+
+    const isLight = document.documentElement.classList.contains('light-mode');
+    const textColor = isLight ? '#0f172a' : '#f8fafc';
+    const gridColor = isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)';
+
+    const labels = results.map(r => `N=${r.N}`);
+    const empiricalData = results.map(r => r.time);
+    const maxN = results[results.length - 1].N;
+    const maxTime = Math.max(0.001, results[results.length - 1].time);
+
+    const refFns = {
+        'O(1)': n => 1,
+        'O(log N)': n => Math.log2(Math.max(1, n)),
+        'O(N)': n => n,
+        'O(N log N)': n => n * Math.log2(Math.max(1, n)),
+        'O(N²)': n => n * n
+    };
+
+    const refColors = {
+        'O(1)': '#94a3b8',
+        'O(log N)': '#3b82f6',
+        'O(N)': '#10b981',
+        'O(N log N)': '#f59e0b',
+        'O(N²)': '#ef4444'
+    };
+
+    const datasets = [
+        {
+            label: 'Your Code (Empirical)',
+            data: empiricalData,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.2)',
+            borderWidth: 3,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            tension: 0.2,
+            fill: false
+        }
+    ];
+
+    for (const [name, fn] of Object.entries(refFns)) {
+        const scale = maxTime / (fn(maxN) || 1);
+        const curveData = results.map(r => Math.max(0, fn(r.N) * scale));
+        datasets.push({
+            label: name,
+            data: curveData,
+            borderColor: refColors[name],
+            borderDash: [4, 4],
+            borderWidth: 1.5,
+            pointRadius: 0,
+            fill: false
+        });
+    }
+
+    if (profilerChartInstance) {
+        profilerChartInstance.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    profilerChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: textColor,
+                        font: { family: 'Outfit, Inter, sans-serif', size: 11 },
+                        usePointStyle: true,
+                        boxWidth: 8
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const val = typeof context.raw === 'number' ? context.raw.toFixed(3) : context.raw;
+                            return `${context.dataset.label}: ${val} ms`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor },
+                    title: { display: true, text: 'Input Size (N)', color: textColor }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor },
+                    title: { display: true, text: 'Execution Time (ms)', color: textColor },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function estimateComplexity(results) {
+    if (results.length < 2) return 'O(1)';
+    const shapes = {
+        'O(1)': n => 1,
+        'O(log N)': n => Math.log2(n || 1),
+        'O(N)': n => n,
+        'O(N log N)': n => n * Math.log2(n || 1),
+        'O(N²)': n => n * n,
+        'O(N³)': n => n * n * n,
+        'O(2ᴺ)': n => Math.pow(2, Math.min(n, 30))
+    };
+
+    let bestFit = 'O(N)';
+    let minError = Infinity;
+    const maxN = results[results.length - 1].N;
+    const maxTime = results[results.length - 1].time || 0.001;
+
+    for (const [name, fn] of Object.entries(shapes)) {
+        let error = 0;
+        const scale = maxTime / (fn(maxN) || 1);
+
+        for (const r of results) {
+            const expected = fn(r.N) * scale;
+            error += Math.pow((r.time - expected) / Math.max(0.001, maxTime), 2);
+        }
+
+        if (error < minError) {
+            minError = error;
+            bestFit = name;
+        }
+    }
+    return bestFit;
+}
+
+async function runProfiler() {
+    const lang = currentLanguage || (languageSelector ? languageSelector.value : 'javascript');
+    if (lang !== 'javascript') {
+        alert('The Interactive Profiler currently supports JavaScript in the browser.');
+        return;
+    }
+
+    const code = editor ? editor.getValue() : '';
+    if (!code || !code.trim()) {
+        alert('Please write some code to profile.');
+        return;
+    }
+
+    const modal = document.getElementById('profilerModal');
+    if (modal) modal.style.display = 'flex';
+
+    const statusEl = document.getElementById('profilerStatus');
+    if (statusEl) statusEl.textContent = 'Running profiler against N = 10, 100, 1000, 5000...';
+
+    const compEl = document.getElementById('profComplexity');
+    const avgEl = document.getElementById('profAvgTime');
+    const fastEl = document.getElementById('profFastest');
+    const slowEl = document.getElementById('profSlowest');
+
+    if (compEl) compEl.textContent = 'Profiling...';
+    if (avgEl) avgEl.textContent = '- ms';
+    if (fastEl) fastEl.textContent = '- ms';
+    if (slowEl) slowEl.textContent = '- ms';
+
+    await new Promise(r => setTimeout(r, 50));
+
+    const origLog = console.log;
+    console.log = () => {};
+
+    try {
+        let solveFn;
+        try {
+            solveFn = new Function(
+                '"use strict";\n' + code + '\nreturn (typeof solve !== "undefined" ? solve : (typeof solution !== "undefined" ? solution : (typeof main !== "undefined" ? main : null)));'
+            )();
+        } catch (e) {
+            throw new Error('Syntax or compilation error: ' + e.message);
+        }
+
+        if (typeof solveFn !== 'function') {
+            try {
+                solveFn = new Function('input', '"use strict";\n' + code);
+            } catch (e) {
+                throw new Error('Could not find or construct executable function. Ensure code defines a solve() function.');
+            }
+        }
+
+        const sampleArr = Array.from({ length: 10 }, () => Math.floor(Math.random() * 100));
+        let isArgArray = true;
+
+        try {
+            solveFn([...sampleArr]);
+        } catch (errArr) {
+            try {
+                solveFn(10);
+                isArgArray = false;
+            } catch (errNum) {
+                throw new Error('Execution error on sample input: ' + errArr.message);
+            }
+        }
+
+        const sizes = [10, 100, 1000, 5000];
+        const results = [];
+
+        for (const N of sizes) {
+            if (statusEl) statusEl.textContent = `Benchmarking size N = ${N}...`;
+            const input = isArgArray
+                ? Array.from({ length: N }, () => Math.floor(Math.random() * 1000))
+                : N;
+
+            const iterations = N <= 100 ? 5 : 1;
+            const start = performance.now();
+            for (let i = 0; i < iterations; i++) {
+                if (isArgArray) {
+                    solveFn([...input]);
+                } else {
+                    solveFn(input);
+                }
+            }
+            const end = performance.now();
+            const timeTaken = Math.max(0.001, (end - start) / iterations);
+
+            results.push({ N, time: timeTaken });
+
+            await new Promise(r => setTimeout(r, 15));
+
+            if (timeTaken > 1500 && N !== sizes[sizes.length - 1]) {
+                if (statusEl) statusEl.textContent = `Stopped profiling at N = ${N} due to timeout (>1.5s).`;
+                break;
+            }
+        }
+
+        if (statusEl && results.length === sizes.length) {
+            statusEl.textContent = 'Profiling complete across generated datasets (N = 10, 100, 1000, 5000).';
+        }
+
+        const times = results.map(r => r.time);
+        const avgTime = times.reduce((acc, t) => acc + t, 0) / times.length;
+        const fastest = Math.min(...times);
+        const slowest = Math.max(...times);
+        const complexity = estimateComplexity(results);
+
+        if (compEl) compEl.textContent = complexity;
+        if (avgEl) avgEl.textContent = avgTime.toFixed(3) + ' ms';
+        if (fastEl) fastEl.textContent = fastest.toFixed(3) + ' ms';
+        if (slowEl) slowEl.textContent = slowest.toFixed(3) + ' ms';
+
+        const canvas = document.getElementById('profilerChart');
+        if (canvas) {
+            drawProfilerChart(canvas, results);
+        }
+    } catch (e) {
+        if (compEl) compEl.textContent = 'Error';
+        if (statusEl) statusEl.textContent = 'Profiling error: ' + e.message;
+        alert(e.message || 'Error during profiling');
+        console.error(e);
+    } finally {
+        console.log = origLog;
     }
 }
 
@@ -795,6 +924,9 @@ export {
     initEditor,
     updateEditorTheme,
     runCode,
+    runProfiler,
+    drawProfilerChart,
+    estimateComplexity,
     clearOutput,
     resetEditor,
     saveCode
@@ -804,10 +936,3 @@ export {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initEditor);
-
-// Also re-initialize if theme changes
-document.addEventListener('themeChanged', function(event) {
-    const theme = event.detail.theme;
-    updateEditorTheme(theme);
-});
-

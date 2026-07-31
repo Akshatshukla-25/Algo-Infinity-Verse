@@ -1,0 +1,355 @@
+/* Diffie-Hellman Visualizer CSS */
+:root {
+  --bg-dark: #0f172a;
+  --panel-bg: rgba(30, 41, 59, 0.7);
+  --border-color: rgba(148, 163, 184, 0.2);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+
+  --color-alice: #ec4899; /* Pink */
+  --color-bob: #3b82f6; /* Blue */
+  --color-eve: #10b981; /* Green */
+}
+
+body.dh-body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dh-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(15, 23, 42, 0.9);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.logo-text {
+  color: var(--color-alice);
+  font-size: 1.5rem;
+}
+
+.engine-badge {
+  background: rgba(236, 72, 153, 0.2);
+  color: #f9a8d4;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.dh-workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 2rem;
+  gap: 1.5rem;
+}
+
+.workspace-header {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.workspace-header h1 {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+}
+.subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.control-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--color-bob);
+  color: white;
+}
+.btn-primary:hover {
+  background: #2563eb;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Toggle Switch */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: 'Fira Code', monospace;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #334155;
+  transition: 0.4s;
+}
+.slider:before {
+  position: absolute;
+  content: '';
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+}
+input:checked + .slider {
+  background-color: var(--color-alice);
+}
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+.slider.round {
+  border-radius: 24px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Visualizer Content */
+.visualizer-content {
+  display: flex;
+  flex: 1;
+  gap: 1.5rem;
+}
+
+.actor-panel {
+  flex: 1;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.alice-panel {
+  border-color: var(--color-alice);
+}
+.bob-panel {
+  border-color: var(--color-bob);
+}
+.eve-panel {
+  flex: 1.5;
+  border-color: var(--color-eve);
+  border-style: dashed;
+}
+
+.actor-header {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.actor-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.alice-panel h2 {
+  color: var(--color-alice);
+}
+.bob-panel h2 {
+  color: var(--color-bob);
+}
+.eve-panel h2 {
+  color: var(--color-eve);
+}
+
+.actor-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.secret-box,
+.mix-box,
+.result-box {
+  background: #1e293b;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.value,
+.calc-text,
+.final-text {
+  font-family: 'Fira Code', monospace;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.calc-text {
+  font-size: 1.2rem;
+}
+
+/* Color Blocks */
+.color-val {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin: 0 auto;
+  box-shadow:
+    inset -5px -5px 10px rgba(0, 0, 0, 0.3),
+    0 5px 15px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: background-color 1s ease;
+}
+
+/* Eve Panel */
+.public-params {
+  display: flex;
+  justify-content: space-around;
+  background: #1e293b;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.param {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.traffic-monitor {
+  flex: 1;
+  background: #0b1120;
+  border: 1px solid var(--color-eve);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.traffic-monitor h3 {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--color-eve);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--color-eve);
+}
+.traffic-log {
+  padding: 1rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.log-entry {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--color-eve);
+  animation: fadeIn 0.3s ease-out;
+}
+.log-entry.empty {
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.eve-conclusion {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  color: #fca5a5;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.eve-conclusion.visible {
+  opacity: 1;
+}

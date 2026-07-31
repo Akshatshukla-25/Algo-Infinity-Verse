@@ -2,6 +2,7 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getDb, COLLECTIONS } from '../../firebase.js';
 import vm from 'vm';
+import { checkAndFlagPlagiarism } from '../../backend/services/plagiarism.service.js';
 
 export const battleCache = new Map();
 const CACHE_TTL = 1000; // 1 second for active/waiting
@@ -280,6 +281,12 @@ export async function submitSolution(battleId, playerId, code) {
   });
 
   battleCache.delete(battleId);
+
+  // Trigger plagiarism checks asynchronously in the background
+  checkAndFlagPlagiarism(battleId, playerId, code).catch((err) => {
+    console.error('[PLAGIARISM] Background check failed:', err);
+  });
+
   return result;
 }
 

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   mkInit();
 });
 
@@ -25,20 +25,41 @@ function mkHash(str) {
   h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
   h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  var combined = (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0');
+  var combined =
+    (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0');
   return combined;
 }
 
 function mkGenerateBlocks(n) {
   var blocks = [];
-  var words = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot', 'golf', 'hotel', 'india', 'juliet', 'kilo', 'lima', 'mike', 'november', 'oscar', 'papa'];
-  for (var i = 0; i < n; i++) blocks.push(words[i % words.length] + '-' + Math.floor(Math.random() * 1000));
+  var words = [
+    'alpha',
+    'bravo',
+    'charlie',
+    'delta',
+    'echo',
+    'foxtrot',
+    'golf',
+    'hotel',
+    'india',
+    'juliet',
+    'kilo',
+    'lima',
+    'mike',
+    'november',
+    'oscar',
+    'papa',
+  ];
+  for (var i = 0; i < n; i++)
+    blocks.push(words[i % words.length] + '-' + Math.floor(Math.random() * 1000));
   return blocks;
 }
 
 function mkBuildTree(blocks) {
   var levels = [];
-  var currentLevel = blocks.map(function(b) { return mkHash(b); });
+  var currentLevel = blocks.map(function (b) {
+    return mkHash(b);
+  });
   levels.push(currentLevel);
 
   while (currentLevel.length > 1) {
@@ -66,7 +87,8 @@ function mkRecomputePath(leafIdx) {
     var currentLevel = levels[lvl];
     var pairIdx = idx % 2 === 0 ? idx : idx - 1;
     var left = currentLevel[pairIdx];
-    var right = pairIdx + 1 < currentLevel.length ? currentLevel[pairIdx + 1] : currentLevel[pairIdx];
+    var right =
+      pairIdx + 1 < currentLevel.length ? currentLevel[pairIdx + 1] : currentLevel[pairIdx];
 
     var parentIdx = Math.floor(idx / 2);
     levels[lvl + 1][parentIdx] = mkHash(left + right);
@@ -86,9 +108,15 @@ function mkGenerateProof(leafIdx) {
     var currentLevel = levels[lvl];
     var isRightChild = idx % 2 === 1;
     var siblingIdx = isRightChild ? idx - 1 : idx + 1;
-    var siblingHash = siblingIdx < currentLevel.length ? currentLevel[siblingIdx] : currentLevel[idx];
+    var siblingHash =
+      siblingIdx < currentLevel.length ? currentLevel[siblingIdx] : currentLevel[idx];
 
-    proof.push({ level: lvl, siblingIdx: siblingIdx, hash: siblingHash, position: isRightChild ? 'left' : 'right' });
+    proof.push({
+      level: lvl,
+      siblingIdx: siblingIdx,
+      hash: siblingHash,
+      position: isRightChild ? 'left' : 'right',
+    });
     idx = Math.floor(idx / 2);
   }
 
@@ -99,7 +127,8 @@ function mkVerifyProof(leafData, proof, expectedRoot) {
   var computed = mkHash(leafData);
   for (var i = 0; i < proof.length; i++) {
     var step = proof[i];
-    computed = step.position === 'left' ? mkHash(step.hash + computed) : mkHash(computed + step.hash);
+    computed =
+      step.position === 'left' ? mkHash(step.hash + computed) : mkHash(computed + step.hash);
   }
   return { computedRoot: computed, matches: computed === expectedRoot };
 }
@@ -131,14 +160,19 @@ function mkRenderTree(highlightPath, proofSiblings) {
   var W = 720;
   var H = levels.length * 70 + 40;
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
   svg.innerHTML = '';
 
   var highlightSet = {};
-  (highlightPath || []).forEach(function(p) { highlightSet[p.level + '-' + p.idx] = true; });
+  (highlightPath || []).forEach(function (p) {
+    highlightSet[p.level + '-' + p.idx] = true;
+  });
 
   var proofSet = {};
-  (proofSiblings || []).forEach(function(p) { proofSet[p.level + '-' + p.siblingIdx] = true; });
+  (proofSiblings || []).forEach(function (p) {
+    proofSet[p.level + '-' + p.siblingIdx] = true;
+  });
 
   for (let lvl = 0; lvl < levels.length - 1; lvl++) {
     var count = levels[lvl].length;
@@ -147,9 +181,12 @@ function mkRenderTree(highlightPath, proofSiblings) {
       var childPos = positions[lvl][i];
       var parentPos = positions[lvl + 1][parentIdx];
       var line = document.createElementNS(MK_NS, 'line');
-      line.setAttribute('x1', childPos.x); line.setAttribute('y1', childPos.y - 12);
-      line.setAttribute('x2', parentPos.x); line.setAttribute('y2', parentPos.y + 12);
-      line.setAttribute('stroke', 'rgba(148,163,184,0.25)'); line.setAttribute('stroke-width', '1.3');
+      line.setAttribute('x1', childPos.x);
+      line.setAttribute('y1', childPos.y - 12);
+      line.setAttribute('x2', parentPos.x);
+      line.setAttribute('y2', parentPos.y + 12);
+      line.setAttribute('stroke', 'rgba(148,163,184,0.25)');
+      line.setAttribute('stroke-width', '1.3');
       svg.appendChild(line);
     }
   }
@@ -165,34 +202,53 @@ function mkRenderTree(highlightPath, proofSiblings) {
       var isLeaf = lvl === 0;
 
       var fillColor, strokeColor;
-      if (isRoot) { fillColor = 'rgba(34,197,94,0.3)'; strokeColor = '#22c55e'; }
-      else if (isChanged) { fillColor = 'rgba(245,158,11,0.3)'; strokeColor = '#f59e0b'; }
-      else if (isProofSibling) { fillColor = 'rgba(168,85,247,0.3)'; strokeColor = '#a855f7'; }
-      else { fillColor = 'rgba(6,182,212,0.15)'; strokeColor = '#06b6d4'; }
+      if (isRoot) {
+        fillColor = 'rgba(34,197,94,0.3)';
+        strokeColor = '#22c55e';
+      } else if (isChanged) {
+        fillColor = 'rgba(245,158,11,0.3)';
+        strokeColor = '#f59e0b';
+      } else if (isProofSibling) {
+        fillColor = 'rgba(168,85,247,0.3)';
+        strokeColor = '#a855f7';
+      } else {
+        fillColor = 'rgba(6,182,212,0.15)';
+        strokeColor = '#06b6d4';
+      }
 
       var g = document.createElementNS(MK_NS, 'g');
+      g.setAttribute('id', 'mk-node-' + lvl + '-' + i);
       g.setAttribute('data-leaf', isLeaf ? i : '');
       if (isLeaf) g.style.cursor = 'pointer';
 
       var rect = document.createElementNS(MK_NS, 'rect');
       var w = isLeaf ? 44 : 40;
-      rect.setAttribute('x', pos.x - w / 2); rect.setAttribute('y', pos.y - 12);
-      rect.setAttribute('width', w); rect.setAttribute('height', 24); rect.setAttribute('rx', 5);
-      rect.setAttribute('fill', fillColor); rect.setAttribute('stroke', strokeColor);
+      rect.setAttribute('x', pos.x - w / 2);
+      rect.setAttribute('y', pos.y - 12);
+      rect.setAttribute('width', w);
+      rect.setAttribute('height', 24);
+      rect.setAttribute('rx', 5);
+      rect.setAttribute('fill', fillColor);
+      rect.setAttribute('stroke', strokeColor);
       rect.setAttribute('stroke-width', isRoot || isChanged ? '2.2' : '1.4');
       g.appendChild(rect);
 
       var label = document.createElementNS(MK_NS, 'text');
-      label.setAttribute('x', pos.x); label.setAttribute('y', pos.y + 4);
-      label.setAttribute('text-anchor', 'middle'); label.setAttribute('fill', strokeColor);
-      label.setAttribute('font-family', 'Fira Code, monospace'); label.setAttribute('font-size', '8');
+      label.setAttribute('x', pos.x);
+      label.setAttribute('y', pos.y + 4);
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('fill', strokeColor);
+      label.setAttribute('font-family', 'Fira Code, monospace');
+      label.setAttribute('font-size', '8');
       label.textContent = levelHashes[i].slice(0, 6);
       g.appendChild(label);
 
       if (isLeaf) {
         var dataLabel = document.createElementNS(MK_NS, 'text');
-        dataLabel.setAttribute('x', pos.x); dataLabel.setAttribute('y', pos.y + 22);
-        dataLabel.setAttribute('text-anchor', 'middle'); dataLabel.setAttribute('fill', 'rgba(148,163,184,0.5)');
+        dataLabel.setAttribute('x', pos.x);
+        dataLabel.setAttribute('y', pos.y + 22);
+        dataLabel.setAttribute('text-anchor', 'middle');
+        dataLabel.setAttribute('fill', 'rgba(148,163,184,0.5)');
         dataLabel.setAttribute('font-size', '7');
         dataLabel.textContent = mkState.blocks[i].slice(0, 8);
         g.appendChild(dataLabel);
@@ -201,10 +257,10 @@ function mkRenderTree(highlightPath, proofSiblings) {
         g.setAttribute('role', 'button');
         g.setAttribute('aria-label', 'Edit data for block #' + i);
 
-        g.addEventListener('click', function() {
+        g.addEventListener('click', function () {
           mkEditLeaf(parseInt(this.getAttribute('data-leaf')));
         });
-        g.addEventListener('keydown', function(e) {
+        g.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             mkEditLeaf(parseInt(this.getAttribute('data-leaf')));
@@ -214,9 +270,12 @@ function mkRenderTree(highlightPath, proofSiblings) {
 
       if (isRoot) {
         var rootLabel = document.createElementNS(MK_NS, 'text');
-        rootLabel.setAttribute('x', pos.x); rootLabel.setAttribute('y', pos.y - 18);
-        rootLabel.setAttribute('text-anchor', 'middle'); rootLabel.setAttribute('fill', '#22c55e');
-        rootLabel.setAttribute('font-size', '9'); rootLabel.setAttribute('font-weight', '700');
+        rootLabel.setAttribute('x', pos.x);
+        rootLabel.setAttribute('y', pos.y - 18);
+        rootLabel.setAttribute('text-anchor', 'middle');
+        rootLabel.setAttribute('fill', '#22c55e');
+        rootLabel.setAttribute('font-size', '9');
+        rootLabel.setAttribute('font-weight', '700');
         rootLabel.textContent = 'ROOT';
         g.appendChild(rootLabel);
       }
@@ -234,7 +293,14 @@ function mkEditLeaf(leafIdx) {
   var changedPath = mkRecomputePath(leafIdx);
 
   mkRenderTree(changedPath, null);
-  mkSetStatus('Block #' + leafIdx + ' changed → recomputed ' + changedPath.length + ' hashes up to the root (highlighted in amber).', '');
+  mkSetStatus(
+    'Block #' +
+      leafIdx +
+      ' changed → recomputed ' +
+      changedPath.length +
+      ' hashes up to the root (highlighted in amber).',
+    ''
+  );
 
   mkResetTamperState();
 }
@@ -242,7 +308,11 @@ function mkEditLeaf(leafIdx) {
 function mkPopulateProofSelect() {
   var select = document.getElementById('mkProofLeafSelect');
   if (!select) return;
-  select.innerHTML = mkState.blocks.map(function(b, i) { return '<option value="' + i + '">Block #' + i + ' — ' + b + '</option>'; }).join('');
+  select.innerHTML = mkState.blocks
+    .map(function (b, i) {
+      return '<option value="' + i + '">Block #' + i + ' — ' + b + '</option>';
+    })
+    .join('');
 }
 
 function mkGenProofHandler() {
@@ -259,9 +329,23 @@ function mkGenProofHandler() {
 
   var resultEl = document.getElementById('mkProofResult');
   if (resultEl) {
-    resultEl.innerHTML = proof.map(function(step, i) {
-      return '<div class="mk-proof-entry">Level ' + step.level + ': sibling hash ' + step.hash.slice(0, 10) + '… (' + step.position + ' side)</div>';
-    }).join('') + '<div class="mk-proof-entry root">Verifying root: ' + mkState.levels[mkState.levels.length - 1][0].slice(0, 12) + '…</div>';
+    resultEl.innerHTML =
+      proof
+        .map(function (step, i) {
+          return (
+            '<div class="mk-proof-entry">Level ' +
+            step.level +
+            ': sibling hash ' +
+            step.hash.slice(0, 10) +
+            '… (' +
+            step.position +
+            ' side)</div>'
+          );
+        })
+        .join('') +
+      '<div class="mk-proof-entry root">Verifying root: ' +
+      mkState.levels[mkState.levels.length - 1][0].slice(0, 12) +
+      '…</div>';
   }
 
   mkUpdateByteComparison(proof.length);
@@ -274,7 +358,161 @@ function mkGenProofHandler() {
   var tamperResult = document.getElementById('mkTamperResult');
   if (tamperResult) tamperResult.classList.add('hidden');
 
-  mkSetStatus('Proof generated for block #' + leafIdx + ' — ' + proof.length + ' sibling hashes (purple), highlighted on the tree.', '');
+  var spvCard = document.getElementById('mkSpvCard');
+  if (spvCard) spvCard.classList.remove('hidden');
+
+  mkSetStatus(
+    'Proof generated for block #' +
+      leafIdx +
+      ' — ' +
+      proof.length +
+      ' sibling hashes (purple), highlighted on the tree.',
+    ''
+  );
+
+  // Kick off SPV animation
+  setTimeout(function () {
+    mkRunSPVAnimation(leafIdx, proof);
+  }, 500);
+}
+
+function mkRunSPVAnimation(leafIdx, proof) {
+  var overlay = document.getElementById('mkAnimOverlay');
+  var workspace = document.getElementById('mkSpvHashes');
+  var status = document.getElementById('mkSpvStatus');
+  if (!overlay || !workspace || !status) return;
+
+  workspace.innerHTML = '';
+  status.textContent = 'Initializing Light Client with leaf data...';
+
+  var currentHash = mkHash(mkState.blocks[leafIdx]);
+
+  var leafBox = document.createElement('div');
+  leafBox.className = 'spv-hash-box leaf';
+  leafBox.innerHTML =
+    '<span class="spv-hash-label">Current Hash</span><span>' +
+    currentHash.slice(0, 12) +
+    '…</span>';
+  workspace.appendChild(leafBox);
+
+  var step = 0;
+
+  function nextStep() {
+    if (step >= proof.length) {
+      status.innerHTML = '<span style="color:#22c55e">✅ Root Reconstructed and Verified!</span>';
+      leafBox.className = 'spv-hash-box root spv-flash';
+      leafBox.innerHTML =
+        '<span class="spv-hash-label">Final Root</span><span>' +
+        currentHash.slice(0, 12) +
+        '…</span>';
+      return;
+    }
+
+    var p = proof[step];
+    status.innerHTML =
+      'Fetching sibling hash for Level ' +
+      p.level +
+      ' <span style="color:#a855f7">(' +
+      p.position +
+      ')</span>...';
+
+    // Find the SVG element for this sibling
+    var nodeG = document.getElementById('mk-node-' + p.level + '-' + p.siblingIdx);
+    var startRect = null;
+    if (nodeG) {
+      var rect = nodeG.querySelector('rect');
+      if (rect) startRect = rect.getBoundingClientRect();
+    }
+
+    var siblingBox = document.createElement('div');
+    siblingBox.className = 'spv-hash-box sibling';
+    siblingBox.innerHTML =
+      '<span class="spv-hash-label">Sibling L' +
+      p.level +
+      '</span><span>' +
+      p.hash.slice(0, 12) +
+      '…</span>';
+
+    // We add it to workspace so it takes up space, but initially invisible
+    siblingBox.style.opacity = '0';
+
+    var opSpan = document.createElement('div');
+    opSpan.className = 'spv-merge-op';
+    opSpan.textContent = '+';
+    opSpan.style.opacity = '0';
+
+    if (p.position === 'left') {
+      workspace.insertBefore(opSpan, leafBox);
+      workspace.insertBefore(siblingBox, opSpan);
+    } else {
+      workspace.appendChild(opSpan);
+      workspace.appendChild(siblingBox);
+    }
+
+    // Now animate the flight if we have startRect
+    if (startRect) {
+      var fly = document.createElement('div');
+      fly.className = 'spv-flying-hash';
+      fly.textContent = p.hash.slice(0, 8);
+      fly.style.left = startRect.left + 'px';
+      fly.style.top = startRect.top + 'px';
+      fly.style.width = startRect.width + 'px';
+      fly.style.height = startRect.height + 'px';
+      overlay.appendChild(fly);
+
+      // Trigger reflow
+      fly.offsetHeight;
+
+      var targetRect = siblingBox.getBoundingClientRect();
+      fly.style.left = targetRect.left + 'px';
+      fly.style.top = targetRect.top + 'px';
+      fly.style.width = targetRect.width + 'px';
+      fly.style.height = targetRect.height + 'px';
+
+      setTimeout(function () {
+        overlay.removeChild(fly);
+        siblingBox.style.opacity = '1';
+        opSpan.style.opacity = '1';
+
+        // Now hash them together
+        setTimeout(function () {
+          status.textContent =
+            'Hashing ( ' +
+            (p.position === 'left' ? 'Sibling + Current' : 'Current + Sibling') +
+            ' )...';
+          leafBox.classList.add('spv-flash');
+          siblingBox.classList.add('spv-flash');
+
+          setTimeout(function () {
+            currentHash =
+              p.position === 'left' ? mkHash(p.hash + currentHash) : mkHash(currentHash + p.hash);
+
+            // Remove old boxes
+            workspace.innerHTML = '';
+
+            leafBox = document.createElement('div');
+            leafBox.className = 'spv-hash-box leaf spv-flash';
+            leafBox.innerHTML =
+              '<span class="spv-hash-label">Current Hash</span><span>' +
+              currentHash.slice(0, 12) +
+              '…</span>';
+            workspace.appendChild(leafBox);
+
+            step++;
+            setTimeout(nextStep, 800);
+          }, 500);
+        }, 800);
+      }, 800); // Wait for flight to finish
+    } else {
+      // Fallback if SVG not found
+      siblingBox.style.opacity = '1';
+      opSpan.style.opacity = '1';
+      step++;
+      nextStep();
+    }
+  }
+
+  nextStep();
 }
 
 function mkUpdateByteComparison(proofLength) {
@@ -309,7 +547,12 @@ function mkTamperHandler() {
   if (resultEl) {
     resultEl.classList.remove('hidden');
     resultEl.className = 'mk-tamper-result';
-    resultEl.textContent = 'Attacker silently changed block #' + leafIdx + '\'s claimed data to "' + fakeData + '" — without updating the tree. Click Verify Proof to see if this is caught.';
+    resultEl.textContent =
+      'Attacker silently changed block #' +
+      leafIdx +
+      '\'s claimed data to "' +
+      fakeData +
+      '" — without updating the tree. Click Verify Proof to see if this is caught.';
   }
 
   mkSetStatus('Attacker tampered with block #' + leafIdx + '. Click Verify Proof.', 'bad');
@@ -319,7 +562,11 @@ function mkVerifyHandler() {
   if (!mkState.currentProof) return;
 
   var expectedRoot = mkState.levels[mkState.levels.length - 1][0];
-  var result = mkVerifyProof(mkState.currentProof.leafData, mkState.currentProof.proof, expectedRoot);
+  var result = mkVerifyProof(
+    mkState.currentProof.leafData,
+    mkState.currentProof.proof,
+    expectedRoot
+  );
 
   var resultEl = document.getElementById('mkTamperResult');
   if (resultEl) {
@@ -329,19 +576,31 @@ function mkVerifyHandler() {
       resultEl.className = 'mk-tamper-result ' + (result.matches ? 'undetected' : 'detected');
       resultEl.innerHTML = result.matches
         ? '❌ Tamper went undetected — this should never happen with correct hashing.'
-        : '✅ <strong>Tamper detected!</strong> Recomputed root from the (tampered) leaf + proof: ' + result.computedRoot.slice(0, 12) + '…, but the tree\'s actual root is ' + expectedRoot.slice(0, 12) + '…. Mismatch → verification fails, exactly as it should.';
+        : '✅ <strong>Tamper detected!</strong> Recomputed root from the (tampered) leaf + proof: ' +
+          result.computedRoot.slice(0, 12) +
+          "…, but the tree's actual root is " +
+          expectedRoot.slice(0, 12) +
+          '…. Mismatch → verification fails, exactly as it should.';
     } else {
       resultEl.className = 'mk-tamper-result ' + (result.matches ? 'detected' : 'undetected');
       resultEl.innerHTML = result.matches
-        ? '✅ Proof verified successfully. Recomputed root ' + result.computedRoot.slice(0, 12) + '… matches the tree\'s actual root — using only ' + mkState.currentProof.proof.length + ' sibling hashes, no other block needed.'
+        ? '✅ Proof verified successfully. Recomputed root ' +
+          result.computedRoot.slice(0, 12) +
+          "… matches the tree's actual root — using only " +
+          mkState.currentProof.proof.length +
+          ' sibling hashes, no other block needed.'
         : '❌ Verification failed unexpectedly.';
     }
   }
 
   var asExpected = result.matches === !mkState.tampered;
   var statusMsg = mkState.tampered
-    ? (result.matches ? 'Unexpected: tamper not detected.' : 'Tamper correctly detected via proof mismatch.')
-    : (result.matches ? 'Proof verified successfully.' : 'Verification failed unexpectedly.');
+    ? result.matches
+      ? 'Unexpected: tamper not detected.'
+      : 'Tamper correctly detected via proof mismatch.'
+    : result.matches
+      ? 'Proof verified successfully.'
+      : 'Verification failed unexpectedly.';
   mkSetStatus(statusMsg, asExpected ? 'good' : 'bad');
 }
 
@@ -359,7 +618,8 @@ function mkResetTamperState() {
 function mkSetStatus(msg, cls) {
   var el = document.getElementById('mkStatus');
   if (!el) return;
-  el.textContent = msg; el.className = 'mk-status ' + (cls || '');
+  el.textContent = msg;
+  el.className = 'mk-status ' + (cls || '');
 }
 
 function mkBuildAndRender() {
@@ -370,7 +630,8 @@ function mkBuildAndRender() {
   mkResetTamperState();
 
   var proofResult = document.getElementById('mkProofResult');
-  if (proofResult) proofResult.innerHTML = '<div class="mk-empty">Select a leaf and generate its proof.</div>';
+  if (proofResult)
+    proofResult.innerHTML = '<div class="mk-empty">Select a leaf and generate its proof.</div>';
 
   var naiveEl = document.getElementById('mkNaiveBytes');
   var proofEl = document.getElementById('mkProofBytes');
@@ -379,15 +640,22 @@ function mkBuildAndRender() {
   if (proofEl) proofEl.textContent = '—';
   if (savingsEl) savingsEl.textContent = '—';
 
-  mkSetStatus('Tree built with ' + mkState.n + ' blocks. Click any leaf to edit it, or generate a Merkle proof from the panel.', '');
+  mkSetStatus(
+    'Tree built with ' +
+      mkState.n +
+      ' blocks. Click any leaf to edit it, or generate a Merkle proof from the panel.',
+    ''
+  );
 }
 
 function mkInit() {
   mkBuildAndRender();
 
-  document.querySelectorAll('.mk-n-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.mk-n-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.mk-n-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.mk-n-btn').forEach(function (b) {
+        b.classList.remove('active');
+      });
       btn.classList.add('active');
       mkState.n = parseInt(btn.getAttribute('data-n'));
       mkBuildAndRender();
@@ -405,5 +673,7 @@ function mkInit() {
   if (tamperBtn) tamperBtn.addEventListener('click', mkTamperHandler);
   if (verifyBtn) verifyBtn.addEventListener('click', mkVerifyHandler);
 
-  window.addEventListener('resize', function() { mkRenderTree(null, null); });
+  window.addEventListener('resize', function () {
+    mkRenderTree(null, null);
+  });
 }

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>O'Neill Cylinder Stabilizer | Algo Infinity Verse</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Monaco Editor -->
+    <script src="https://unpkg.com/monaco-editor@0.36.1/min/vs/loader.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
+      .app-container { display: flex; height: 100vh; }
+      
+      .sidebar { width: 450px; background: rgba(15, 23, 42, 0.95); border-right: 1px solid #3b82f6; display: flex; flex-direction: column; z-index: 10; }
+      .header { padding: 20px; border-bottom: 1px solid #1e293b; }
+      .header h2 { margin: 0; color: #3b82f6; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; }
+      .header p { margin: 5px 0 0 0; font-size: 0.8rem; color: #94a3b8; }
+      
+      #editor-container { flex: 1; min-height: 300px; }
+      
+      .controls { padding: 20px; border-top: 1px solid #1e293b; background: rgba(0,0,0,0.5); }
+      .btn { background: linear-gradient(90deg, #2563eb, #1d4ed8); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+      .btn:hover { background: #3b82f6; transform: translateY(-2px); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+      
+      .sim-container { flex: 1; position: relative; background: radial-gradient(circle at center, #020617 0%, #000 100%); overflow: hidden; }
+      canvas { width: 100%; height: 100%; display: block; filter: contrast(1.2); }
+      
+      .hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #3b82f6; width: 280px; z-index: 10; pointer-events: none; }
+      .hud h3 { margin: 0 0 10px 0; color: #3b82f6; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
+      .metric { display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
+      .val { font-weight: bold; font-family: monospace; }
+      .val-grav { color: #facc15; }
+      .val-wobble { color: #ef4444; }
+    </style>
+  </head>
+  <body>
+    
+    <div class="app-container">
+      <div class="sidebar">
+        <div class="header">
+          <h2><i class="fas fa-satellite"></i> O'Neill Cylinder Stabilizer</h2>
+          <p>Maintain 1G gravity via PID thrust control</p>
+        </div>
+        
+        <div id="editor-container"></div>
+        
+        <div class="controls">
+          <button class="btn" onclick="startCentrifuge()"><i class="fas fa-sync"></i> Engage Spin Thrusters</button>
+        </div>
+      </div>
+      
+      <div class="sim-container">
+        <!-- Starfield -->
+        <div style="position: absolute; inset:0; background: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=2693&auto=format&fit=crop') center/cover; opacity: 0.3; pointer-events: none; z-index: 0;"></div>
+        
+        <canvas id="cylinderCanvas" style="position: relative; z-index: 1;"></canvas>
+        
+        <div class="hud">
+          <h3>Habitat Telemetry</h3>
+          <div class="metric"><span>Centrifugal Gravity:</span> <span class="val val-grav" id="gravVal">0.00 G</span></div>
+          <div class="metric"><span>Structural Wobble:</span> <span class="val val-wobble" id="wobbleVal">0.00°</span></div>
+          <div class="metric"><span>Internal Cargo Shift:</span> <span class="val" id="shiftVal" style="color:#60a5fa">Normal</span></div>
+          <div class="metric" style="margin-top: 10px; border-top: 1px solid #334155; padding-top: 5px;">
+            <span>Stability:</span> <span class="val" id="statusVal" style="color:#94a3b8">OFFLINE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let editor;
+      require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.36.1/min/vs' }});
+      require(['vs/editor/editor.main'], function() {
+        editor = monaco.editor.create(document.getElementById('editor-container'), {
+          value: `// PID Controller for Habitat Stabilization
+// Modulate thrusters to counter internal mass shifts and maintain exactly 1G (9.81 m/s^2).
+// Wobble > 5 degrees will snap the structure.
+
+let integral = 0;
+let previousError = 0;
+
+function calculateThrusterAdjustment(currentGravity, currentWobble) {
+    // Target is exactly 1.0 G
+    let error = 1.0 - currentGravity;
+    
+    // Write your PID logic here (Proportional, Integral, Derivative)
+    // Return thruster torque adjustment
+    
+    // Naive Controller (Causes oscillation and structural failure!)
+    let kp = 0.5; // Proportional gain
+    
+    return error * kp;
+}`,
+          language: 'javascript',
+          theme: 'vs-dark',
+          minimap: { enabled: false },
+          automaticLayout: true
+        });
+      });
+
+      const canvas = document.getElementById('cylinderCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      let isSimulating = false;
+      let angle = 0;
+      let rotationSpeed = 0;
+      let wobble = 0;
+      let time = 0;
+      
+      let cargoShiftSeverity = 0;
+      
+      function resize() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function animate() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          let cx = canvas.width / 2;
+          let cy = canvas.height / 2;
+
+          time += 0.016; // Approx 60fps
+
+          if (isSimulating) {
+              // Internal mass randomly shifts, causing torque/wobble and slowing rotation
+              if (Math.random() < 0.05) cargoShiftSeverity = (Math.random() - 0.5) * 2;
+              cargoShiftSeverity *= 0.98; // decay
+              
+              // Physics
+              // Centripetal accel: a = v^2 / r = (omega*r)^2 / r = omega^2 * r
+              // Let's abstract this so rotationSpeed 0.1 = 1G
+              let currentGravity = (rotationSpeed / 0.1) * (rotationSpeed / 0.1); 
+              
+              wobble += cargoShiftSeverity * 0.1;
+              
+              let thrustAdj = 0;
+              try {
+                  eval(editor.getValue());
+                  if (typeof calculateThrusterAdjustment === 'function') {
+                      thrustAdj = calculateThrusterAdjustment(currentGravity, wobble);
+                  }
+              } catch(e) {}
+              
+              // Apply thrust to rotation speed and counter-wobble
+              rotationSpeed += thrustAdj * 0.01;
+              rotationSpeed -= cargoShiftSeverity * 0.001; // Friction/drag from shift
+              
+              // If thruster tries to counter wobble (naive implementation won't, real one would need full 3-axis)
+              wobble += thrustAdj * 0.05; // Thruster also induces wobble if misused!
+              wobble *= 0.99; // Natural damping
+              
+              angle += rotationSpeed;
+              
+              // Failure conditions
+              if (Math.abs(wobble) > 5) {
+                  document.getElementById('statusVal').innerText = "STRUCTURAL COLLAPSE (WOBBLE)";
+                  document.getElementById('statusVal').style.color = "#ef4444";
+                  isSimulating = false;
+              } else if (currentGravity > 1.5) {
+                  document.getElementById('statusVal').innerText = "FATAL G-FORCE";
+                  document.getElementById('statusVal').style.color = "#ef4444";
+                  isSimulating = false;
+              } else if (Math.abs(1.0 - currentGravity) < 0.01 && Math.abs(wobble) < 0.5) {
+                  // Stable!
+                  document.getElementById('statusVal').innerText = "1G STABLE";
+                  document.getElementById('statusVal').style.color = "#10b981";
+              } else {
+                  document.getElementById('statusVal').innerText = "ADJUSTING TRAJECTORY...";
+                  document.getElementById('statusVal').style.color = "#3b82f6";
+              }
+              
+              document.getElementById('gravVal').innerText = currentGravity.toFixed(3) + " G";
+              document.getElementById('wobbleVal').innerText = Math.abs(wobble).toFixed(2) + "°";
+              
+              if(Math.abs(cargoShiftSeverity) > 1) document.getElementById('shiftVal').innerText = "SEVERE";
+              else if(Math.abs(cargoShiftSeverity) > 0.5) document.getElementById('shiftVal').innerText = "MODERATE";
+              else document.getElementById('shiftVal').innerText = "NOMINAL";
+          }
+
+          // Draw the rotating cylinder (Top-down cross-section)
+          ctx.save();
+          ctx.translate(cx, cy);
+          
+          // Apply wobble to drawing
+          ctx.rotate(wobble * Math.PI / 180);
+          
+          // Outer hull
+          ctx.beginPath();
+          ctx.arc(0, 0, 200, 0, Math.PI*2);
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 10;
+          ctx.stroke();
+          
+          // Inner rotation struts
+          ctx.rotate(angle);
+          ctx.beginPath();
+          ctx.moveTo(-190, 0); ctx.lineTo(190, 0);
+          ctx.moveTo(0, -190); ctx.lineTo(0, 190);
+          ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+          
+          // Habitation blocks
+          for(let i=0; i<8; i++) {
+              let a = (i/8) * Math.PI*2;
+              ctx.beginPath();
+              ctx.arc(Math.cos(a)*185, Math.sin(a)*185, 10, 0, Math.PI*2);
+              ctx.fillStyle = '#facc15';
+              ctx.fill();
+          }
+          
+          ctx.restore();
+
+          requestAnimationFrame(animate);
+      }
+      animate();
+
+      function startCentrifuge() {
+          if(isSimulating) return;
+          isSimulating = true;
+          rotationSpeed = 0;
+          wobble = 0;
+          angle = 0;
+          cargoShiftSeverity = 0;
+      }
+    </script>
+  </body>
+</html>

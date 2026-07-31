@@ -1,11 +1,5 @@
 import { renderBookmarkCollectionsPanel } from './bookmarkUI.js';
 
-let leaderboardRequestId = 0;
-const LEADERBOARD_LIMIT = 10;
-let currentLeaderboardPage = 1;
-let totalLeaderboardPages = 1;
-let totalLeaderboardUsers = 0;
-
 function initDashboard() {
   updateDashboard();
   if (typeof updateProfile === 'function') updateProfile();
@@ -70,34 +64,8 @@ function updateDashboard() {
   if (typeof renderInventoryDisplay === 'function') renderInventoryDisplay();
   updateRecentProblems();
   updateRecommendations();
-  updateLeaderboard();
   renderBookmarkCollectionsPanel();
   updateReviewQueueWidget();
-
-  const grid = document.querySelector('.dashboard-grid');
-  if (grid && !document.getElementById('personalityCard')) {
-    const pCard = document.createElement('div');
-    pCard.className = 'dashboard-card personality-card';
-    pCard.id = 'personalityCard';
-    const profileCard = grid.querySelector('.profile-card');
-    if (profileCard) profileCard.after(pCard);
-    else grid.prepend(pCard);
-  }
-  if (typeof renderPersonalityCard === 'function') renderPersonalityCard();
-
-  if (grid && !document.getElementById('mistakeDnaCard')) {
-    const mCard = document.createElement('div');
-    mCard.className = 'dashboard-card mistake-dna-card';
-    mCard.id = 'mistakeDnaCard';
-    const personalityCard = document.getElementById('personalityCard');
-    if (personalityCard) personalityCard.after(mCard);
-    else {
-      const profileCard = grid.querySelector('.profile-card');
-      if (profileCard) profileCard.after(mCard);
-      else grid.prepend(mCard);
-    }
-  }
-  if (typeof renderMistakeDnaCard === 'function') renderMistakeDnaCard();
 }
 
 function updateCurrentDate() {
@@ -284,74 +252,92 @@ function updateBadges() {
   const badges = [
     {
       id: 1,
-      icon: '🌟',
+      icon: '<i class="fas fa-star"></i>',
       name: 'First Steps',
       description: 'Begin your journey',
       criteria: 'Solve 1 problem',
+      color: '#f59e0b',
+      anim: 'badge-hover-spin',
       earned: completedProblems.length >= 1,
     },
     {
       id: 2,
-      icon: '🔥',
+      icon: '<i class="fas fa-fire"></i>',
       name: 'On Fire',
       description: 'Keep the momentum going',
       criteria: 'Maintain a 7-day streak',
+      color: '#ef4444',
+      anim: 'badge-hover-pulse',
       earned: (userProgress.streak || 0) >= 7,
     },
     {
       id: 3,
-      icon: '💎',
+      icon: '<i class="fas fa-gem"></i>',
       name: 'Diamond',
       description: 'Reach a major XP milestone',
       criteria: 'Earn 5,000 XP',
+      color: '#8b5cf6',
+      anim: 'badge-hover-float',
       earned: (userProgress.xp || 0) >= 5000,
     },
     {
       id: 4,
-      icon: '🚀',
+      icon: '<i class="fas fa-rocket"></i>',
       name: 'Rocket',
       description: 'Speed through problems',
       criteria: 'Solve 50 problems',
+      color: '#06b6d4',
+      anim: 'badge-hover-bounce',
       earned: completedProblems.length >= 50,
     },
     {
       id: 5,
-      icon: '👑',
+      icon: '<i class="fas fa-crown"></i>',
       name: 'Master',
       description: 'Achieve expert problem-solving',
       criteria: 'Solve 100 problems',
+      color: '#ec4899',
+      anim: 'badge-hover-glow',
       earned: completedProblems.length >= 100,
     },
     {
       id: 6,
-      icon: '🎯',
+      icon: '<i class="fas fa-bullseye"></i>',
       name: 'Sharpshooter',
       description: 'Hit the target with consistency',
       criteria: 'Solve 25 problems and earn 2,500 XP',
+      color: '#10b981',
+      anim: 'badge-hover-wobble',
       earned: completedProblems.length >= 25 && (userProgress.xp || 0) >= 2500,
     },
     {
       id: 7,
-      icon: '⚔️',
+      icon: '<i class="fas fa-shield-alt"></i>',
       name: 'Gladiator',
       description: 'Win your first coding battle',
       criteria: 'Win 1 battle',
+      color: '#f97316',
+      anim: 'badge-hover-shake',
       earned: (userProgress.battlesWon || 0) >= 1,
     },
     {
       id: 8,
-      icon: '⚡',
+      icon: '<i class="fas fa-bolt"></i>',
       name: 'Speed Demon',
       description: 'Become a battle master',
       criteria: 'Win 5 battles',
+      color: '#a855f7',
+      anim: 'badge-hover-flash',
       earned: (userProgress.battlesWon || 0) >= 5,
     },
     {
       id: 9,
-      icon: '<i class="fas fa-gem" style="font-size:1.1rem"></i>',
+      icon: '<i class="fas fa-trophy"></i>',
       name: 'Exclusive',
       description: 'A mark of true dedication',
       criteria: 'Purchased from the XP Store',
+      color: '#f59e0b',
+      anim: 'badge-hover-grow',
       earned: !!(userProgress.inventory?.exclusiveBadge),
     },
   ];
@@ -370,7 +356,7 @@ function updateBadges() {
       .map((badge) => {
         const tooltipId = `badge-tooltip-${badge.id}`;
         const lockedLabel = badge.earned ? '' : ' (locked)';
-        return `<div class="badge ${badge.earned ? '' : 'locked'}" tabindex="0" aria-describedby="${tooltipId}" aria-label="${badge.name}${lockedLabel}">
+        return `<div class="badge ${badge.earned ? badge.anim : 'locked'}" tabindex="0" aria-describedby="${tooltipId}" aria-label="${badge.name}${lockedLabel}" style="${badge.earned ? `background:${badge.color};box-shadow:0 4px 14px ${badge.color}40` : ''}">
                 <span class="badge-tooltip" id="${tooltipId}" role="tooltip">
                     <strong>${badge.name}</strong>
                     <span>${badge.description}</span>
@@ -387,7 +373,7 @@ function updateBadges() {
       .map((badge) => {
         const tooltipId = `badge-lg-tooltip-${badge.id}`;
         const lockedLabel = badge.earned ? '' : ' (locked)';
-        return `<div class="badge-lg ${badge.earned ? '' : 'locked'}" tabindex="0" aria-describedby="${tooltipId}" aria-label="${badge.name}${lockedLabel}">
+        return `<div class="badge-lg ${badge.earned ? badge.anim : 'locked'}" tabindex="0" aria-describedby="${tooltipId}" aria-label="${badge.name}${lockedLabel}" style="${badge.earned ? `background:${badge.color};box-shadow:0 4px 14px ${badge.color}40` : ''}">
                 <span class="badge-tooltip" id="${tooltipId}" role="tooltip">
                     <strong>${badge.name}</strong>
                     <span>${badge.description}</span>
@@ -398,140 +384,41 @@ function updateBadges() {
       })
       .join('');
   }
+
+  const earnedEl = document.getElementById('badgesEarnedCount');
+  if (earnedEl) earnedEl.textContent = `${earned.length} / ${badges.length} earned`;
 }
 
-function updateLeaderboard(page = 1) {
-  const leaderboardList = document.getElementById('leaderboardList');
-  if (!leaderboardList) return;
+const _badgePreviewData = [
+  { icon: '<i class="fas fa-star"></i>', name: 'First Steps', color: '#f59e0b', anim: 'badge-hover-spin' },
+  { icon: '<i class="fas fa-fire"></i>', name: 'On Fire', color: '#ef4444', anim: 'badge-hover-pulse' },
+  { icon: '<i class="fas fa-gem"></i>', name: 'Diamond', color: '#8b5cf6', anim: 'badge-hover-float' },
+  { icon: '<i class="fas fa-rocket"></i>', name: 'Rocket', color: '#06b6d4', anim: 'badge-hover-bounce' },
+  { icon: '<i class="fas fa-crown"></i>', name: 'Master', color: '#ec4899', anim: 'badge-hover-glow' },
+  { icon: '<i class="fas fa-bullseye"></i>', name: 'Sharpshooter', color: '#10b981', anim: 'badge-hover-wobble' },
+  { icon: '<i class="fas fa-shield-alt"></i>', name: 'Gladiator', color: '#f97316', anim: 'badge-hover-shake' },
+  { icon: '<i class="fas fa-bolt"></i>', name: 'Speed Demon', color: '#a855f7', anim: 'badge-hover-flash' },
+  { icon: '<i class="fas fa-trophy"></i>', name: 'Exclusive', color: '#f59e0b', anim: 'badge-hover-grow' },
+];
 
-  const requestId = ++leaderboardRequestId;
-  currentLeaderboardPage = page;
-
-  renderLeaderboardRows([], getCurrentUserId(), { emptyMessage: 'Loading leaderboard...' });
-  renderPaginationControls(true);
-
-  loadLeaderboard(page)
-    .then(({ leaders, currentUserId, total }) => {
-      if (requestId !== leaderboardRequestId) return;
-
-      const resolvedCurrentUserId = currentUserId || getCurrentUserId();
-      totalLeaderboardUsers = total || leaders.length;
-      totalLeaderboardPages = Math.ceil(totalLeaderboardUsers / LEADERBOARD_LIMIT);
-
-      renderLeaderboardRows(
-        buildLeaderboardRows(leaders, resolvedCurrentUserId),
-        resolvedCurrentUserId
-      );
-      renderPaginationControls(false);
-    })
-    .catch((error) => {
-      if (error.name === 'AbortError') return;
-      void 0;
-      if (requestId !== leaderboardRequestId) return;
-      renderLeaderboardRows([], getCurrentUserId(), { emptyMessage: 'Leaderboard unavailable.' });
-      renderPaginationControls(true, true);
-    });
+function previewBadges() {
+  const modal = document.getElementById('badgesPreviewModal');
+  const grid = document.getElementById('badgesPreviewGrid');
+  if (!modal || !grid) return;
+  grid.innerHTML = _badgePreviewData.map(b =>
+    `<div class="badge-lg ${b.anim}" style="background:${b.color};box-shadow:0 4px 14px ${b.color}40"><span class="badge-tooltip"><strong>${b.name}</strong></span>${b.icon}</div>`
+  ).join('');
+  modal.classList.add('active');
+  modal.onclick = (e) => { if (e.target === modal) closeBadgesPreview(); };
 }
 
-async function loadLeaderboard(page = 1) {
-  const apiAbort = window.apiAbort;
-  const apiCache = window.apiCache;
-
-  if (location.protocol === 'file:') {
-    return { leaders: [], currentUserId: null, total: 0 };
-  }
-  if (!apiAbort || !apiCache) {
-    return { leaders: [], currentUserId: null, total: 0 };
-  }
-
-  const limit = LEADERBOARD_LIMIT;
-  const skip = (page - 1) * limit;
-  const signal = apiAbort.getSignal('leaderboard');
-
-  try {
-    const response = await apiCache.fetchWithCache(
-      `/api/leaderboard?limit=${limit}&skip=${skip}`,
-      { credentials: 'include', signal },
-      300000,
-      'json'
-    );
-    return {
-      leaders: response.users || response.leaders || [],
-      currentUserId: response.currentUserId || null,
-      total: response.total || 0,
-    };
-  } finally {
-    apiAbort.clearSignal('leaderboard');
-  }
+function closeBadgesPreview() {
+  const modal = document.getElementById('badgesPreviewModal');
+  if (modal) modal.classList.remove('active');
 }
 
-function buildLeaderboardRows(leaders = [], currentUserId = getCurrentUserId()) {
-  const userProgress = window.userProgress || {};
-  const rowsById = new Map();
-
-  leaders.forEach((leader) => {
-    const normalized = normalizeLeaderboardEntry(leader);
-    if (normalized.id) rowsById.set(normalized.id, normalized);
-  });
-
-  const currentEntry = getCurrentLeaderboardEntry(currentUserId);
-  if (currentUserId !== 'local-user' || userProgress.xp > 350 || leaders.length === 0) {
-    rowsById.set(currentEntry.id, currentEntry);
-  }
-
-  const rankedRows = Array.from(rowsById.values())
-    .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name))
-    .map((leader, index) => ({ ...leader, rank: index + 1 }));
-
-  const visibleRows = rankedRows.slice(0, LEADERBOARD_LIMIT);
-
-  if (!visibleRows.some((leader) => leader.id === currentEntry.id)) {
-    const currentRow = rankedRows.find((leader) => leader.id === currentEntry.id);
-    if (currentRow) visibleRows[visibleRows.length - 1] = currentRow;
-  }
-
-  return visibleRows;
-}
-
-function normalizeLeaderboardEntry(entry) {
-  return {
-    id: String(entry.id || ''),
-    name: String(entry.name || 'Learner'),
-    xp: Math.max(0, Number(entry.xp) || 0),
-    level: Math.max(1, Number(entry.level) || 1),
-    avatar: String(entry.avatar || '🚀'),
-    rank: Number(entry.rank) || null,
-  };
-}
-
-function getCurrentLeaderboardEntry(currentUserId = getCurrentUserId()) {
-  const userProgress = window.userProgress || {};
-  return normalizeLeaderboardEntry({
-    id: currentUserId || 'local-user',
-    name: getCurrentDisplayName(),
-    xp: userProgress.xp,
-    level: userProgress.level,
-    avatar: userProgress.avatar,
-  });
-}
-
-function getCurrentUserId() {
-  return (
-    window.algoAuth?.user?.sub ||
-    window.algoAuth?.user?.id ||
-    (typeof cachedSession !== 'undefined' ? cachedSession?.user?.sub : null) ||
-    'local-user'
-  );
-}
-
-function getCurrentDisplayName() {
-  return (
-    window.algoAuth?.user?.name ||
-    (typeof cachedSession !== 'undefined' ? cachedSession?.user?.name : null) ||
-    (window.userProgress ? window.userProgress.name : null) ||
-    'Learner'
-  );
-}
+window.previewBadges = previewBadges;
+window.closeBadgesPreview = closeBadgesPreview;
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -543,128 +430,6 @@ function findProblemById(problems, id) {
   const targetId = String(id);
   return problems.find((problem) => String(problem.id) === targetId);
 }
-
-function getAvatarImageUrl(avatar) {
-  if (!avatar || typeof avatar !== 'string') return '';
-  if (
-    avatar.startsWith('http://') ||
-    avatar.startsWith('https://') ||
-    avatar.startsWith('data:image/')
-  ) {
-    return avatar;
-  }
-  if (avatar.startsWith('//')) return `https:${avatar}`;
-  if (/^[\w.-]+\.[a-z]{2,}\//i.test(avatar)) return `https://${avatar}`;
-  return '';
-}
-
-function renderLeaderboardRows(rows, currentUserId = getCurrentUserId(), options = {}) {
-  const leaderboardList = document.getElementById('leaderboardList');
-  if (!leaderboardList) return;
-
-  if (!rows.length) {
-    leaderboardList.innerHTML = `<p class="empty-state">${options.emptyMessage || 'No leaderboard data yet.'}</p>`;
-    return;
-  }
-
-  leaderboardList.innerHTML = rows
-    .map((user) => {
-      const isCurrentUser =
-        user.id === currentUserId || (currentUserId === 'local-user' && user.id === 'local-user');
-      const displayName = isCurrentUser ? `${user.name} (You)` : user.name;
-      let avatarHtml = escapeHtml(user.avatar);
-      const avatarUrl = getAvatarImageUrl(user.avatar);
-      if (avatarUrl) {
-        avatarHtml = `<img src="${escapeHtml(avatarUrl)}" alt="" loading="lazy">`;
-      }
-      return `<div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
-            <span class="leader-rank">#${user.rank}</span>
-            <span class="leader-avatar" aria-hidden="true">${avatarHtml}</span>
-            <span class="leader-name">${escapeHtml(displayName)}</span>
-            <span class="leader-xp">${user.xp.toLocaleString()} XP</span>
-        </div>`;
-    })
-    .join('');
-}
-
-function renderPaginationControls(isLoading = false, hasError = false) {
-  const paginationContainer = document.getElementById('paginationContainer');
-  if (!paginationContainer) {
-    createPaginationContainer();
-  }
-
-  const container = document.getElementById('paginationContainer');
-  if (!container) return;
-
-  if (totalLeaderboardPages <= 1 && !isLoading) {
-    container.innerHTML = '';
-    return;
-  }
-
-  if (isLoading) {
-    container.innerHTML = `
-            <div class="pagination-controls">
-                <span class="pagination-info">Loading leaderboard...</span>
-            </div>
-        `;
-    return;
-  }
-
-  if (hasError) {
-    container.innerHTML = `
-            <div class="pagination-controls">
-                <span class="pagination-info error">Failed to load leaderboard</span>
-            </div>
-        `;
-    return;
-  }
-
-  const currentPage = currentLeaderboardPage;
-  const totalPages = totalLeaderboardPages;
-
-  let html = '<div class="pagination-controls">';
-
-  html += `
-        <button class="pagination-btn" onclick="goToLeaderboardPage(${currentPage - 1})" 
-            ${currentPage <= 1 ? 'disabled' : ''}>
-            <i class="fas fa-chevron-left"></i> Previous
-        </button>
-    `;
-
-  html += `<span class="pagination-info">Page ${currentPage} of ${totalPages}</span>`;
-
-  html += `
-        <button class="pagination-btn" onclick="goToLeaderboardPage(${currentPage + 1})" 
-            ${currentPage >= totalPages ? 'disabled' : ''}>
-            Next <i class="fas fa-chevron-right"></i>
-        </button>
-    `;
-
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-function goToLeaderboardPage(page) {
-  if (page < 1 || page > totalLeaderboardPages) return;
-  if (page === currentLeaderboardPage) return;
-  updateLeaderboard(page);
-}
-
-function createPaginationContainer() {
-  const leaderboardList = document.getElementById('leaderboardList');
-  if (!leaderboardList) return;
-
-  const existingContainer = document.getElementById('paginationContainer');
-  if (existingContainer) return;
-
-  const container = document.createElement('div');
-  container.id = 'paginationContainer';
-  container.className = 'pagination-container';
-  leaderboardList.parentNode.insertBefore(container, leaderboardList.nextSibling);
-}
-
-window.updateLeaderboard = updateLeaderboard;
-window.goToLeaderboardPage = goToLeaderboardPage;
 
 function getActivityLevel(count) {
   if (!count || count === 0) return 0;
@@ -686,7 +451,7 @@ function renderActivityHeatmap() {
   const WEEKS_TO_SHOW = 52;
   const dayOfWeek = today.getDay();
   const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - (WEEKS_TO_SHOW * 7 - 1) - dayOfWeek);
+  startDate.setDate(startDate.getDate() - ((WEEKS_TO_SHOW * 7 - 1) - dayOfWeek));
   startDate.setHours(0, 0, 0, 0);
 
   const weeks = [];
@@ -833,9 +598,7 @@ function updateReviewQueueWidget() {
 export {
   initDashboard,
   updateDashboard,
-  updateLeaderboard,
   updateBadges,
   updateFreezeHistoryList,
   renderActivityHeatmap,
-  goToLeaderboardPage,
 };

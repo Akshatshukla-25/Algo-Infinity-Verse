@@ -1,61 +1,150 @@
 <footer class="footer">
+    <div class="footer-bg-pattern" aria-hidden="true"></div>
     <div class="container">
       <div class="footer-content">
+        <!-- Column 1: Brand -->
         <div class="footer-section footer-brand">
-          <h3>∞ Algo Infinity Verse</h3>
-          <p>Your ultimate destination for mastering DSA and acing technical interviews.</p>
+          <div class="footer-brand-heading">
+            <span class="footer-logo-symbol" aria-hidden="true">∞</span>
+            <div class="footer-logo-text">
+              <span class="footer-logo-top">Algo</span>
+              <span class="footer-logo-bottom">Infinity Verse</span>
+            </div>
+          </div>
+          <p class="footer-tagline">Your ultimate destination for mastering data structures, algorithms, and acing technical interviews.</p>
           <div class="social-links">
-            <a href="javascript:void(0)" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
-            <a href="javascript:void(0)" aria-label="X / Twitter"><i class="fa-brands fa-x-twitter"></i></a>
-            <a href="javascript:void(0)" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
-            <a href="javascript:void(0)" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            <a href="https://github.com/AlgoInfinityVerse" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+            <a href="https://twitter.com/AlgoInfinity" target="_blank" rel="noopener noreferrer" aria-label="X / Twitter"><i class="fa-brands fa-twitter"></i></a>
+            <a href="https://linkedin.com/company/algoinfinityverse" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+            <a href="https://youtube.com/@AlgoInfinityVerse" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
           </div>
         </div>
+
+        <!-- Column 2: Explore -->
         <div class="footer-section">
-          <h4>Quick Links</h4>
-          <ul>
-            <li><a href="/index.html#topics">DSA Topics</a></li>
-            <li><a href="/pages/practice/problems.html">Practice Problems</a></li>
-            <li><a href="/index.html#quiz">Quizzes</a></li>
-            <li><a href="/pages/resources/cheat-sheets/cheat-sheets.html">DSA Cheat Sheets</a></li>
-            <li><a href="/pages/visualizers/sorting-visualizer/sorting-visualizer.html">Sorting Visualizer</a></li>
-            <li><a href="/pages/visualizers/graph-visualizer/graph-visualizer.html">Graph Visualizer</a></li>
-            <li><a href="/pages/visualizers/heap-percolation-visualizer/heap-percolation-visualizer.html">Heap Percolation Visualizer</a></li>
-            <li><a href="/fast-slow-pointer-simulator.html">Fast/Slow Pointer Simulator</a></li>
+          <h4 class="footer-heading">
+            <i class="fas fa-compass" aria-hidden="true"></i>
+            Explore
+          </h4>
+          <ul class="footer-links">
+            <li><a href="/pages/roadmaps/roadmaps.html">
+              <i class="fas fa-map-signs" aria-hidden="true"></i>
+              Roadmaps
+            </a></li>
+            <li><a href="/pages/practice/problems.html">
+              <i class="fas fa-laptop-code" aria-hidden="true"></i>
+              Practice Problems
+            </a></li>
+            <li><a href="/pages/tools/contest/contest.html">
+              <i class="fas fa-trophy" aria-hidden="true"></i>
+              Contests
+            </a></li>
+            <li><a href="/pages/interview/interview.html">
+              <i class="fas fa-user-tie" aria-hidden="true"></i>
+              Interview Prep
+            </a></li>
+            <li><a href="/index.html#quiz">
+              <i class="fas fa-question-circle" aria-hidden="true"></i>
+              Quizzes
+            </a></li>
+            <li><a href="/pages/leaderboard/leaderboard.html">
+              <i class="fas fa-medal" aria-hidden="true"></i>
+              Leaderboard
+            </a></li>
           </ul>
         </div>
+
+        <!-- Column 3: Learn -->
         <div class="footer-section">
-          <h4>Learn</h4>
-          <ul>
-            <li><a href="/pages/learning/python-learning/python-learning.html">Learn Python</a></li>
-            <li><a href="/pages/learning/java-learning/java-learning.html">Learn Java</a></li>
-            <li><a href="/pages/learning/cplusplus-learning/cplusplus-learning.html">Learn C++</a></li>
-            <li><a href="/pages/resources/system-design/system-design.html">System Design</a></li>
-            <li><a href="/pages/learning/dbms-learning/dbms-learning.html">Learn DBMS</a></li>
-            <li><a href="/pages/learning/oop-learning/oop-learning.html">Learn OOP</a></li>
+          <h4 class="footer-heading">
+            <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+            Learn
+          </h4>
+          <ul class="footer-links">
+            <li><a href="/pages/learning/learning-topics.html">
+              <i class="fas fa-book-open" aria-hidden="true"></i>
+              DSA Topics
+            </a></li>
+            <li><a href="/pages/system-design.html">
+              <i class="fas fa-server" aria-hidden="true"></i>
+              System Design
+            </a></li>
+            <li><a href="/pages/career/job-preparation-hub/job-preparation-hub.html">
+              <i class="fas fa-briefcase" aria-hidden="true"></i>
+              Career Hub
+            </a></li>
+            <li><a href="/code-playground.html">
+              <i class="fas fa-terminal" aria-hidden="true"></i>
+              Code Playground
+            </a></li>
+            <li><a href="/pages/academy/academy.html">
+              <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+              Academies
+            </a></li>
+            <li><a href="/pages/tools/tech-comparison/comparison.html">
+              <i class="fas fa-chart-bar" aria-hidden="true"></i>
+              Tech Comparisons
+            </a></li>
           </ul>
         </div>
+
+        <!-- Column 4: Community -->
         <div class="footer-section">
-          <h4>Stay Updated</h4>
-          <p>Get weekly problem sets and tips.</p>
-          <form class="newsletter-form" id="newsletterForm" novalidate>
-            <label for="newsletterEmail" class="visually-hidden">Your email address</label>
-            <input type="email" id="newsletterEmail" name="email"
-              placeholder="Your email" autocomplete="email" required />
-            <button type="submit" aria-label="Subscribe">
-              <i class="fas fa-paper-plane"></i>
-            </button>
-          </form>
+          <h4 class="footer-heading">
+            <i class="fas fa-users" aria-hidden="true"></i>
+            Community
+          </h4>
+          <ul class="footer-links">
+            <li><a href="/pages/community/community/community.html">
+              <i class="fas fa-comments" aria-hidden="true"></i>
+              Discussions
+            </a></li>
+            <li><a href="/support-page/">
+              <i class="fas fa-headset" aria-hidden="true"></i>
+              Support
+            </a></li>
+            <li><a href="/pages/community/feedback/feedback.html">
+              <i class="fas fa-comment-alt" aria-hidden="true"></i>
+              Feedback
+            </a></li>
+            <li><a href="/pages/resources/about-us.html">
+              <i class="fas fa-info-circle" aria-hidden="true"></i>
+              About Us
+            </a></li>
+            <li><a href="/pages/resources/faq/faq.html">
+              <i class="fas fa-question-circle" aria-hidden="true"></i>
+              FAQ
+            </a></li>
+          </ul>
+          <div class="footer-newsletter">
+            <p class="footer-newsletter-label">
+              <i class="fas fa-envelope" aria-hidden="true"></i>
+              Get weekly problem sets &amp; tips
+            </p>
+            <form class="newsletter-form" id="newsletterForm" novalidate>
+              <label for="newsletterEmail" class="visually-hidden">Your email address</label>
+              <div class="newsletter-input-wrap">
+                <input type="email" id="newsletterEmail" name="email"
+                  placeholder="your@email.com" autocomplete="email" required />
+                <button type="submit" aria-label="Subscribe">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
+
       <div class="footer-bottom">
-        <p>&copy; 2026 Algo Infinity Verse. Crafted with 💜 for learners worldwide.</p>
+       <p class="footer-copyright">&copy; <span id="footer-current-year">2026</span> Algo Infinity Verse. Made with <span class="footer-heart">&hearts;</span> for learners worldwide.</p>
         <div class="footer-bottom-links">
           <a href="/pages/resources/privacy-policy.html">Privacy Policy</a>
-          <a href="/pages/resources/about-us.html">About Us</a>
-          <a href="/pages/community/community/community.html">Community</a>
-          <a href="/pages/community/feedback/feedback.html">Feedback</a>
-          <a href="/pages/community/support/index.html">Support</a>
+          <span class="footer-link-dot" aria-hidden="true">&middot;</span>
+          <a href="/pages/resources/faq/faq.html">FAQ</a>
+          <span class="footer-link-dot" aria-hidden="true">&middot;</span>
+          <a href="/support-page/">Contact</a>
+          <span class="footer-link-dot" aria-hidden="true">&middot;</span>
+          <a href="/contributors/index.html">Contributors</a>
         </div>
       </div>
     </div>

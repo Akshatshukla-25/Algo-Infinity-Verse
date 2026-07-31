@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Refactoring Dojo | Algo Infinity Verse</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="dojo">
+      <header class="dojo-header">
+        <h1>Code Refactoring Dojo</h1>
+        <p>
+          Refactor the code without changing behavior. The system checks output equivalence and
+          shows complexity/maintainability metrics.
+        </p>
+      </header>
+
+      <section class="dojo-controls">
+        <div class="dojo-controls-row">
+          <button class="btn" id="runAndAnalyze">Run & Analyze</button>
+          <span class="muted" id="statusText">Ready.</span>
+        </div>
+      </section>
+
+      <section class="dojo-grid">
+        <section class="dojo-card">
+          <h2 id="originalCodeLabel">Original (unoptimized)</h2>
+          <textarea
+            id="originalCode"
+            aria-labelledby="originalCodeLabel"
+            spellcheck="false"
+            class="codearea"
+            readonly
+            rows="18"
+          ></textarea>
+        </section>
+
+        <section class="dojo-card">
+          <h2 id="refactoredCodeLabel">Your Refactor</h2>
+          <textarea id="refactoredCode" aria-labelledby="refactoredCodeLabel" spellcheck="false" class="codearea" rows="18"></textarea>
+        </section>
+      </section>
+
+      <section class="dojo-card dojo-results">
+        <h2>Behavior Validation</h2>
+        <div class="summary" id="behaviorSummary"></div>
+        <div id="testsList" class="tests-list"></div>
+        <div id="runtimeError" class="runtime-error" style="display: none"></div>
+      </section>
+
+      <section class="dojo-grid dojo-metrics">
+        <section class="dojo-card">
+          <h2>Metrics: Original</h2>
+          <pre id="metricsOriginal" class="metrics-pre"></pre>
+        </section>
+        <section class="dojo-card">
+          <h2>Metrics: Refactored</h2>
+          <pre id="metricsRefactored" class="metrics-pre"></pre>
+        </section>
+      </section>
+
+      <section class="dojo-card">
+        <h2>Improvement Stats</h2>
+        <pre id="improvementStats" class="metrics-pre"></pre>
+      </section>
+
+      <section class="dojo-card">
+        <h2>Educational Suggestions</h2>
+        <ul id="suggestionsList" class="suggestions-list"></ul>
+      </section>
+
+      <section class="dojo-card dojo-score">
+        <h2>Score</h2>
+        <div class="score-row">
+          <span class="score-badge" id="scoreBadge">-</span>
+          <span class="muted" id="scoreHint"></span>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="/bootstrap-legacy.js"></script>
+    <script src="/script.js"></script>
+    <script type="module" src="./dojo-refactoring.js"></script>
+
+    <script>
+      loadPartial('navbar-placeholder', '/partials/navbar.html');
+      loadPartial('footer-placeholder', '/partials/footer.html');
+    </script>
+  </body>
+</html>

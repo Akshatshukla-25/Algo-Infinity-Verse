@@ -7,6 +7,7 @@ const interviewTools = [
   { name: "Mock Interview Simulator", path: "/pages/interview/mock-interview-simulator/mock-interview-simulator.html", category: "Practice & Mock", icon: "fa-microphone", desc: "Simulate real technical interviews with timed coding challenges and AI feedback." },
   { name: "Interview Panic Mode", path: "/pages/interview/interview-panic-mode/interview-panic-mode.html", category: "Practice & Mock", icon: "fa-bolt", desc: "Rapid-fire revision mode for last-minute interview cramming under pressure." },
   { name: "System Design Simulator", path: "/pages/interview/system-design-simulator/system-design-simulator.html", category: "Practice & Mock", icon: "fa-sitemap", desc: "Practice system design interviews with structured prompts and evaluation rubrics." },
+  { name: "Adaptive Interview Mock Engine", path: "/pages/interview/adaptive-mock-engine/adaptive-mock-engine.html", category: "Practice & Mock", icon: "fa-microphone-lines", desc: "Timed mock interview that adapts to your weak topics and ends with a STAR + DSA rubric scorecard." },
 
   // ── Behavioral ──
   { name: "Behavioral Questions", path: "/pages/interview/behavioral-questions/behavioral-questions.html", category: "Behavioral", icon: "fa-comments", desc: "Practice behavioral interviews with STAR method guidance and sample answers." },
@@ -21,6 +22,7 @@ const interviewTools = [
   // ── Tracking & Analytics ──
   { name: "Interview Experiences", path: "/pages/interview/interview-experience/interview-experience.html", category: "Tracking & Analytics", icon: "fa-book-open", desc: "Read and share real interview experiences from top tech companies." },
   { name: "Interview Heatmap", path: "/pages/interview/interview-heatmap/interview-heatmap.html", category: "Tracking & Analytics", icon: "fa-fire", desc: "Track your interview preparation activity and identify focus areas." },
+  { name: "Interview Self-Scorecard", path: "/pages/interview/interview-scorecard/interview-scorecard.html", category: "Tracking & Analytics", icon: "fa-clipboard-check", desc: "After a mock: score clarity, correctness, complexity, and communication — radar chart, weak areas, and revision deep links." },
   { name: "Interview Mistakes", path: "/pages/interview/interview-mistakes/interview-mistakes.html", category: "Tracking & Analytics", icon: "fa-exclamation-triangle", desc: "Learn from common coding interview mistakes with detailed explanations." },
   { name: "Company Questions", path: "/pages/interview/company-interview/company-interview.html", category: "Tracking & Analytics", icon: "fa-building", desc: "Browse company-specific interview questions from FAANG and top tech firms." },
 
@@ -34,6 +36,8 @@ const interviewTools = [
   { name: "Job Prep Hub", path: "/pages/career/job-preparation-hub/job-preparation-hub.html", category: "Resume & Career", icon: "fa-briefcase", desc: "Centralized hub for resume prep, aptitude practice, and career resources." },
   { name: "Coding Resume", path: "/pages/career/resume/resume.html", category: "Resume & Career", icon: "fa-file-alt", desc: "Visualize your progress, DSA mastery, and accomplishments in a resume layout." },
   { name: "Resume Tips", path: "/pages/career/resume-tips/resume-tips.html", category: "Resume & Career", icon: "fa-lightbulb", desc: "Learn resume structure, ATS-friendly formatting, and project presentation tips." },
+  { name: "Resume Roast & ATS Visualizer", path: "/pages/resume-roast.html", category: "Resume & Career", icon: "fa-fire", desc: "Get a brutally honest AI roast of your resume plus an ATS-parsing visualization." },
+  { name: "Smart Revision Calendar", path: "/pages/revision/revision.html", category: "Tracking & Analytics", icon: "fa-calendar-days", desc: "Personalized study scheduling and spaced repetition tracking dashboard for mastering DSA concepts." },
 ];
 
 /* ─── Categories ─── */

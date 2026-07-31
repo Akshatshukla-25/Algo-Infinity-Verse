@@ -163,78 +163,108 @@
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.02em;
-        padding: 15px;
+        padding: 0 15px;
         border-radius: 9px;
-        border: 1px solid;
         transition: opacity 0.15s;
         white-space: nowrap;
       }
       .badge i {
         font-size: 12px;
       }
+      .badge::after {
+        display: none;
+      }
 
-      /* Dark mode defaults (your site's default) */
+      /* Badge tier colors (dark mode default) */
+      .badge-elite {
+        background: #2d1b4e;
+        color: #d4a8ff;
+      }
       .badge-gold {
         background: #412402;
         color: #fac775;
-        border-color: #854f0b;
       }
       .badge-silver {
         background: #2c2c2a;
         color: #d3d1c7;
-        border-color: #5f5e5a;
       }
       .badge-bronze {
         background: #4a1b0c;
         color: #f0997b;
-        border-color: #993c1d;
       }
       .badge-purple {
         background: #26215c;
         color: #cecbf6;
-        border-color: #534ab7;
       }
-      .badge-green {
+      .badge-entry {
         background: #04342c;
         color: #9fe1cb;
-        border-color: #0f6e56;
       }
-      .badge-blue {
-        background: #042c53;
-        color: #b5d4f4;
-        border-color: #185fa5;
+      .badge-intermediate {
+        background: #1e3a5f;
+        color: #93c5fd;
+      }
+      .badge-advanced {
+        background: #2d1b4e;
+        color: #c4b5fd;
+      }
+      .badge-legendary {
+        background: #4c1d3a;
+        color: #fda4af;
+      }
+      .badge-core {
+        background: #1a3a4a;
+        color: #7dd3fc;
+      }
+      .badge-early {
+        background: #1a3a2a;
+        color: #86efac;
       }
 
       /* Light mode overrides */
+      .light-mode .badge-elite {
+        background: #f0e6ff;
+        color: #5b21b6;
+      }
       .light-mode .badge-gold {
         background: #faeeda;
         color: #633806;
-        border-color: #fac775;
       }
       .light-mode .badge-silver {
         background: #f1efe8;
         color: #444441;
-        border-color: #b4b2a9;
       }
       .light-mode .badge-bronze {
         background: #faece7;
         color: #71230b;
-        border-color: #f0997b;
       }
       .light-mode .badge-purple {
         background: #eeedfe;
         color: #3c3489;
-        border-color: #afa9ec;
       }
-      .light-mode .badge-green {
+      .light-mode .badge-entry {
         background: #e1f5ee;
         color: #085041;
-        border-color: #5dcaa5;
       }
-      .light-mode .badge-blue {
-        background: #e6f1fb;
-        color: #0c447c;
-        border-color: #85b7eb;
+      .light-mode .badge-intermediate {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .light-mode .badge-advanced {
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+      .light-mode .badge-legendary {
+        background: #fce7f3;
+        color: #9d174d;
+      }
+      .light-mode .badge-core {
+        background: #e0f2fe;
+        color: #0369a1;
+      }
+      .light-mode .badge-early {
+        background: #dcfce7;
+        color: #15803d;
       }
       .contributor-stats {
         display: flex;
@@ -748,6 +778,7 @@
       <section class="contributors-header">
         <h1>🌟 Our Contributors</h1>
         <p>Meet the amazing people building Algo-Infinity-Verse</p>
+        <p><a href="/pages/team-profile/index.html">View Shared Team Profile →</a></p>
       </section>
       <section class="leaderboard-section">
         <h2>🏆 Top Contributors</h2>
@@ -888,6 +919,7 @@
 
       function getBadges(contributions, rank) {
         const badges = [];
+
         if (rank === 1)
           badges.push({
             label: '<i class="fas fa-trophy"></i> 1st place',
@@ -909,21 +941,78 @@
             cls: 'purple',
           });
 
-        if (contributions >= 50)
+        if (contributions >= 200)
+          badges.push({
+            label: '<i class="fas fa-star"></i> ' + Math.floor(contributions / 100) * 100 + '+ commits',
+            cls: 'legendary',
+          });
+        else if (contributions >= 150)
+          badges.push({
+            label: '<i class="fas fa-star"></i> 150+ commits',
+            cls: 'legendary',
+          });
+        else if (contributions >= 100)
+          badges.push({
+            label: '<i class="fas fa-crown"></i> 100+ commits',
+            cls: 'elite',
+          });
+        else if (contributions >= 90)
+          badges.push({
+            label: '<i class="fas fa-fire"></i> 90+ commits',
+            cls: 'advanced',
+          });
+        else if (contributions >= 80)
+          badges.push({
+            label: '<i class="fas fa-fire"></i> 80+ commits',
+            cls: 'advanced',
+          });
+        else if (contributions >= 70)
+          badges.push({
+            label: '<i class="fas fa-fire"></i> 70+ commits',
+            cls: 'advanced',
+          });
+        else if (contributions >= 60)
+          badges.push({
+            label: '<i class="fas fa-fire"></i> 60+ commits',
+            cls: 'advanced',
+          });
+        else if (contributions >= 50)
           badges.push({
             label: '<i class="fas fa-fire"></i> 50+ commits',
-            cls: 'green',
+            cls: 'advanced',
+          });
+        else if (contributions >= 40)
+          badges.push({
+            label: '<i class="fas fa-rocket"></i> 40+ commits',
+            cls: 'intermediate',
+          });
+        else if (contributions >= 30)
+          badges.push({
+            label: '<i class="fas fa-rocket"></i> 30+ commits',
+            cls: 'intermediate',
           });
         else if (contributions >= 20)
           badges.push({
             label: '<i class="fas fa-rocket"></i> 20+ commits',
-            cls: 'blue',
+            cls: 'intermediate',
           });
         else if (contributions >= 10)
           badges.push({
             label: '<i class="fas fa-code"></i> 10+ commits',
-            cls: 'blue',
+            cls: 'entry',
           });
+
+        if (rank >= 1 && rank <= 20)
+          badges.push({
+            label: '<i class="fas fa-gem"></i> Core Contributor',
+            cls: 'core',
+          });
+        else if (contributions >= 5)
+          badges.push({
+            label: '<i class="fas fa-seedling"></i> Early Contributor',
+            cls: 'early',
+          });
+
         return badges;
       }
 

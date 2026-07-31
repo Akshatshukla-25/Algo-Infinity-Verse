@@ -136,7 +136,7 @@ class QuadTree {
 
         this.divided = true;
     }
-}
+
 
     query(range, found) {
         if (!found) found = [];
