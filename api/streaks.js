@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   let session = null;
   if (sessionToken) {
     try {
-      session = verifySessionToken(sessionToken);
+      session = await verifySessionToken(sessionToken);
     } catch {
       session = null;
     }

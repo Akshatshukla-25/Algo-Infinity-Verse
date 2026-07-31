@@ -20,12 +20,12 @@ export default async function handler(req, res) {
 
   try {
     const cookies = parseCookies(req.headers.cookie || '');
-    const session = verifySessionToken(cookies[SESSION_COOKIE]);
+    const session = await verifySessionToken(cookies[SESSION_COOKIE]);
     if (!session) return res.status(401).json({ error: 'Authentication required.' });
     if (!useFirestore) {
       return res.status(503).json({
         error:
-          "Firestore is unavailable. Ensure the required FIREBASE_* environment variables are configured."
+          'Firestore is unavailable. Ensure the required FIREBASE_* environment variables are configured.',
       });
     }
 

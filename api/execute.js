@@ -1,11 +1,6 @@
 import { runUserCode } from '../backend/jsSandboxRunner.js';
 import { SESSION_COOKIE, verifySessionToken, parseCookies } from '../backend/utils/sessionToken.js';
 
-import {
-  applyRedisRateLimit,
-  codeExecutionRedisLimiter,
-} from '../backend/utils/redisRateLimiter.js';
-
 // ============================================
 // CONFIGURABLE SETTINGS
 // ============================================
@@ -17,9 +12,9 @@ const EXECUTION_CONFIG = {
 };
 
 // ─── Auth helpers ──────────────────────────────────────────────────────────
-function getUser(req) {
+async function getUser(req) {
   const cookies = parseCookies(req.headers.cookie || '');
-  return verifySessionToken(cookies[SESSION_COOKIE]);
+  return await verifySessionToken(cookies[SESSION_COOKIE]);
 }
 
 const LANGUAGE_IDS = {
@@ -44,16 +39,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Rate Limiting
-  const allowed = await applyRedisRateLimit(
-    req,
-    res,
-    codeExecutionRedisLimiter,
-    'Rate limit exceeded for code execution. Please try again later.'
-  );
-  if (!allowed) return;
-
-  const user = getUser(req);
+  const user = await getUser(req);
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized — please log in' });
   }

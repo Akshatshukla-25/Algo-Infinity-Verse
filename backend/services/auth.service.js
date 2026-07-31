@@ -161,7 +161,7 @@ export function validateFamilyId(familyId) {
   return null;
 }
 
-export function createAccessToken(user) {
+export async function createAccessToken(user, sessionId = crypto.randomUUID()) {
   const validationError = validateUserForToken(user);
   if (validationError) {
     throw new Error(validationError);
@@ -176,10 +176,24 @@ export function createAccessToken(user) {
       iat: nowSeconds,
       exp: nowSeconds + ACCESS_TOKEN_MAX_AGE_SECONDS,
       type: 'access',
+      sid: sessionId,
     })
   );
   const body = `${header}.${payload}`;
-  return `${body}.${sign(body)}`;
+  const token = `${body}.${sign(body)}`;
+
+  const sessionHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  if (redisAvailable && redisClient) {
+    try {
+      await redisClient.set(`session:${sessionHash}`, user.id, 'EX', ACCESS_TOKEN_MAX_AGE_SECONDS);
+      await redisClient.sadd(`user_sessions:${user.id}`, sessionHash);
+    } catch (err) {
+      console.error('[Redis] Error storing session hash:', err.message);
+    }
+  }
+
+  return token;
 }
 
 export async function createRefreshToken(
@@ -274,7 +288,7 @@ export function verifyToken(token, expectedType) {
   }
 }
 
-export function verifyAccessToken(token) {
+export async function verifyAccessToken(token) {
   const session = verifyToken(token, 'access');
   if (!session) return null;
 
@@ -285,7 +299,35 @@ export function verifyAccessToken(token) {
     }
   }
 
+  if (redisAvailable && redisClient) {
+    try {
+      const sessionHash = crypto.createHash('sha256').update(token).digest('hex');
+      const exists = await redisClient.exists(`session:${sessionHash}`);
+      if (!exists) return null;
+    } catch (err) {
+      console.error('[Redis] Error checking session hash:', err.message);
+    }
+  }
+
   return session;
+}
+
+export async function revokeOtherUserSessions(userId, currentToken) {
+  if (!userId || !currentToken) return;
+  if (redisAvailable && redisClient) {
+    try {
+      const currentHash = crypto.createHash('sha256').update(currentToken).digest('hex');
+      const hashes = await redisClient.smembers(`user_sessions:${userId}`);
+      for (const hash of hashes) {
+        if (hash !== currentHash) {
+          await redisClient.del(`session:${hash}`);
+          await redisClient.srem(`user_sessions:${userId}`, hash);
+        }
+      }
+    } catch (err) {
+      console.error('[Redis] Error in revokeOtherUserSessions:', err.message);
+    }
+  }
 }
 
 export async function verifyRefreshToken(token) {

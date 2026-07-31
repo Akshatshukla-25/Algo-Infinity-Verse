@@ -12,12 +12,12 @@ describe('Instant Access Token Revocation (#2893)', () => {
       name: 'Security Tester',
       email: 'test@example.com',
     };
-    const token = createAccessToken(user);
+    const token = await createAccessToken(user);
 
-    expect(verifyAccessToken(token)).toBeTruthy();
+    expect(await verifyAccessToken(token)).toBeTruthy();
 
     await revokeAllUserSessions(user.id);
 
-    expect(verifyAccessToken(token)).toBeNull();
+    expect(await verifyAccessToken(token)).toBeNull();
   });
 });
