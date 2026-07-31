@@ -679,6 +679,13 @@ const visualizers = [
     desc: 'Visualize TCP Congestion Window Slow Start & AIMD mechanism with simulated packet drops.',
   },
   {
+    name: 'TCP Nagle & Delayed ACK Deadlock',
+    path: '/pages/visualizers/tcp-nagle-visualizer/tcp-nagle-visualizer.html',
+    category: 'Networking',
+    icon: 'fa-network-wired',
+    desc: "Visualize the infamous deadlock interaction between Nagle's Algorithm and Delayed ACK causing 40ms-200ms latency spikes.",
+  },
+  {
     name: 'Git Visualizer',
     path: '/pages/ai-features/git-visualizer/git-visualizer.html',
     category: 'Systems & OS',
