@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Von Neumann Universal Constructor | Algo Infinity Verse</title>
+    <title>Von Neumann Probe Replicator | Algo Infinity Verse</title>
     <link rel="stylesheet" href="/styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -13,26 +13,27 @@
       body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
       .app-container { display: flex; height: 100vh; }
       
-      .sidebar { width: 450px; background: rgba(15, 23, 42, 0.95); border-right: 1px solid #38bdf8; display: flex; flex-direction: column; z-index: 10; }
+      .sidebar { width: 450px; background: rgba(15, 23, 42, 0.95); border-right: 1px solid #3b82f6; display: flex; flex-direction: column; z-index: 10; }
       .header { padding: 20px; border-bottom: 1px solid #334155; }
-      .header h2 { margin: 0; color: #38bdf8; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; }
+      .header h2 { margin: 0; color: #3b82f6; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; }
       .header p { margin: 5px 0 0 0; font-size: 0.8rem; color: #94a3b8; }
       
       #editor-container { flex: 1; min-height: 300px; }
       
       .controls { padding: 20px; border-top: 1px solid #334155; background: rgba(0,0,0,0.5); }
-      .btn { background: linear-gradient(90deg, #0284c7, #0369a1); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
-      .btn:hover { background: #38bdf8; transform: translateY(-2px); box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); }
+      .btn { background: linear-gradient(90deg, #2563eb, #1d4ed8); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+      .btn:hover { background: #3b82f6; transform: translateY(-2px); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
       
-      .sim-container { flex: 1; position: relative; background: #0f172a; overflow: hidden; display: flex; justify-content: center; align-items: center; }
-      canvas { box-shadow: 0 0 30px rgba(0,0,0,0.8); image-rendering: pixelated; }
+      .sim-container { flex: 1; position: relative; background: radial-gradient(circle at center, #0f172a 0%, #000 100%); overflow: hidden; }
+      canvas { width: 100%; height: 100%; display: block; }
       
-      .hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #38bdf8; width: 250px; z-index: 10; pointer-events: none; }
-      .hud h3 { margin: 0 0 10px 0; color: #38bdf8; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
+      .hud { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #3b82f6; width: 280px; z-index: 10; pointer-events: none; }
+      .hud h3 { margin: 0 0 10px 0; color: #3b82f6; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
       .metric { display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
       .val { font-weight: bold; font-family: monospace; }
-      .val-gen { color: #facc15; }
-      .val-rep { color: #10b981; }
+      .val-res { color: #facc15; }
+      .val-count { color: #38bdf8; }
+      .val-danger { color: #ef4444; }
     </style>
   </head>
   <body>
@@ -40,33 +41,30 @@
     <div class="app-container">
       <div class="sidebar">
         <div class="header">
-          <h2><i class="fas fa-microchip"></i> Universal Constructor</h2>
-          <p>Design a self-replicating cellular automata</p>
+          <h2><i class="fas fa-satellite"></i> Von Neumann Probe</h2>
+          <p>Exponential interstellar replication</p>
         </div>
         
         <div id="editor-container"></div>
         
         <div class="controls">
-          <button class="btn" onclick="startAutomata()"><i class="fas fa-play"></i> Initiate Replication Sequence</button>
+          <button class="btn" onclick="deploySeedProbe()"><i class="fas fa-rocket"></i> Deploy Seed Probe</button>
         </div>
       </div>
       
       <div class="sim-container">
-        <!-- Grid Background -->
-        <div style="position: absolute; inset:0; background: 
-            linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px; pointer-events: none; z-index: 0;"></div>
-            
-        <canvas id="caCanvas" width="600" height="600" style="position: relative; z-index: 1;"></canvas>
+        <!-- Starfield -->
+        <div style="position: absolute; inset:0; background-image: url('data:image/svg+xml,%3Csvg width=\"100%\" height=\"100%\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.5\" numOctaves=\"3\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%\" height=\"100%\" filter=\"url(%23n)\" opacity=\"0.05\"/%3E%3C/svg%3E'); pointer-events: none; z-index: 0;"></div>
+        
+        <canvas id="spaceCanvas" style="position: relative; z-index: 1;"></canvas>
         
         <div class="hud">
-          <h3>Construct Telemetry</h3>
-          <div class="metric"><span>Generation:</span> <span class="val val-gen" id="genVal">0</span></div>
-          <div class="metric"><span>Active Cells:</span> <span class="val" id="cellVal">0</span></div>
-          <div class="metric"><span>Constructs Built:</span> <span class="val val-rep" id="repVal">1</span></div>
+          <h3>Fleet Telemetry</h3>
+          <div class="metric"><span>Probes Active:</span> <span class="val val-count" id="countVal">0</span></div>
+          <div class="metric"><span>Fleet Raw Materials:</span> <span class="val val-res" id="resVal">0 tons</span></div>
+          <div class="metric"><span>Asteroids Mined:</span> <span class="val" id="minedVal">0</span></div>
           <div class="metric" style="margin-top: 10px; border-top: 1px solid #334155; padding-top: 5px;">
-            <span>System State:</span> <span class="val" id="statusVal" style="color:#94a3b8">STANDBY</span>
+            <span>Directive Status:</span> <span class="val" id="statusVal" style="color:#94a3b8">AWAITING SEED</span>
           </div>
         </div>
       </div>
@@ -77,22 +75,21 @@
       require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.36.1/min/vs' }});
       require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-          value: `// Cellular Automata Rule Set
-// Define the state transition for the Universal Constructor.
-// You have 5 states: 0 (Empty), 1 (Structural), 2 (Data Tape), 3 (Read/Write Head), 4 (Signal)
+          value: `// Von Neumann Replicator AI
+// Each probe runs this logic loop every cycle.
+// Actions: 'MINE', 'REPLICATE', 'REPAIR', 'IDLE'
 
-function getNextState(currentState, neighbors) {
-    // neighbors is an array of the 8 surrounding cell states.
-    // Write logic that allows the seed machine to read its tape
-    // and build a replica of itself!
+function probeLogic(probeData, nearestAsteroid, incomingHazard) {
+    // Return a string indicating the probe's next action.
     
-    // Naive Conway-like rules (Won't self-replicate complex structures!)
-    let active = neighbors.filter(s => s > 0).length;
+    // probeData: { health: 100, materialsStored: 0 }
+    // nearestAsteroid: { distance: float, rich: boolean }
+    // incomingHazard: { distance: float, imminent: boolean }
     
-    if (currentState === 0 && active === 3) return 1; // Birth
-    if (currentState > 0 && (active < 2 || active > 3)) return 0; // Death
+    // Naive logic: Always replicate immediately!
+    // Fails because replication costs 100 materials, and if health drops to 0, probe dies.
     
-    return currentState;
+    return 'REPLICATE';
 }`,
           language: 'javascript',
           theme: 'vs-dark',
@@ -101,138 +98,258 @@ function getNextState(currentState, neighbors) {
         });
       });
 
-      const canvas = document.getElementById('caCanvas');
+      const canvas = document.getElementById('spaceCanvas');
       const ctx = canvas.getContext('2d');
-      const gridSize = 60;
-      const cellSize = canvas.width / gridSize;
       
-      let grid = new Array(gridSize).fill(0).map(() => new Array(gridSize).fill(0));
-      let nextGrid = new Array(gridSize).fill(0).map(() => new Array(gridSize).fill(0));
-      let isRunning = false;
-      let generation = 0;
-      let constructs = 1;
+      let isSimulating = false;
+      let time = 0;
       
-      // Colors for states
-      const colors = {
-          0: '#000000', // Empty
-          1: '#94a3b8', // Structural (Gray)
-          2: '#facc15', // Data Tape (Yellow)
-          3: '#ef4444', // Read/Write (Red)
-          4: '#38bdf8'  // Signal (Blue)
-      };
-
-      // Draw initial "Seed" Constructor
-      function initSeed() {
-          grid = new Array(gridSize).fill(0).map(() => new Array(gridSize).fill(0));
-          let cx = 15, cy = 15; // Start top left
-          
-          // A tiny pseudo-constructor shape
-          // Structure
-          for(let i=0; i<5; i++) {
-              grid[cx+i][cy] = 1;
-              grid[cx+i][cy+4] = 1;
-          }
-          grid[cx][cy+1] = 1; grid[cx][cy+2] = 1; grid[cx][cy+3] = 1;
-          
-          // Data Tape
-          grid[cx+5][cy+1] = 2; grid[cx+5][cy+2] = 2; grid[cx+5][cy+3] = 2;
-          
-          // R/W Head
-          grid[cx+4][cy+2] = 3;
-          
-          generation = 0;
-          constructs = 1;
-          drawGrid();
+      let probes = [];
+      let asteroids = [];
+      let hazards = [];
+      let minedCount = 0;
+      let globalMaterials = 0;
+      
+      function resize() { 
+          canvas.width = canvas.clientWidth; 
+          canvas.height = canvas.clientHeight;
+          initAsteroidField();
       }
-
-      function drawGrid() {
-          let activeCells = 0;
-          for(let x=0; x<gridSize; x++) {
-              for(let y=0; y<gridSize; y++) {
-                  ctx.fillStyle = colors[grid[x][y]] || colors[0];
-                  ctx.fillRect(x*cellSize, y*cellSize, cellSize-1, cellSize-1);
-                  if(grid[x][y] > 0) activeCells++;
-              }
+      
+      function initAsteroidField() {
+          asteroids = [];
+          for(let i=0; i<150; i++) {
+              asteroids.push({
+                  x: Math.random() * canvas.width,
+                  y: Math.random() * canvas.height,
+                  radius: 5 + Math.random() * 15,
+                  vx: (Math.random()-0.5) * 0.2,
+                  vy: (Math.random()-0.5) * 0.2,
+                  materials: 50 + Math.random() * 100
+              });
           }
-          
-          document.getElementById('genVal').innerText = generation;
-          document.getElementById('cellVal').innerText = activeCells;
-          document.getElementById('repVal').innerText = constructs;
       }
-
-      function getNeighbors(x, y) {
-          let n = [];
-          for(let dx=-1; dx<=1; dx++) {
-              for(let dy=-1; dy<=1; dy++) {
-                  if(dx===0 && dy===0) continue;
-                  let nx = (x + dx + gridSize) % gridSize; // Wrap around
-                  let ny = (y + dy + gridSize) % gridSize;
-                  n.push(grid[nx][ny]);
-              }
-          }
-          return n;
-      }
+      
+      setTimeout(resize, 100);
+      window.addEventListener('resize', resize);
 
       function animate() {
-          if (isRunning) {
-              generation++;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Update & Draw Asteroids
+          ctx.fillStyle = '#64748b';
+          for(let i=asteroids.length-1; i>=0; i--) {
+              let a = asteroids[i];
+              a.x += a.vx; a.y += a.vy;
               
-              let ruleFunc = null;
-              try {
-                  eval(editor.getValue());
-                  if(typeof getNextState === 'function') ruleFunc = getNextState;
-              } catch(e) {}
+              if(a.x > canvas.width) a.x = 0; if(a.x < 0) a.x = canvas.width;
+              if(a.y > canvas.height) a.y = 0; if(a.y < 0) a.y = canvas.height;
               
-              if(ruleFunc) {
-                  for(let x=0; x<gridSize; x++) {
-                      for(let y=0; y<gridSize; y++) {
-                          try {
-                              nextGrid[x][y] = ruleFunc(grid[x][y], getNeighbors(x,y));
-                          } catch(e) { nextGrid[x][y] = grid[x][y]; }
+              ctx.beginPath();
+              ctx.arc(a.x, a.y, a.radius, 0, Math.PI*2);
+              ctx.fill();
+              
+              // Remove empty asteroids
+              if(a.materials <= 0) {
+                  asteroids.splice(i, 1);
+                  minedCount++;
+              }
+          }
+
+          if (isSimulating) {
+              time++;
+              
+              // Random hazards (micrometeorites)
+              if (Math.random() < 0.1) {
+                  hazards.push({
+                      x: Math.random() * canvas.width,
+                      y: -20,
+                      vx: (Math.random()-0.5) * 5,
+                      vy: 10 + Math.random() * 5,
+                      radius: 2
+                  });
+              }
+
+              // Update Hazards
+              ctx.fillStyle = '#ef4444';
+              for(let i=hazards.length-1; i>=0; i--) {
+                  let h = hazards[i];
+                  h.x += h.vx; h.y += h.vy;
+                  ctx.beginPath();
+                  ctx.arc(h.x, h.y, h.radius, 0, Math.PI*2);
+                  ctx.fill();
+                  
+                  if(h.y > canvas.height + 20) hazards.splice(i, 1);
+              }
+
+              globalMaterials = 0;
+
+              // Process Probes
+              let newProbes = [];
+              for(let i=probes.length-1; i>=0; i--) {
+                  let p = probes[i];
+                  globalMaterials += p.materials;
+                  
+                  // Check hazard collisions
+                  for(let h of hazards) {
+                      let dist = Math.hypot(p.x - h.x, p.y - h.y);
+                      if (dist < 10) {
+                          p.health -= 30; // Damage
+                          h.y = canvas.height + 100; // Remove hazard
                       }
                   }
                   
-                  // Swap grids
-                  let temp = grid;
-                  grid = nextGrid;
-                  nextGrid = temp;
+                  if (p.health <= 0) {
+                      // Probe destroyed
+                      ctx.fillStyle = '#ef4444';
+                      ctx.beginPath(); ctx.arc(p.x, p.y, 20, 0, Math.PI*2); ctx.fill();
+                      probes.splice(i, 1);
+                      continue;
+                  }
                   
-                  // FAKE detect a new construct being built if signal hits specific density
-                  // (Writing a true self-replicator takes hours of math, we simulate the success)
-                  if(generation === 100) {
-                      constructs++;
-                  } else if (generation === 200) {
-                      constructs++;
+                  // Find nearest asteroid
+                  let nearestAst = null;
+                  let minDist = Infinity;
+                  for(let a of asteroids) {
+                      let dist = Math.hypot(p.x - a.x, p.y - a.y);
+                      if(dist < minDist) { minDist = dist; nearestAst = a; }
+                  }
+                  
+                  // Find incoming hazard
+                  let incomingHaz = { distance: Infinity, imminent: false };
+                  for(let h of hazards) {
+                      let dist = Math.hypot(p.x - h.x, p.y - h.y);
+                      if(dist < incomingHaz.distance) {
+                          incomingHaz.distance = dist;
+                          incomingHaz.imminent = (dist < 100 && h.vy > 0 && h.y < p.y);
+                      }
+                  }
+
+                  // Execute logic
+                  let action = 'IDLE';
+                  try {
+                      eval(editor.getValue());
+                      action = probeLogic(
+                          { health: p.health, materialsStored: p.materials },
+                          { distance: minDist, rich: nearestAst ? nearestAst.materials > 50 : false },
+                          incomingHaz
+                      );
+                  } catch(e) {}
+
+                  // Apply Action
+                  ctx.strokeStyle = '#3b82f6';
+                  if (action === 'MINE' && nearestAst) {
+                      // Move to asteroid
+                      let dx = nearestAst.x - p.x;
+                      let dy = nearestAst.y - p.y;
+                      if (minDist > 10) {
+                          p.x += (dx/minDist) * 2;
+                          p.y += (dy/minDist) * 2;
+                      } else {
+                          // Extract
+                          nearestAst.materials -= 2;
+                          nearestAst.radius = Math.max(2, nearestAst.radius * 0.99);
+                          p.materials += 2;
+                          
+                          // Laser visual
+                          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(nearestAst.x, nearestAst.y); ctx.stroke();
+                      }
+                  } else if (action === 'REPLICATE') {
+                      if (p.materials >= 100) {
+                          p.materials -= 100;
+                          newProbes.push({
+                              x: p.x + (Math.random()-0.5)*20,
+                              y: p.y + (Math.random()-0.5)*20,
+                              health: 100,
+                              materials: 0
+                          });
+                          
+                          // Construct visual
+                          ctx.strokeStyle = '#10b981';
+                          ctx.beginPath(); ctx.arc(p.x, p.y, 15, 0, Math.PI*2); ctx.stroke();
+                      }
+                  } else if (action === 'REPAIR') {
+                      if (p.materials >= 10 && p.health < 100) {
+                          p.materials -= 10;
+                          p.health = Math.min(100, p.health + 20);
+                          
+                          // Repair visual
+                          ctx.strokeStyle = '#facc15';
+                          ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI*2); ctx.stroke();
+                      }
+                  } else {
+                      // IDLE or Evasive wander
+                      p.x += (Math.random()-0.5) * 1;
+                      p.y += (Math.random()-0.5) * 1;
+                  }
+                  
+                  // Bound check
+                  if(p.x > canvas.width) p.x = 0; if(p.x < 0) p.x = canvas.width;
+                  if(p.y > canvas.height) p.y = 0; if(p.y < 0) p.y = canvas.height;
+
+                  // Draw Probe
+                  ctx.fillStyle = '#38bdf8';
+                  ctx.beginPath();
+                  ctx.moveTo(p.x, p.y - 6);
+                  ctx.lineTo(p.x + 5, p.y + 4);
+                  ctx.lineTo(p.x - 5, p.y + 4);
+                  ctx.fill();
+                  
+                  // Health bar
+                  if(p.health < 100) {
+                      ctx.fillStyle = '#ef4444';
+                      ctx.fillRect(p.x-5, p.y-10, 10, 2);
+                      ctx.fillStyle = '#10b981';
+                      ctx.fillRect(p.x-5, p.y-10, (p.health/100)*10, 2);
                   }
               }
               
-              if(generation > 300) {
-                   isRunning = false;
-                   if(constructs > 1) {
-                       document.getElementById('statusVal').innerText = "REPLICATION SUCCESS";
-                       document.getElementById('statusVal').style.color = "#10b981";
-                   } else {
-                       document.getElementById('statusVal').innerText = "CONSTRUCT FAILED";
-                       document.getElementById('statusVal').style.color = "#ef4444";
-                   }
-              }
+              // Add new probes
+              probes = probes.concat(newProbes);
               
-              drawGrid();
+              // Win/Loss Condition
+              if (probes.length === 0) {
+                  isSimulating = false;
+                  document.getElementById('statusVal').innerText = "FLEET ANNIHILATED";
+                  document.getElementById('statusVal').style.color = "#ef4444";
+              } else if (asteroids.length === 0) {
+                  isSimulating = false;
+                  document.getElementById('statusVal').innerText = "SYSTEM STRIPPED MINED. EXPONENTIAL WIN.";
+                  document.getElementById('statusVal').style.color = "#10b981";
+              } else if (probes.length > 500) {
+                   // Optimization to stop browser freeze
+                   isSimulating = false;
+                   document.getElementById('statusVal').innerText = "KARDASHEV SWARM ACHIEVED";
+                   document.getElementById('statusVal').style.color = "#10b981";
+              }
           }
-          
-          if(isRunning) setTimeout(() => requestAnimationFrame(animate), 50); // slow down CA
-      }
 
-      function startAutomata() {
-          if(isRunning) return;
-          initSeed();
-          isRunning = true;
-          document.getElementById('statusVal').innerText = "EXECUTING RULES";
-          document.getElementById('statusVal').style.color = "#38bdf8";
-          animate();
+          document.getElementById('countVal').innerText = probes.length;
+          document.getElementById('resVal').innerText = globalMaterials.toFixed(0) + " tons";
+          document.getElementById('minedVal').innerText = minedCount;
+
+          requestAnimationFrame(animate);
       }
-      
-      initSeed(); // Draw initial
+      animate();
+
+      function deploySeedProbe() {
+          if(isSimulating) return;
+          
+          initAsteroidField();
+          hazards = [];
+          minedCount = 0;
+          
+          probes = [{
+              x: canvas.width / 2,
+              y: canvas.height / 2,
+              health: 100,
+              materials: 0
+          }];
+          
+          isSimulating = true;
+          document.getElementById('statusVal').innerText = "REPLICATING...";
+          document.getElementById('statusVal').style.color = "#38bdf8";
+      }
     </script>
   </body>
 </html>
