@@ -5,6 +5,27 @@
 const practiceTools = [
   // ── Featured (new) ──
   {
+    name: 'Client Memory GC Auditor',
+    path: '/pages/tools/client-memory-gc-auditor/index.html',
+    category: 'Debugging',
+    icon: 'fa-memory',
+    desc: 'Profile detached DOM, uncleared timers, and dangling listeners — simulate mount/unmount heap delta and get GC cleanup patches.',
+  },
+  {
+    name: 'OAuth2 PKCE Security Auditor',
+    path: '/pages/tools/oauth2-pkce-security-auditor/index.html',
+    category: 'Other',
+    icon: 'fa-key',
+    desc: 'Simulate OAuth2 Authorization Code + PKCE, audit state/redirect/JWT risks, and export a security hardening report.',
+  },
+  {
+    name: 'WASM SIMD Performance Lab',
+    path: '/pages/tools/wasm-simd-performance-lab/index.html',
+    category: 'Simulators',
+    icon: 'fa-gauge-high',
+    desc: 'Benchmark JS vs WASM SIMD-style matrix multiply — FLOPS, cache heuristics, speedup ratio, and CSV export.',
+  },
+  {
     name: 'Chaos Resiliency Simulator',
     path: '/pages/tools/chaos-resiliency-simulator/index.html',
     category: 'Simulators',

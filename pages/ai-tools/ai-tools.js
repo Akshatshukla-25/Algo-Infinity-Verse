@@ -5,6 +5,13 @@
 const aiTools = [
   // ── Featured (new) ──
   {
+    name: 'AI Code Smell Scanner',
+    path: '/pages/ai-features/ai-code-smell-scanner/index.html',
+    category: 'Code Quality',
+    icon: 'fa-broom',
+    desc: 'AST-based architectural smell scanner (God Object, Feature Envy, deep nesting) with complexity scores and refactor patches.',
+  },
+  {
     name: 'AI OpenAPI Contract Linter',
     path: '/pages/ai-features/ai-openapi-contract-linter/index.html',
     category: 'Code Quality',
