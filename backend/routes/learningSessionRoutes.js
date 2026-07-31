@@ -238,8 +238,6 @@ const SUPPORTED_LEARNING_EVENT_TYPES = [
   'code_playground_used',
   'session_started',
 ];
-
-async function setupLearningSessionRoutes(req, res, pathname) {
     if (!type || !SUPPORTED_LEARNING_EVENT_TYPES.includes(type)) {
       return sendJson(res, 400, {
         success: false,
