@@ -1,5 +1,74 @@
 /* global handleActiveNav, initPracticeSection, initProfile, initAiInterviewer, initNewsletterValidation, initFooterCurrentDate, closeTopicModal, saveProblemNotes, closeNotesModal, closeQuizEditor, closeQuizModal, openTopicModal, openQuizModal, renderQuizQuestion, handleProblemClick, escapeHtml, apiAbort, apiCache, getEditorDraft, getEditorDraftSignature, getProblemSignature, clearEditorDraft, updateEditorDisplayMode, toggleOutputPanel, updateLineNumbers, syncScroll, switchQuizTab, genCppHarness, genJavaHarness, genCHarness, genSwiftHarness, parseTestResults, setOutput, getXPForDifficulty, initializeQuizEditor, closeShortcutModal, renderProblems, updatePaginationControls, initDarkMode */
 
+// ============================================
+// GLOBAL DOM EVENT GARBAGE COLLECTOR
+// Resolves innerHTML event listener memory leaks
+// ============================================
+(function() {
+  const originalAddEventListener = EventTarget.prototype.addEventListener;
+  const originalRemoveEventListener = EventTarget.prototype.removeEventListener;
+  const originalInnerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+
+  // Use a WeakMap so we don't prevent native garbage collection of the DOM elements themselves
+  const listenerRegistry = new WeakMap();
+
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    let listeners = listenerRegistry.get(this);
+    if (!listeners) {
+      listeners = [];
+      listenerRegistry.set(this, listeners);
+    }
+    listeners.push({ type, listener, options });
+    return originalAddEventListener.call(this, type, listener, options);
+  };
+
+  EventTarget.prototype.removeEventListener = function(type, listener, options) {
+    const listeners = listenerRegistry.get(this);
+    if (listeners) {
+      const index = listeners.findIndex(l => l.type === type && l.listener === listener);
+      if (index !== -1) {
+        listeners.splice(index, 1);
+      }
+    }
+    return originalRemoveEventListener.call(this, type, listener, options);
+  };
+
+  function cleanupNode(node) {
+    if (node instanceof EventTarget) {
+      const listeners = listenerRegistry.get(node);
+      if (listeners) {
+        listeners.forEach(l => {
+          originalRemoveEventListener.call(node, l.type, l.listener, l.options);
+        });
+        listenerRegistry.delete(node);
+      }
+    }
+    // Recursively cleanup children
+    if (node.childNodes && node.childNodes.length > 0) {
+      for (let i = 0; i < node.childNodes.length; i++) {
+        cleanupNode(node.childNodes[i]);
+      }
+    }
+  }
+
+  if (originalInnerHTML) {
+    Object.defineProperty(Element.prototype, 'innerHTML', {
+      get: function() {
+        return originalInnerHTML.get.call(this);
+      },
+      set: function(val) {
+        // Automatically garbage collect all listeners inside this element before wiping it
+        for (let i = 0; i < this.childNodes.length; i++) {
+          cleanupNode(this.childNodes[i]);
+        }
+        originalInnerHTML.set.call(this, val);
+      },
+      enumerable: originalInnerHTML.enumerable,
+      configurable: originalInnerHTML.configurable
+    });
+  }
+})();
+
 // Nuke all caches on every page load — ensures fresh content always
 (async function nukeCaches() {
   try {
