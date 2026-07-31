@@ -30,6 +30,7 @@ import { interviewRoutes } from './routeGroups/interviewRoutes.js';
 import { memoryRoutesGroup } from './routeGroups/memoryRoutesGroup.js';
 import { personalityRoutes } from './routeGroups/personalityRoutes.js';
 import { refactoringDojoRoutesGroup } from './routeGroups/refactoringDojoRoutesGroup.js';
+import { API_ROUTES } from './routeConstants.js';
 
 // Single source of truth for the registration order. Order matters only
 // for `matchers[]` (a path-pattern route can shadow another path-pattern
@@ -264,7 +265,7 @@ export function setupApiRoutes(req, res, pathname) {
     }
   }
 
-  if (pathname === '/api/explain-code' && req.method === 'POST') {
+  if (pathname === API_ROUTES.EXPLAIN_CODE && req.method === 'POST') {
     return wrapHandler(
       async (req, res) => {
         const { code, language } = req.body || {};
@@ -278,7 +279,7 @@ export function setupApiRoutes(req, res, pathname) {
     )(req, res);
   }
 
-  if (pathname === '/api/cheat-sheet' && (req.method === 'POST' || req.method === 'GET')) {
+  if (pathname === API_ROUTES.CHEAT_SHEET && (req.method === 'POST' || req.method === 'GET')) {
     return wrapHandler(
       async (req, res) => {
         await cheatSheetHandler(req, res);

@@ -28,6 +28,7 @@
       this.initAnimatedCounters();
       this.initFacts();
       this.initProgress();
+      this.initTopicTooltips();
       this.initStatsPolling();
       this.initWelcomeGreeting();
       this.addReducedMotionSupport();
@@ -199,6 +200,160 @@
         const currentXp = Math.round((progress / 100) * 1000);
         xpText.textContent = `${currentXp} / 1000 XP`;
       }
+    },
+
+    /* ── Topic Card Hover Preview ── */
+    initTopicTooltips() {
+      const cards = document.querySelectorAll('.hp-topic-card');
+      const tooltip = document.getElementById('hpTopicTooltip');
+      if (!cards.length || !tooltip) return;
+
+      const problems = Array.isArray(window.practiceProblems)
+        ? window.practiceProblems
+        : [];
+      const breakdownCache = new Map();
+
+      // Skip hover-preview triggers on coarse-pointer (touch) devices: taps
+      // focus the card and navigate away, so the tooltip would only flash.
+      const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+
+      const getBreakdown = (category) => {
+        if (breakdownCache.has(category)) return breakdownCache.get(category);
+
+        const list =
+          category === 'all'
+            ? problems
+            : problems.filter((problem) => problem.category === category);
+
+        const breakdown = { easy: 0, medium: 0, hard: 0 };
+        list.forEach((problem) => {
+          const difficulty = String(problem.difficulty || '').toLowerCase();
+          if (difficulty === 'easy') breakdown.easy += 1;
+          else if (difficulty === 'medium') breakdown.medium += 1;
+          else if (difficulty === 'hard') breakdown.hard += 1;
+        });
+        breakdown.total = list.length;
+
+        breakdownCache.set(category, breakdown);
+        return breakdown;
+      };
+
+      const renderTooltip = (card, breakdown) => {
+        tooltip.textContent = '';
+
+        const header = document.createElement('div');
+        header.className = 'hp-topic-tooltip-header';
+
+        const cardName = card.querySelector('.hp-topic-name');
+        const name = document.createElement('span');
+        name.className = 'hp-topic-tooltip-name';
+        name.textContent = cardName ? cardName.textContent : '';
+        header.appendChild(name);
+
+        const total = document.createElement('span');
+        total.className = 'hp-topic-tooltip-total';
+        total.textContent = `${breakdown.total} problems`;
+        header.appendChild(total);
+
+        tooltip.appendChild(header);
+
+        const breakdownList = document.createElement('div');
+        breakdownList.className = 'hp-topic-tooltip-breakdown';
+        const difficulties = [
+          { key: 'easy', label: 'Easy' },
+          { key: 'medium', label: 'Medium' },
+          { key: 'hard', label: 'Hard' },
+        ];
+        difficulties.forEach(({ key, label }) => {
+          const row = document.createElement('div');
+          row.className = `hp-topic-tooltip-row ${key}`;
+
+          const dot = document.createElement('span');
+          dot.className = 'hp-topic-tooltip-dot';
+          dot.setAttribute('aria-hidden', 'true');
+
+          const text = document.createElement('span');
+          text.textContent = `${label} ${breakdown[key]}`;
+
+          row.appendChild(dot);
+          row.appendChild(text);
+          breakdownList.appendChild(row);
+        });
+        tooltip.appendChild(breakdownList);
+      };
+
+      const positionTooltip = (card) => {
+        const gap = 10;
+        const cardRect = card.getBoundingClientRect();
+
+        // Constrain the tooltip to the hovered card's own bounds so it never
+        // overlaps neighbouring cards, labels, or the section header.
+        // min-width must be cleared too: it outranks max-width in CSS.
+        const maxWidth = cardRect.width - gap * 2;
+        tooltip.style.maxWidth = `${maxWidth}px`;
+        tooltip.style.minWidth = '0';
+
+        const tooltipWidth = tooltip.offsetWidth;
+        const tooltipHeight = tooltip.offsetHeight;
+
+        let left = cardRect.left + (cardRect.width - tooltipWidth) / 2;
+        left = Math.max(cardRect.left + gap, Math.min(left, cardRect.right - tooltipWidth - gap));
+        left = Math.max(gap, Math.min(left, window.innerWidth - tooltipWidth - gap));
+
+        let top = cardRect.bottom - tooltipHeight - gap;
+        top = Math.max(cardRect.top + gap, Math.min(top, cardRect.bottom - tooltipHeight - gap));
+        top = Math.max(gap, Math.min(top, window.innerHeight - tooltipHeight - gap));
+
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+
+        // Only render the preview if it genuinely fits inside the card.
+        // Otherwise it would spill over neighbouring cards and labels.
+        return tooltipHeight <= cardRect.height - gap * 2;
+      };
+
+      let describedCard = null;
+
+      const showTooltip = (card) => {
+        const category = card.getAttribute('data-topic-category');
+        if (!category) return;
+
+        const breakdown = getBreakdown(category);
+        if (breakdown.total === 0) return;
+
+        renderTooltip(card, breakdown);
+        if (!positionTooltip(card)) {
+          hideTooltip();
+          return;
+        }
+        tooltip.classList.add('visible');
+        tooltip.setAttribute('aria-hidden', 'false');
+        describedCard = card;
+        describedCard.setAttribute('aria-describedby', tooltip.id);
+      };
+
+      const hideTooltip = () => {
+        tooltip.classList.remove('visible');
+        tooltip.setAttribute('aria-hidden', 'true');
+        if (describedCard) {
+          describedCard.removeAttribute('aria-describedby');
+          describedCard = null;
+        }
+      };
+
+      cards.forEach((card) => {
+        card.addEventListener('mouseenter', () => showTooltip(card));
+        card.addEventListener('mouseleave', hideTooltip);
+        card.addEventListener('focusin', () => {
+          if (isCoarsePointer) return;
+          showTooltip(card);
+        });
+        card.addEventListener('focusout', hideTooltip);
+      });
+
+      window.addEventListener('scroll', hideTooltip, { passive: true });
+      window.addEventListener('resize', hideTooltip);
+      window.addEventListener('blur', hideTooltip);
     },
 
     /* ── Welcome Back Greeting ── */

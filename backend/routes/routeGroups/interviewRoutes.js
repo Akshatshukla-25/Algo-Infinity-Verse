@@ -2,6 +2,7 @@
 //
 // Issue #2402 — feature-grouped route registration.
 import { handleSubmitInterviewExperience } from '../../handlers/interviewHandlers.js';
+import { API_ROUTES } from '../routeConstants.js';
 
 export const interviewRoutes = [
   {
@@ -9,7 +10,7 @@ export const interviewRoutes = [
     routes: [
       {
         method: 'POST',
-        path: '/api/interview-experiences',
+        path: API_ROUTES.INTERVIEW_EXPERIENCES,
         handler: handleSubmitInterviewExperience,
         tier: 'default',
         requiresAuth: true,
