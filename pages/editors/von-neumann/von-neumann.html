@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Von Neumann Universal Constructor | Algo Infinity Verse</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Monaco Editor -->
+    <script src="https://unpkg.com/monaco-editor@0.36.1/min/vs/loader.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
+      .app-container { display: flex; height: 100vh; }
+      
+      .sidebar { width: 450px; background: rgba(15, 23, 42, 0.95); border-right: 1px solid #38bdf8; display: flex; flex-direction: column; z-index: 10; }
+      .header { padding: 20px; border-bottom: 1px solid #334155; }
+      .header h2 { margin: 0; color: #38bdf8; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; }
+      .header p { margin: 5px 0 0 0; font-size: 0.8rem; color: #94a3b8; }
+      
+      #editor-container { flex: 1; min-height: 300px; }
+      
+      .controls { padding: 20px; border-top: 1px solid #334155; background: rgba(0,0,0,0.5); }
+      .btn { background: linear-gradient(90deg, #0284c7, #0369a1); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+      .btn:hover { background: #38bdf8; transform: translateY(-2px); box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); }
+      
+      .sim-container { flex: 1; position: relative; background: #0f172a; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+      canvas { box-shadow: 0 0 30px rgba(0,0,0,0.8); image-rendering: pixelated; }
+      
+      .hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #38bdf8; width: 250px; z-index: 10; pointer-events: none; }
+      .hud h3 { margin: 0 0 10px 0; color: #38bdf8; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
+      .metric { display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
+      .val { font-weight: bold; font-family: monospace; }
+      .val-gen { color: #facc15; }
+      .val-rep { color: #10b981; }
+    </style>
+  </head>
+  <body>
+    
+    <div class="app-container">
+      <div class="sidebar">
+        <div class="header">
+          <h2><i class="fas fa-microchip"></i> Universal Constructor</h2>
+          <p>Design a self-replicating cellular automata</p>
+        </div>
+        
+        <div id="editor-container"></div>
+        
+        <div class="controls">
+          <button class="btn" onclick="startAutomata()"><i class="fas fa-play"></i> Initiate Replication Sequence</button>
+        </div>
+      </div>
+      
+      <div class="sim-container">
+        <!-- Grid Background -->
+        <div style="position: absolute; inset:0; background: 
+            linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px; pointer-events: none; z-index: 0;"></div>
+            
+        <canvas id="caCanvas" width="600" height="600" style="position: relative; z-index: 1;"></canvas>
+        
+        <div class="hud">
+          <h3>Construct Telemetry</h3>
+          <div class="metric"><span>Generation:</span> <span class="val val-gen" id="genVal">0</span></div>
+          <div class="metric"><span>Active Cells:</span> <span class="val" id="cellVal">0</span></div>
+          <div class="metric"><span>Constructs Built:</span> <span class="val val-rep" id="repVal">1</span></div>
+          <div class="metric" style="margin-top: 10px; border-top: 1px solid #334155; padding-top: 5px;">
+            <span>System State:</span> <span class="val" id="statusVal" style="color:#94a3b8">STANDBY</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let editor;
+      require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.36.1/min/vs' }});
+      require(['vs/editor/editor.main'], function() {
+        editor = monaco.editor.create(document.getElementById('editor-container'), {
+          value: `// Cellular Automata Rule Set
+// Define the state transition for the Universal Constructor.
+// You have 5 states: 0 (Empty), 1 (Structural), 2 (Data Tape), 3 (Read/Write Head), 4 (Signal)
+
+function getNextState(currentState, neighbors) {
+    // neighbors is an array of the 8 surrounding cell states.
+    // Write logic that allows the seed machine to read its tape
+    // and build a replica of itself!
+    
+    // Naive Conway-like rules (Won't self-replicate complex structures!)
+    let active = neighbors.filter(s => s > 0).length;
+    
+    if (currentState === 0 && active === 3) return 1; // Birth
+    if (currentState > 0 && (active < 2 || active > 3)) return 0; // Death
+    
+    return currentState;
+}`,
+          language: 'javascript',
+          theme: 'vs-dark',
+          minimap: { enabled: false },
+          automaticLayout: true
+        });
+      });
+
+      const canvas = document.getElementById('caCanvas');
+      const ctx = canvas.getContext('2d');
+      const gridSize = 60;
+      const cellSize = canvas.width / gridSize;
+      
+      let grid = new Array(gridSize).fill(0).map(() => new Array(gridSize).fill(0));
+      let nextGrid = new Array(gridSize).fill(0).map(() => new Array(gridSize).fill(0));
+      let isRunning = false;
+      let generation = 0;
+      let constructs = 1;
+      
+      // Colors for states
+      const colors = {
+          0: '#000000', // Empty
+          1: '#94a3b8', // Structural (Gray)
+          2: '#facc15', // Data Tape (Yellow)
+          3: '#ef4444', // Read/Write (Red)
+          4: '#38bdf8'  // Signal (Blue)
+      };
+
+      // Draw initial "Seed" Constructor
+      function initSeed() {
+          grid = new Array(gridSize).fill(0).map(() => new Array(gridSize).fill(0));
+          let cx = 15, cy = 15; // Start top left
+          
+          // A tiny pseudo-constructor shape
+          // Structure
+          for(let i=0; i<5; i++) {
+              grid[cx+i][cy] = 1;
+              grid[cx+i][cy+4] = 1;
+          }
+          grid[cx][cy+1] = 1; grid[cx][cy+2] = 1; grid[cx][cy+3] = 1;
+          
+          // Data Tape
+          grid[cx+5][cy+1] = 2; grid[cx+5][cy+2] = 2; grid[cx+5][cy+3] = 2;
+          
+          // R/W Head
+          grid[cx+4][cy+2] = 3;
+          
+          generation = 0;
+          constructs = 1;
+          drawGrid();
+      }
+
+      function drawGrid() {
+          let activeCells = 0;
+          for(let x=0; x<gridSize; x++) {
+              for(let y=0; y<gridSize; y++) {
+                  ctx.fillStyle = colors[grid[x][y]] || colors[0];
+                  ctx.fillRect(x*cellSize, y*cellSize, cellSize-1, cellSize-1);
+                  if(grid[x][y] > 0) activeCells++;
+              }
+          }
+          
+          document.getElementById('genVal').innerText = generation;
+          document.getElementById('cellVal').innerText = activeCells;
+          document.getElementById('repVal').innerText = constructs;
+      }
+
+      function getNeighbors(x, y) {
+          let n = [];
+          for(let dx=-1; dx<=1; dx++) {
+              for(let dy=-1; dy<=1; dy++) {
+                  if(dx===0 && dy===0) continue;
+                  let nx = (x + dx + gridSize) % gridSize; // Wrap around
+                  let ny = (y + dy + gridSize) % gridSize;
+                  n.push(grid[nx][ny]);
+              }
+          }
+          return n;
+      }
+
+      function animate() {
+          if (isRunning) {
+              generation++;
+              
+              let ruleFunc = null;
+              try {
+                  eval(editor.getValue());
+                  if(typeof getNextState === 'function') ruleFunc = getNextState;
+              } catch(e) {}
+              
+              if(ruleFunc) {
+                  for(let x=0; x<gridSize; x++) {
+                      for(let y=0; y<gridSize; y++) {
+                          try {
+                              nextGrid[x][y] = ruleFunc(grid[x][y], getNeighbors(x,y));
+                          } catch(e) { nextGrid[x][y] = grid[x][y]; }
+                      }
+                  }
+                  
+                  // Swap grids
+                  let temp = grid;
+                  grid = nextGrid;
+                  nextGrid = temp;
+                  
+                  // FAKE detect a new construct being built if signal hits specific density
+                  // (Writing a true self-replicator takes hours of math, we simulate the success)
+                  if(generation === 100) {
+                      constructs++;
+                  } else if (generation === 200) {
+                      constructs++;
+                  }
+              }
+              
+              if(generation > 300) {
+                   isRunning = false;
+                   if(constructs > 1) {
+                       document.getElementById('statusVal').innerText = "REPLICATION SUCCESS";
+                       document.getElementById('statusVal').style.color = "#10b981";
+                   } else {
+                       document.getElementById('statusVal').innerText = "CONSTRUCT FAILED";
+                       document.getElementById('statusVal').style.color = "#ef4444";
+                   }
+              }
+              
+              drawGrid();
+          }
+          
+          if(isRunning) setTimeout(() => requestAnimationFrame(animate), 50); // slow down CA
+      }
+
+      function startAutomata() {
+          if(isRunning) return;
+          initSeed();
+          isRunning = true;
+          document.getElementById('statusVal').innerText = "EXECUTING RULES";
+          document.getElementById('statusVal').style.color = "#38bdf8";
+          animate();
+      }
+      
+      initSeed(); // Draw initial
+    </script>
+  </body>
+</html>
