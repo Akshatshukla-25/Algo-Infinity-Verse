@@ -330,10 +330,14 @@ async function calculateReadiness(userId, metrics = null) {
 
     cache.misses++;
 
+    // Declared here (not inside the `if` block below) so it stays in scope
+    // for `careerTrackRecommendations` further down — previously this threw
+    // a ReferenceError on every call that reached that point (#2536).
+    let user;
     let userMetrics = metrics;
     if (!userMetrics) {
       const users = await readUsersFile();
-      const user = users.find((u) => u.id === userId);
+      user = users.find((u) => u.id === userId);
       userMetrics = {
         easySolved: user?.easySolved || 0,
         mediumSolved: user?.mediumSolved || 0,

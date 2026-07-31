@@ -1,0 +1,204 @@
+:root {
+  --lil-bg: #090d16;
+  --lil-card: rgba(15, 23, 42, 0.78);
+  --lil-border: #1e293b;
+  --lil-text: #f8fafc;
+  --lil-muted: #94a3b8;
+  --lil-accent: #06b6d4;
+  --lil-hold: #10b981;
+  --lil-break: #f87171;
+}
+
+html.light-mode {
+  --lil-bg: #f1f5f9;
+  --lil-card: #fff;
+  --lil-border: #e2e8f0;
+  --lil-text: #0f172a;
+  --lil-muted: #64748b;
+}
+
+.lil-body {
+  background: var(--lil-bg);
+  color: var(--lil-text);
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+}
+
+.lil-skip {
+  position: absolute;
+  left: 1rem;
+  top: -80px;
+  background: var(--lil-accent);
+  color: #111;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  z-index: 99;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.lil-skip:focus { top: 1rem; }
+
+.lil-hero {
+  padding: 6.5rem 1.25rem 2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--lil-border);
+}
+
+.lil-badge {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  border: 1px solid var(--lil-border);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  color: var(--lil-accent);
+  font-size: 0.85rem;
+  margin-bottom: 0.8rem;
+}
+
+.lil-hero h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+}
+
+.lil-hero h1 span { color: var(--lil-accent); }
+
+.lil-hero p {
+  max-width: 640px;
+  margin: 0.75rem auto 0;
+  color: var(--lil-muted);
+}
+
+.lil-main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.lil-card {
+  background: var(--lil-card);
+  border: 1px solid var(--lil-border);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.lil-card label {
+  display: block;
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.85rem;
+  color: var(--lil-muted);
+}
+
+.lil-card select,
+.lil-card textarea {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--lil-border);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  color: var(--lil-text);
+  font: inherit;
+}
+
+.lil-card textarea {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.88rem;
+  resize: vertical;
+}
+
+.lil-hint {
+  margin-top: 0.5rem;
+  color: var(--lil-muted);
+  font-size: 0.8rem;
+}
+
+.lil-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.lil-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem 0.95rem;
+  background: linear-gradient(135deg, #06b6d4, #7c3aed);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.lil-btn.ghost {
+  background: transparent;
+  border: 1px solid var(--lil-border);
+  color: var(--lil-text);
+}
+
+.lil-array {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.lil-cell {
+  min-width: 2.4rem;
+  padding: 0.55rem 0.4rem;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px solid var(--lil-border);
+  font-family: 'Fira Code', monospace;
+  position: relative;
+}
+
+.lil-cell.lo { outline: 2px solid #38bdf8; }
+.lil-cell.hi { outline: 2px solid #f472b6; }
+.lil-cell.mid { outline: 2px solid #a78bfa; }
+.lil-cell.i { outline: 2px solid #fbbf24; }
+.lil-cell.j { outline: 2px solid #34d399; }
+.lil-cell.sorted { background: rgba(16, 185, 129, 0.15); }
+
+.lil-vars {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--lil-border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.lil-status {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.lil-status.holds {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--lil-hold);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.lil-status.breaks {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--lil-break);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.lil-explain {
+  margin-top: 0.65rem;
+  color: var(--lil-muted);
+  font-size: 0.9rem;
+  min-height: 1.4em;
+}

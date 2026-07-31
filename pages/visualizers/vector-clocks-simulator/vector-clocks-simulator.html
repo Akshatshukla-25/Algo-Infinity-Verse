@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vector Clocks Simulator | Algo Infinity Verse</title>
+    <meta name="description" content="Visualize causality and logical time using Vector Clocks." />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="vector-clocks-simulator.css" />
+    <script src="/theme.js"></script>
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+  </head>
+  <body class="vector-body">
+    <nav class="navbar vector-nav">
+      <div class="nav-logo">
+        <span class="logo-text">∞</span>
+        <span class="logo-title">Algo Infinity Verse</span>
+      </div>
+      <div class="engine-badge"><i class="fas fa-clock"></i> Logical Time Simulator</div>
+    </nav>
+
+    <main class="vector-workspace">
+      <header class="workspace-header">
+        <h1>Vector Clocks & Causality</h1>
+        <p class="subtitle">
+          Interact with Nodes A, B, and C to generate events and observe the vector clock algorithm.
+        </p>
+      </header>
+
+      <div class="visualizer-content">
+        <!-- Timeline Panel -->
+        <section class="timeline-panel" id="timelinePanel">
+          <!-- Node A -->
+          <div class="node-column" id="node-A">
+            <div class="node-header">
+              <h2>Node A</h2>
+              <div class="current-vector">[0, 0, 0]</div>
+              <div class="node-actions">
+                <button class="btn btn-internal" onclick="triggerInternal('A')">Event</button>
+                <button class="btn btn-send" onclick="startSend('A')">Send</button>
+              </div>
+            </div>
+            <div class="node-timeline" id="timeline-A"></div>
+          </div>
+
+          <!-- Node B -->
+          <div class="node-column" id="node-B">
+            <div class="node-header">
+              <h2>Node B</h2>
+              <div class="current-vector">[0, 0, 0]</div>
+              <div class="node-actions">
+                <button class="btn btn-internal" onclick="triggerInternal('B')">Event</button>
+                <button class="btn btn-send" onclick="startSend('B')">Send</button>
+              </div>
+            </div>
+            <div class="node-timeline" id="timeline-B"></div>
+          </div>
+
+          <!-- Node C -->
+          <div class="node-column" id="node-C">
+            <div class="node-header">
+              <h2>Node C</h2>
+              <div class="current-vector">[0, 0, 0]</div>
+              <div class="node-actions">
+                <button class="btn btn-internal" onclick="triggerInternal('C')">Event</button>
+                <button class="btn btn-send" onclick="startSend('C')">Send</button>
+              </div>
+            </div>
+            <div class="node-timeline" id="timeline-C"></div>
+          </div>
+
+          <!-- SVG for Drawing Message Arrows -->
+          <svg class="arrows-svg" id="arrowsSvg"></svg>
+
+          <!-- Overlay for Flying Packets -->
+          <div id="packetOverlay" class="packet-overlay"></div>
+        </section>
+
+        <!-- Causality Analyzer Panel -->
+        <section class="analyzer-panel">
+          <div class="panel-header">
+            <h2><i class="fas fa-search"></i> Causality Analyzer</h2>
+          </div>
+          <div class="analyzer-content">
+            <p class="instruction">
+              Select two events on the timelines to compare their vector clocks.
+            </p>
+
+            <div class="comparison-box">
+              <div class="event-box" id="selectedEvent1">
+                <span class="label">Event 1</span>
+                <span class="value mono">--</span>
+              </div>
+              <div class="vs-text">vs</div>
+              <div class="event-box" id="selectedEvent2">
+                <span class="label">Event 2</span>
+                <span class="value mono">--</span>
+              </div>
+            </div>
+
+            <div class="result-box" id="analyzerResult">Waiting for selection...</div>
+
+            <div class="concurrency-info" id="concurrencyInfo">
+              <i class="fas fa-lightbulb"></i> Selecting an event highlights all perfectly
+              concurrent events in
+              <span style="color: #eab308; font-weight: bold">yellow</span> across other nodes.
+            </div>
+
+            <button class="btn btn-reset" onclick="resetAll()">Reset Simulator</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Receiver Selection Modal (Overlay) -->
+    <div class="modal-overlay hidden" id="receiverModal">
+      <div class="modal-content">
+        <h3>Select Receiver</h3>
+        <p>Node <span id="senderNodeLabel"></span> is sending a message to:</p>
+        <div class="modal-actions" id="receiverButtons">
+          <!-- Dynamically populated -->
+        </div>
+        <button class="btn btn-cancel" onclick="cancelSend()">Cancel</button>
+      </div>
+    </div>
+
+    <script src="vector-clocks-simulator.js"></script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+  </body>
+</html>

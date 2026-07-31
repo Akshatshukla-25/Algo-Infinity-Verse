@@ -4,6 +4,8 @@ import securityConfig from '../config/security.js';
 export const {
   SIGNUP_RATE_LIMIT,
   SIGNUP_WINDOW_MS,
+  LOGIN_RATE_LIMIT,
+  LOGIN_WINDOW_MS,
   AUTH_DELAY_MS,
   MIN_PASSWORD_LENGTH,
   PASSWORD_REGEX,
@@ -17,21 +19,27 @@ export const {
 import { redisAvailable, redisClient } from '../jobs/queue.js';
 
 export const activeRefreshFamilies = new Map();
-const signupAttempts = new Map();
+export const revokedUserSessions = new Map();
 
-export const _signupSweeper = setInterval(() => {
-  const now = Date.now();
-  for (const [identifier, timestamps] of signupAttempts) {
-    const fresh = timestamps.filter((t) => now - t < SIGNUP_WINDOW_MS);
-    if (fresh.length === 0) {
-      signupAttempts.delete(identifier);
-    } else {
-      signupAttempts.set(identifier, fresh);
+export async function revokeAllUserSessions(userId) {
+  if (!userId) return;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (redisAvailable && redisClient) {
+    try {
+      await redisClient.set(
+        `user_revocation:${userId}`,
+        nowSeconds,
+        'EX',
+        ACCESS_TOKEN_MAX_AGE_SECONDS
+      );
+    } catch (err) {
+      console.error('[Redis] Error in revokeAllUserSessions:', err.message);
+      revokedUserSessions.set(userId, nowSeconds);
     }
+  } else {
+    revokedUserSessions.set(userId, nowSeconds);
   }
-}, SIGNUP_WINDOW_MS);
-
-if (_signupSweeper.unref) _signupSweeper.unref();
+}
 
 const TRUSTED_PROXIES = new Set(
   (process.env.TRUSTED_PROXIES || '')
@@ -39,6 +47,18 @@ const TRUSTED_PROXIES = new Set(
     .map((s) => s.trim())
     .filter(Boolean)
 );
+
+if (process.env.NODE_ENV === 'production' && TRUSTED_PROXIES.size === 0) {
+  console.warn(
+    '[SECURITY WARNING] TRUSTED_PROXIES is not configured in production. ' +
+      'If this server sits behind a reverse proxy or CDN, every request will ' +
+      "resolve to the proxy's IP for rate-limiting purposes, collapsing all " +
+      "clients into a single shared bucket (e.g. one user's failed logins can " +
+      "lock out the entire site). Set TRUSTED_PROXIES to the proxy's IP(s) so " +
+      'X-Forwarded-For is honoured, or ignore this warning if the server is ' +
+      'reachable directly with no proxy in front of it.'
+  );
+}
 
 export function getClientIdentifier(req) {
   const remoteAddress = req.socket?.remoteAddress || 'unknown';
@@ -53,22 +73,6 @@ export function getClientIdentifier(req) {
   }
 
   return remoteAddress;
-}
-
-export function isSignupRateLimited(identifier) {
-  const now = Date.now();
-  const attempts = signupAttempts.get(identifier) || [];
-  const recentAttempts = attempts.filter((t) => now - t < SIGNUP_WINDOW_MS);
-  signupAttempts.set(identifier, recentAttempts);
-  return recentAttempts.length >= SIGNUP_RATE_LIMIT;
-}
-
-export function recordSignupAttempt(identifier) {
-  const now = Date.now();
-  const attempts = signupAttempts.get(identifier) || [];
-  const recentAttempts = attempts.filter((t) => now - t < SIGNUP_WINDOW_MS);
-  recentAttempts.push(now);
-  signupAttempts.set(identifier, recentAttempts);
 }
 
 export async function normalizeAuthDelay() {
@@ -104,14 +108,73 @@ function sign(value) {
   return crypto.createHmac('sha256', sessionSecret()).update(value).digest('base64url');
 }
 
+/**
+ * Validates the user object before it is encoded into an access or refresh
+ * token (see issue #2412). Returns `null` if valid, otherwise a string
+ * describing the first detected problem so callers can surface a consistent
+ * error message.
+ *
+ * Contract:
+ *   - `user` must be a non-null object
+ *   - `id`, `name`, `email` must each be present and a non-empty string
+ *
+ * We deliberately only stringify-check the three required claims; extra
+ * fields (rating, role, avatarUrl, ...) are passed through untouched. The
+ * function never mutates `user` or any of its properties.
+ */
+export function validateUserForToken(user) {
+  if (user === null || typeof user !== 'object' || Array.isArray(user)) {
+    return 'A valid user object is required to generate a token.';
+  }
+  const required = ['id', 'name', 'email'];
+  for (const field of required) {
+    const value = user[field];
+    if (value === undefined || value === null) {
+      return `Missing required field "${field}" on user object.`;
+    }
+    if (typeof value !== 'string' || value.trim() === '') {
+      return `Field "${field}" on the user object must be a non-empty string.`;
+    }
+  }
+  return null;
+}
+
+/**
+ * Validates a refresh token family identifier before it is used for
+ * revocation. Returns `null` if valid, otherwise a string describing
+ * the first detected problem so callers can surface a consistent error.
+ *
+ * Contract:
+ *   - `familyId` must be a non-null, non-empty string
+ *   - Whitespace-only identifiers are rejected
+ */
+export function validateFamilyId(familyId) {
+  if (familyId === undefined || familyId === null) {
+    return 'Refresh token family identifier is required.';
+  }
+  if (typeof familyId !== 'string') {
+    return 'Refresh token family identifier must be a string.';
+  }
+  if (familyId.trim() === '') {
+    return 'Refresh token family identifier must be a non-empty string.';
+  }
+  return null;
+}
+
 export function createAccessToken(user) {
+  const validationError = validateUserForToken(user);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+  const nowSeconds = Math.floor(Date.now() / 1000);
   const header = base64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const payload = base64Url(
     JSON.stringify({
       sub: user.id,
       name: user.name,
       email: user.email,
-      exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_MAX_AGE_SECONDS,
+      iat: nowSeconds,
+      exp: nowSeconds + ACCESS_TOKEN_MAX_AGE_SECONDS,
       type: 'access',
     })
   );
@@ -124,8 +187,17 @@ export async function createRefreshToken(
   familyId = crypto.randomUUID(),
   nonce = crypto.randomUUID()
 ) {
+  const validationError = validateUserForToken(user);
+  if (validationError) {
+    throw new Error(validationError);
+  }
   if (redisAvailable && redisClient) {
-    await redisClient.set(`refresh:${familyId}`, nonce, 'EX', REFRESH_TOKEN_MAX_AGE_SECONDS);
+    try {
+      await redisClient.set(`refresh:${familyId}`, nonce, 'EX', REFRESH_TOKEN_MAX_AGE_SECONDS);
+    } catch (err) {
+      console.error('[Redis] Error in createRefreshToken:', err.message);
+      activeRefreshFamilies.set(familyId, { currentNonce: nonce });
+    }
   } else {
     activeRefreshFamilies.set(familyId, { currentNonce: nonce });
   }
@@ -146,8 +218,17 @@ export async function createRefreshToken(
 }
 
 export async function revokeTokenFamily(familyId) {
+  const validationError = validateFamilyId(familyId);
+  if (validationError) {
+    throw new Error(validationError);
+  }
   if (redisAvailable && redisClient) {
-    await redisClient.del(`refresh:${familyId}`);
+    try {
+      await redisClient.del(`refresh:${familyId}`);
+    } catch (err) {
+      console.error('[Redis] Error in revokeTokenFamily:', err.message);
+      activeRefreshFamilies.delete(familyId);
+    }
   } else {
     activeRefreshFamilies.delete(familyId);
   }
@@ -158,6 +239,20 @@ export function verifyToken(token, expectedType) {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
   const [header, payload, signature] = parts;
+
+  // Validate JWT header before proceeding to signature verification.
+  // This ensures only tokens with the expected algorithm (HS256) and
+  // type (JWT) are processed, rejecting malformed or unsupported headers
+  // early and avoiding unnecessary cryptographic operations.
+  try {
+    const decodedHeader = JSON.parse(fromBase64Url(header));
+    if (decodedHeader.alg !== 'HS256' || decodedHeader.typ !== 'JWT') {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+
   const body = `${header}.${payload}`;
   const expected = sign(body);
   const signatureBuffer = Buffer.from(signature);
@@ -180,7 +275,17 @@ export function verifyToken(token, expectedType) {
 }
 
 export function verifyAccessToken(token) {
-  return verifyToken(token, 'access');
+  const session = verifyToken(token, 'access');
+  if (!session) return null;
+
+  if (session.sub && session.iat) {
+    const revokedAt = revokedUserSessions.get(session.sub);
+    if (revokedAt && session.iat <= revokedAt) {
+      return null;
+    }
+  }
+
+  return session;
 }
 
 export async function verifyRefreshToken(token) {
@@ -188,10 +293,15 @@ export async function verifyRefreshToken(token) {
   if (!session) return null;
 
   if (redisAvailable && redisClient) {
-    const currentNonce = await redisClient.get(`refresh:${session.familyId}`);
-    if (!currentNonce) return null;
-    if (currentNonce !== session.nonce) {
-      await revokeTokenFamily(session.familyId);
+    try {
+      const currentNonce = await redisClient.get(`refresh:${session.familyId}`);
+      if (!currentNonce) return null;
+      if (currentNonce !== session.nonce) {
+        await revokeTokenFamily(session.familyId);
+        return null;
+      }
+    } catch (err) {
+      console.error('[Redis] Error in verifyRefreshToken:', err.message);
       return null;
     }
   } else {
@@ -208,7 +318,103 @@ export async function verifyRefreshToken(token) {
 
 const PASSWORD_PEPPER = process.env.PASSWORD_PEPPER || '';
 
+// ── Password hashing parameter validation ────────────────────────────────────
+
+/** Minimum iterations OWASP recommends (as of 2023) */
+const MIN_PBKDF2_ITERATIONS = 100000;
+/** Hard upper-bound to prevent DoS via absurdly large iteration counts */
+const MAX_PBKDF2_ITERATIONS = 10000000;
+/** Maximum reasonable derived-key length in bytes */
+const MAX_KEY_LENGTH = 64;
+/** Set of digest names that Node's crypto module actually supports */
+const SUPPORTED_HASHING_ALGORITHMS = new Set(crypto.getHashes());
+
+/**
+ * Validates password-hashing configuration parameters before they are
+ * consumed by {@link hashPassword} or {@link passwordMatches}.
+ *
+ * @returns {string|null} A human-readable error message if a parameter is
+ *   invalid, or `null` when every parameter is acceptable.
+ */
+export function validatePasswordHashingParams() {
+  // ── PBKDF2_ITERATIONS ──────────────────────────────────────────────────
+  if (
+    PBKDF2_ITERATIONS === undefined ||
+    PBKDF2_ITERATIONS === null ||
+    typeof PBKDF2_ITERATIONS !== 'number' ||
+    !Number.isFinite(PBKDF2_ITERATIONS) ||
+    !Number.isInteger(PBKDF2_ITERATIONS)
+  ) {
+    return (
+      'PBKDF2_ITERATIONS must be a positive integer. ' +
+      `Received: ${PBKDF2_ITERATIONS} (type: ${typeof PBKDF2_ITERATIONS}).`
+    );
+  }
+  if (PBKDF2_ITERATIONS < MIN_PBKDF2_ITERATIONS) {
+    return (
+      `PBKDF2_ITERATIONS (${PBKDF2_ITERATIONS}) is below the minimum ` +
+      `security threshold of ${MIN_PBKDF2_ITERATIONS}.`
+    );
+  }
+  if (PBKDF2_ITERATIONS > MAX_PBKDF2_ITERATIONS) {
+    return (
+      `PBKDF2_ITERATIONS (${PBKDF2_ITERATIONS}) exceeds the maximum ` +
+      `allowed value of ${MAX_PBKDF2_ITERATIONS} to prevent denial of service.`
+    );
+  }
+
+  // ── PASSWORD_KEY_LENGTH ─────────────────────────────────────────────────
+  if (
+    PASSWORD_KEY_LENGTH === undefined ||
+    PASSWORD_KEY_LENGTH === null ||
+    typeof PASSWORD_KEY_LENGTH !== 'number' ||
+    !Number.isFinite(PASSWORD_KEY_LENGTH) ||
+    !Number.isInteger(PASSWORD_KEY_LENGTH)
+  ) {
+    return (
+      'PASSWORD_KEY_LENGTH must be a positive integer. ' +
+      `Received: ${PASSWORD_KEY_LENGTH} (type: ${typeof PASSWORD_KEY_LENGTH}).`
+    );
+  }
+  if (PASSWORD_KEY_LENGTH < 1) {
+    return `PASSWORD_KEY_LENGTH (${PASSWORD_KEY_LENGTH}) must be at least 1.`;
+  }
+  if (PASSWORD_KEY_LENGTH > MAX_KEY_LENGTH) {
+    return (
+      `PASSWORD_KEY_LENGTH (${PASSWORD_KEY_LENGTH}) exceeds the maximum ` +
+      `allowed value of ${MAX_KEY_LENGTH}.`
+    );
+  }
+
+  // ── HASHING_ALGORITHM ───────────────────────────────────────────────────
+  if (
+    HASHING_ALGORITHM === undefined ||
+    HASHING_ALGORITHM === null ||
+    typeof HASHING_ALGORITHM !== 'string'
+  ) {
+    return (
+      'HASHING_ALGORITHM must be a non-empty string. ' +
+      `Received: ${HASHING_ALGORITHM} (type: ${typeof HASHING_ALGORITHM}).`
+    );
+  }
+  if (HASHING_ALGORITHM.trim() === '') {
+    return 'HASHING_ALGORITHM must be a non-empty string.';
+  }
+  if (!SUPPORTED_HASHING_ALGORITHMS.has(HASHING_ALGORITHM)) {
+    return (
+      `HASHING_ALGORITHM "${HASHING_ALGORITHM}" is not supported. ` +
+      `Supported algorithms: ${Array.from(SUPPORTED_HASHING_ALGORITHMS).join(', ')}.`
+    );
+  }
+
+  return null;
+}
+
 export function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const validationError = validatePasswordHashingParams();
+  if (validationError) {
+    throw new Error(validationError);
+  }
   const hash = crypto
     .pbkdf2Sync(
       password + PASSWORD_PEPPER,
@@ -222,6 +428,10 @@ export function hashPassword(password, salt = crypto.randomBytes(16).toString('h
 }
 
 export function passwordMatches(password, stored) {
+  const validationError = validatePasswordHashingParams();
+  if (validationError) {
+    throw new Error(validationError);
+  }
   const calculated = crypto.pbkdf2Sync(
     password + PASSWORD_PEPPER,
     stored.salt,

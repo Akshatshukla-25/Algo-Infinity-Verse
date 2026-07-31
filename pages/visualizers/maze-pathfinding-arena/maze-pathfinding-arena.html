@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maze & Pathfinding Arena | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Procedural maze generation + animated pathfinding comparison (BFS, DFS, Dijkstra, A*, Greedy Best-First)."
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="maze-pathfinding-arena.css" />
+
+    <script>
+      (function () {
+        try {
+          var storedTheme = localStorage.getItem('theme');
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          var theme = storedTheme || (prefersLight ? 'light' : 'dark');
+          if (theme === 'light') {
+            document.documentElement.classList.add('light-mode');
+          } else {
+            document.documentElement.classList.remove('light-mode');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+  </head>
+  <body class="mpa-body">
+    <button type="button" id="scrollTopBtn" class="scroll-top-btn" aria-label="Scroll to top">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <div id="navbar-placeholder"></div>
+
+    <main class="mpa-workspace">
+      <div class="mpa-controls-bar">
+        <div class="mpa-control-segment mpa-generator">
+          <span class="mpa-control-label"><i class="fas fa-dice-d20"></i> Maze Generator</span>
+          <select
+            id="mazeGeneratorSelector"
+            class="mpa-select"
+            aria-label="Maze generator selector"
+          >
+            <option value="recursive-backtracking" selected>Recursive Backtracking</option>
+            <option value="prim">Prim's Algorithm</option>
+            <option value="kruskal">Kruskal's Algorithm</option>
+            <option value="recursive-division">Recursive Division</option>
+          </select>
+        </div>
+
+        <div class="mpa-control-segment mpa-path-controls">
+          <button
+            type="button"
+            class="btn mpa-btn-primary"
+            id="btnGenerateMaze"
+            title="Generate a new random maze and animate it"
+          >
+            <i class="fas fa-wand-magic-sparkles"></i> Generate Maze
+          </button>
+          <button
+            type="button"
+            class="btn mpa-btn-outline"
+            id="btnStartRace"
+            title="Run chosen pathfinding algorithms on the same generated maze"
+          >
+            <i class="fas fa-flag-checkered"></i> Start Race
+          </button>
+          <button
+            type="button"
+            class="btn mpa-btn-outline"
+            id="btnPause"
+            title="Pause / Resume animation"
+          >
+            <i class="fas fa-pause"></i> Pause
+          </button>
+          <button
+            type="button"
+            class="btn mpa-btn-outline"
+            id="btnClearPaths"
+            title="Clear search animations but keep the maze"
+          >
+            <i class="fas fa-broom"></i> Clear Paths
+          </button>
+        </div>
+
+        <div class="mpa-control-segment mpa-config">
+          <div class="mpa-config-item">
+            <label for="gridSizeSelector"><i class="fas fa-th"></i> Grid Size:</label>
+            <select
+              id="gridSizeSelector"
+              class="mpa-select"
+              aria-label="Grid size selector"
+              title="Grid size"
+            >
+              <option value="15">Small (15x15)</option>
+              <option value="20" selected>Medium (20x20)</option>
+              <option value="25">Large (25x25)</option>
+            </select>
+          </div>
+
+          <div class="mpa-config-item">
+            <label for="speedSlider"><i class="fas fa-running"></i> Speed:</label>
+            <div class="mpa-slider-container">
+              <input type="range" id="speedSlider" min="1" max="5" value="3" />
+              <span id="speedDisplay">3x</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mpa-mode-bar">
+        <span class="mpa-control-label"><i class="fas fa-pen-ruler"></i> Editing Tools</span>
+        <div class="mpa-tool-buttons">
+          <button
+            type="button"
+            class="btn mpa-tool-btn active"
+            id="toolStart"
+            data-tool="start"
+            title="Click maze to move Start"
+          >
+            <i class="fas fa-play mpa-text-success"></i> Start
+          </button>
+          <button
+            type="button"
+            class="btn mpa-tool-btn"
+            id="toolTarget"
+            data-tool="target"
+            title="Click maze to move Target"
+          >
+            <i class="fas fa-bullseye mpa-text-danger"></i> Target
+          </button>
+        </div>
+
+        <div class="mpa-algo-selectors">
+          <div class="mpa-side-label"><i class="fas fa-map-marked-alt mpa-text-teal"></i> Left</div>
+          <select
+            id="algoSelectLeft"
+            class="mpa-select"
+            aria-label="Left pathfinding algorithm selector"
+          >
+            <option value="astar" selected title="Uses Manhattan distance heuristic (admissible for this uniform-cost grid)">A* Search</option>
+            <option value="dijkstra">Dijkstra</option>
+            <option value="bfs">BFS</option>
+            <option value="dfs">DFS</option>
+            <option value="greedy">Greedy Best-First</option>
+          </select>
+
+          <div class="mpa-side-label">
+            <i class="fas fa-map-marked-alt mpa-text-orange"></i> Right
+          </div>
+          <select
+            id="algoSelectRight"
+            class="mpa-select"
+            aria-label="Right pathfinding algorithm selector"
+          >
+            <option value="dijkstra" selected>Dijkstra</option>
+            <option value="astar" title="Uses Manhattan distance heuristic (admissible for this uniform-cost grid)">A* Search</option>
+            <option value="bfs">BFS</option>
+            <option value="dfs">DFS</option>
+            <option value="greedy">Greedy Best-First</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mpa-main-layout">
+        <div class="mpa-left">
+          <div class="mpa-pane-header">
+            <div class="mpa-title">
+              <i class="fas fa-draw-polygon mpa-text-teal"></i> Maze + Left Search
+            </div>
+            <div class="mpa-hud mpa-hud-teal">
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label">Nodes</span
+                ><strong class="mpa-hud-value" id="hudLeftNodes">0</strong>
+              </div>
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label">Path Len</span
+                ><strong class="mpa-hud-value" id="hudLeftPathLen">—</strong>
+              </div>
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label" title="True g-cost of the path">Path Cost</span
+                ><strong class="mpa-hud-value" id="hudLeftPathCost">—</strong>
+              </div>
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label">Time</span
+                ><strong class="mpa-hud-value" id="hudLeftTime">—</strong>
+              </div>
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label">Efficiency</span
+                ><strong class="mpa-hud-value" id="hudLeftEff">—</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="mpa-grid-wrap">
+            <div class="mpa-grid" id="mazeGrid"></div>
+          </div>
+        </div>
+
+        <div class="mpa-right">
+          <div class="mpa-right-pane">
+            <div class="mpa-right-pane-header">
+              <div class="mpa-title"><i class="fas fa-route mpa-text-orange"></i> Right Search</div>
+            </div>
+            <div class="mpa-hud mpa-hud-orange">
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label">Nodes</span
+                ><strong class="mpa-hud-value" id="hudRightNodes">0</strong>
+              </div>
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label">Path Len</span
+                ><strong class="mpa-hud-value" id="hudRightPathLen">—</strong>
+              </div>
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label" title="True g-cost of the path">Path Cost</span
+                ><strong class="mpa-hud-value" id="hudRightPathCost">—</strong>
+              </div>
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label">Time</span
+                ><strong class="mpa-hud-value" id="hudRightTime">—</strong>
+              </div>
+              <div class="mpa-hud-item">
+                <span class="mpa-hud-label">Efficiency</span
+                ><strong class="mpa-hud-value" id="hudRightEff">—</strong>
+              </div>
+            </div>
+
+            <div class="mpa-explain-card">
+              <h3><i class="fas fa-info-circle"></i> How to use</h3>
+              <ol>
+                <li>Generate Maze (animation shows the maze being built).</li>
+                <li>Click grid to move Start/Target (while idle).</li>
+                <li>Pick algorithms (Left & Right) and click Start Race.</li>
+                <li>Compare visited waves + final paths and metrics.</li>
+              </ol>
+            </div>
+
+            <div class="mpa-status-card">
+              <div class="mpa-status-row">
+                <span class="mpa-status-icon" id="statusIcon">▶</span
+                ><span id="statusMsg">Idle</span>
+              </div>
+              <div class="mpa-status-row mpa-small">
+                <span><i class="fas fa-clock"></i> Maze gen:</span>
+                <strong id="hudMazeTime">—</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mpa-footer-info">
+        <div class="mpa-info-card">
+          <h5>Legend</h5>
+          <div class="mpa-legend">
+            <span class="mpa-legend-item"
+              ><span class="mpa-legend-swatch mpa-wall"></span> Wall</span
+            >
+            <span class="mpa-legend-item"
+              ><span class="mpa-legend-swatch mpa-start"></span> Start</span
+            >
+            <span class="mpa-legend-item"
+              ><span class="mpa-legend-swatch mpa-target"></span> Target</span
+            >
+            <span class="mpa-legend-item"
+              ><span class="mpa-legend-swatch mpa-visited-left"></span> Left visited</span
+            >
+            <span class="mpa-legend-item"
+              ><span class="mpa-legend-swatch mpa-visited-right"></span> Right visited</span
+            >
+            <span class="mpa-legend-item"
+              ><span class="mpa-legend-swatch mpa-frontier-left"></span> Left frontier</span
+            >
+            <span class="mpa-legend-item"
+              ><span class="mpa-legend-swatch mpa-frontier-right"></span> Right frontier</span
+            >
+            <span class="mpa-legend-item"
+              ><span class="mpa-legend-swatch mpa-path"></span> Final path</span
+            >
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="/auth.js"></script>
+    <script src="/bootstrap-legacy.js"></script>
+    <script src="/script.js"></script>
+    <script type="module" src="/dist/legacy-bundle.mjs"></script>
+    <script src="/theme.js"></script>
+    <script src="maze-pathfinding-arena.js"></script>
+
+    <script>
+      loadPartial('navbar-placeholder', '/partials/navbar.html');
+      loadPartial('footer-placeholder', '/partials/footer.html');
+    </script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+  </body>
+</html>

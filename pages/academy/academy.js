@@ -88,6 +88,15 @@ const academies = [
     desc: 'Master systems programming with Rust — ownership, lifetimes, concurrency, and memory-safe performance.',
   },
   {
+    id: 'go',
+    name: 'Go Academy',
+    path: '/pages/go-academy/go-academy.html',
+    category: 'Backend',
+    icon: 'go',
+    difficulty: 'Intermediate',
+    desc: 'Master Go (Golang) for building fast, concurrent backend services — goroutines, channels, interfaces, and idiomatic Go patterns.',
+  },
+  {
     id: 'typescript',
     name: 'TypeScript Academy',
     path: '/pages/typescript-academy/typescript-academy.html',
@@ -159,6 +168,26 @@ const academies = [
     difficulty: 'Beginner',
     desc: 'Learn server-side JavaScript with Node.js, event-driven architecture, and npm ecosystem.',
   },
+  {
+    id: 'websocket-academy',
+    name: 'WebSocket & SSE Academy',
+    path: '/pages/websocket-academy/websocket-academy.html',
+    category: 'Backend',
+    icon: 'fa-solid fa-wifi',
+    difficulty: 'Intermediate',
+    desc: 'Learn WebSocket and Server-Sent Events for real-time communication -- from protocol fundamentals to Socket.IO, reconnection strategies, and SSE patterns.',
+  },
+
+  // ── System Design ──
+  {
+    id: 'system-design',
+    name: 'System Design Academy',
+    path: '/pages/system-design-academy/system-design-academy.html',
+    category: 'System Design',
+    icon: 'fa-solid fa-sitemap',
+    difficulty: 'Advanced',
+    desc: 'Master system design with 10 modules covering distributed systems, microservices, real-time systems, observability, and case studies from Uber to Netflix.',
+  },
 
   // ── Cloud & DevOps ──
   {
@@ -178,6 +207,17 @@ const academies = [
     icon: 'fa-brands fa-docker',
     difficulty: 'Intermediate',
     desc: 'Containerize apps with Docker and orchestrate at scale with Kubernetes.',
+  },
+
+  // ── Version Control ──
+  {
+    id: 'git-academy',
+    name: 'Git & GitHub Academy',
+    path: '/pages/git-academy/git-academy.html',
+    category: 'DevOps & CI/CD',
+    icon: 'fa-brands fa-git-alt',
+    difficulty: 'Beginner',
+    desc: 'Master Git and GitHub — from version control basics to branching, collaboration, and GitHub Actions CI/CD.',
   },
 
   // ── Databases ──
@@ -235,6 +275,15 @@ const academies = [
     difficulty: 'Intermediate',
     desc: 'Master Redis for in-memory caching, pub/sub messaging, sorted sets, and high-performance data structures.',
   },
+  {
+    id: 'cassandra',
+    name: 'Cassandra Learning Hub',
+    path: '/pages/cassandra-learning-hub/cassandra-learning-hub.html',
+    category: 'Databases',
+    icon: 'fa-solid fa-server',
+    difficulty: 'Intermediate',
+    desc: 'Explore Apache Cassandra for distributed NoSQL databases, partitioning, replication, CQL, and fault-tolerant architecture.',
+  },
 
   // ── AI / Misc ──
   {
@@ -252,9 +301,11 @@ const academies = [
 const categoryDefs = [
   { label: 'All', key: 'all', count: academies.length },
   { label: 'Frontend', key: 'frontend', count: 8 },
-  { label: 'Backend', key: 'backend', count: 9 },
+  { label: 'Backend', key: 'backend', count: 11 },
+  { label: 'System Design', key: 'system-design', count: 1 },
   { label: 'Cloud & DevOps', key: 'cloud-devops', count: 2 },
-  { label: 'Databases', key: 'databases', count: 6 },
+  { label: 'Databases', key: 'databases', count: 7 },
+  { label: 'DevOps & CI/CD', key: 'devops-ci-cd', count: 1 },
   { label: 'AI / Misc', key: 'ai-misc', count: 1 },
 ];
 
@@ -262,8 +313,10 @@ const categoryDefs = [
 const categoryColors = {
   frontend: '#bae6fd',
   backend: '#99f6e4',
+  'system-design': '#e9d5ff',
   'cloud-devops': '#bfdbfe',
   databases: '#fed7aa',
+  'devops-ci-cd': '#fed7aa',
   'ai-misc': '#fecaca',
 };
 
@@ -404,11 +457,14 @@ const svgIcons = {
     'M23.5594 14.7228a.5269.5269 0 0 0-.0563-.1191c-.139-.2632-.4768-.3418-1.0074-.2321-1.6533.3411-2.2935.1312-2.5256-.0191 1.342-2.0482 2.445-4.522 3.0411-6.8297.2714-1.0507.7982-3.5237.1222-4.7316a1.5641 1.5641 0 0 0-.1509-.235C21.6931.9086 19.8007.0248 17.5099.0005c-1.4947-.0158-2.7705.3461-3.1161.4794a9.449 9.449 0 0 0-.5159-.0816 8.044 8.044 0 0 0-1.3114-.1278c-1.1822-.0184-2.2038.2642-3.0498.8406-.8573-.3211-4.7888-1.645-7.2219.0788C.9359 2.1526.3086 3.8733.4302 6.3043c.0409.818.5069 3.334 1.2423 5.7436.4598 1.5065.9387 2.7019 1.4334 3.582.553.9942 1.1259 1.5933 1.7143 1.7895.4474.1491 1.1327.1441 1.8581-.7279.8012-.9635 1.5903-1.8258 1.9446-2.2069.4351.2355.9064.3625 1.39.3772a.0569.0569 0 0 0 .0004.0041 11.0312 11.0312 0 0 0-.2472.3054c-.3389.4302-.4094.5197-1.5002.7443-.3102.064-1.1344.2339-1.1464.8115-.0025.1224.0329.2309.0919.3268.2269.4231.9216.6097 1.015.6331 1.3345.3335 2.5044.092 3.3714-.6787-.017 2.231.0775 4.4174.3454 5.0874.2212.5529.7618 1.9045 2.4692 1.9043.2505 0 .5263-.0291.8296-.0941 1.7819-.3821 2.5557-1.1696 2.855-2.9059.1503-.8707.4016-2.8753.5388-4.1012.0169-.0703.0357-.1207.057-.1362.0007-.0005.0697-.0471.4272.0307a.3673.3673 0 0 0 .0443.0068l.2539.0223.0149.001c.8468.0384 1.9114-.1426 2.5312-.4308.6438-.2988 1.8057-1.0323 1.5951-1.6698z',
   rust:
     '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="16" text-anchor="middle" font-size="14" font-weight="bold" fill="currentColor" font-family="system-ui, sans-serif">R</text>',
+  go:
+    '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="16" text-anchor="middle" font-size="14" font-weight="bold" fill="currentColor" font-family="system-ui, sans-serif">Go</text>',
 };
 
 const iconViewBox = {
   typescript: '0 0 512 512',
-  rust: '0 0 24 24'
+  rust: '0 0 24 24',
+  go: '0 0 24 24'
 };
 
 function iconHtml(icon) {
@@ -493,6 +549,8 @@ function initFlipAnimation() {
     { name: 'Supabase', cat: 'backend' },
     { name: 'Kafka', cat: 'backend' },
     { name: 'Rust', cat: 'backend' },
+    { name: 'Go', cat: 'backend' },
+    { name: 'System Design', cat: 'system-design' },
     { name: 'AWS', cat: 'cloud-devops' },
     { name: 'Docker & K8s', cat: 'cloud-devops' },
     { name: 'PostgreSQL', cat: 'databases' },
@@ -501,7 +559,10 @@ function initFlipAnimation() {
     { name: 'Neo4j', cat: 'databases' },
     { name: 'SQLite', cat: 'databases' },
     { name: 'Redis', cat: 'databases' },
+    { name: 'Cassandra', cat: 'databases' },
+    { name: 'Git & GitHub', cat: 'devops-ci-cd' },
     { name: 'Fail', cat: 'ai-misc' },
+    { name: 'WebSocket & SSE', cat: 'backend' },
   ];
 
   const inner = document.getElementById('acFlipInner');

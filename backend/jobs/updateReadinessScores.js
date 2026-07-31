@@ -1,4 +1,4 @@
-import { calculateReadinessScore } from '../services/readinessEngine.js';
+import { calculateReadiness } from '../services/readinessEngine.js';
 
 // ============================================
 // CONFIGURABLE BATCH SETTINGS
@@ -295,27 +295,47 @@ export async function processUserReadinessScores(options = {}) {
     console.log(`Found ${users.length} users to process`);
 
     // 2. Define the processing function
+    //
+    // #2536: this previously called a nonexistent `calculateReadinessScore`
+    // export and assumed a return shape (`overallPercentage`, `breakdown`,
+    // `missingTopics`) that readinessEngine.js's actual exported function,
+    // `calculateReadiness`, does not produce. `calculateReadiness(userId,
+    // metrics)` expects a metrics object with easySolved/mediumSolved/
+    // hardSolved/streak/completionRate/topicsCovered/lastActivity, and
+    // returns { overallScore, level, pace, componentScores, topicCoverage,
+    // suggestions, goals, ... }. The mock user records above use a
+    // different shape (quizPerformance/problemsSolved/coveredTopics), so
+    // they're mapped to the metrics shape calculateReadiness expects here.
     const processUser = async (user) => {
       try {
-        const analytics = calculateReadinessScore(user);
+        const metrics = {
+          easySolved: Math.round((user.problemsSolved || 0) * 0.5),
+          mediumSolved: Math.round((user.problemsSolved || 0) * 0.35),
+          hardSolved: Math.round((user.problemsSolved || 0) * 0.15),
+          streak: 0,
+          completionRate: user.quizPerformance || 0,
+          topicsCovered: user.coveredTopics || [],
+          lastActivity: new Date().toISOString(),
+        };
+
+        const analytics = await calculateReadiness(user.id, metrics);
 
         // Save the computed metrics back to the database
         // await db.ReadinessDashboard.upsert({
         //   userId: user.id,
-        //   score: analytics.overallPercentage,
-        //   breakdown: JSON.stringify(analytics.breakdown),
+        //   score: analytics.overallScore,
+        //   breakdown: JSON.stringify(analytics.componentScores),
         //   suggestions: JSON.stringify(analytics.suggestions),
-        //   missingTopics: JSON.stringify(analytics.missingTopics),
         //   updatedAt: new Date()
         // });
 
-        console.log(`User ${user.id} (${user.name}): Score = ${analytics.overallPercentage}%`);
+        console.log(`User ${user.id} (${user.name}): Score = ${analytics.overallScore}%`);
 
         return {
           userId: user.id,
           name: user.name,
-          score: analytics.overallPercentage,
-          breakdown: analytics.breakdown,
+          score: analytics.overallScore,
+          breakdown: analytics.componentScores,
           suggestions: analytics.suggestions,
         };
       } catch (error) {

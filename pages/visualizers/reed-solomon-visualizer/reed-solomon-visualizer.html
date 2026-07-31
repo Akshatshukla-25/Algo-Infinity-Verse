@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reed-Solomon Erasure Coding Visualizer | Algo Infinity Verse</title>
+    <meta name="description" content="Watch RAID 6 survive two dead disks and QR codes survive scratches — Reed-Solomon erasure coding via polynomial interpolation, live disk failures, and exact reconstruction." />
+    <link rel="stylesheet" href="../../../styles.css" />
+    <link rel="stylesheet" href="reed-solomon-visualizer.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+  </head>
+  <body data-page="reed-solomon-visualizer">
+
+    <div id="navbar-placeholder"></div>
+
+    <button id="scrollTopBtn" aria-label="Scroll to top" class="scroll-top-btn">
+      <i class="fas fa-circle-chevron-up"></i>
+    </button>
+
+    <section class="rs-hero">
+      <div class="rs-hero-bg">
+        <canvas id="rsHeroCanvas" class="rs-hero-canvas"></canvas>
+      </div>
+      <div class="rs-hero-inner">
+        <div class="rs-hero-eyebrow">💿 RAID 6 · QR Code Error Correction · Ceph &amp; Azure Storage</div>
+        <h1 class="rs-hero-title">Reed-Solomon<br />Erasure Coding</h1>
+        <p class="rs-hero-sub">Kill 2 disks. Lose zero data. The math doesn't care which 2.</p>
+        <p class="rs-hero-desc">Encode K data blocks as points on a polynomial curve, plus M extra "parity" points on the same curve. Any K of the K+M points — in ANY combination — are enough to reconstruct the exact original curve, and therefore the exact original data.</p>
+        <a href="#lab" class="btn btn-primary rs-btn-primary"><i class="fas fa-hard-drive"></i> Kill Some Disks</a>
+      </div>
+    </section>
+
+    <section id="lab" class="section rs-section">
+      <div class="container">
+
+        <div class="rs-control-card">
+          <div class="rs-row">
+            <label class="rs-row-label" for="rsMessageInput">Message</label>
+            <input type="text" id="rsMessageInput" class="rs-text-input" value="RAID" maxlength="6" />
+            <span class="rs-row-label">Parity blocks (M)</span>
+            <div class="rs-m-btns">
+              <button class="rs-m-btn" data-m="1">M=1</button>
+              <button class="rs-m-btn active" data-m="2">M=2</button>
+              <button class="rs-m-btn" data-m="3">M=3</button>
+            </div>
+            <button class="btn rs-btn-primary rs-encode-btn" id="rsEncodeBtn"><i class="fas fa-hammer"></i> Encode</button>
+          </div>
+        </div>
+
+        <div class="rs-status" id="rsStatus">Encode a message, then click any disk platter below to fail it — up to M disks can die with zero data loss.</div>
+
+        <div class="rs-array-section">
+          <div class="rs-panel-title"><i class="fas fa-server"></i> Disk Array — Click a Platter to Fail It, Click Again to Restore</div>
+          <div class="rs-disk-array" id="rsDiskArray"></div>
+          <div class="rs-array-legend">
+            <span class="rs-leg"><span class="rs-leg-dot rs-leg-data"></span>Data disk</span>
+            <span class="rs-leg"><span class="rs-leg-dot rs-leg-parity"></span>Parity disk</span>
+            <span class="rs-leg"><span class="rs-leg-dot rs-leg-dead"></span>Failed disk</span>
+          </div>
+        </div>
+
+        <div class="rs-main-layout">
+
+          <div class="rs-curve-section">
+            <div class="rs-panel-title"><i class="fas fa-wave-square"></i> The Polynomial — Every Block Is a Point on This Curve</div>
+            <canvas id="rsCurveCanvas" class="rs-curve-canvas"></canvas>
+          </div>
+
+          <div class="rs-right-panel">
+
+            <div class="rs-panel-card">
+              <div class="rs-panel-title"><i class="fas fa-triangle-exclamation"></i> Failure Tolerance</div>
+              <div class="rs-tolerance-display">
+                <div class="rs-tolerance-big" id="rsToleranceBig">0 / 0</div>
+                <div class="rs-tolerance-label">disks failed / tolerable</div>
+              </div>
+              <button class="btn rs-btn-primary rs-reconstruct-btn" id="rsReconstructBtn"><i class="fas fa-rotate"></i> Reconstruct</button>
+            </div>
+
+            <div class="rs-panel-card">
+              <div class="rs-panel-title"><i class="fas fa-terminal"></i> Reconstruction Result</div>
+              <div class="rs-result-display" id="rsResultDisplay">Encode a message first.</div>
+            </div>
+
+            <div class="rs-panel-card">
+              <div class="rs-panel-title"><i class="fas fa-list-ol"></i> Log</div>
+              <div class="rs-log" id="rsLog"><div class="rs-empty">No activity yet.</div></div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="rs-boundary-card">
+          <div class="rs-panel-title"><i class="fas fa-skull"></i> The Hard Mathematical Boundary</div>
+          <p class="rs-boundary-desc">Fail exactly M disks: reconstruction always succeeds, no matter which ones. Fail M+1 disks: reconstruction is mathematically impossible — not "harder," genuinely impossible. Try it.</p>
+          <button class="btn btn-secondary rs-oneover-btn" id="rsOneOverBtn"><i class="fas fa-bomb"></i> Fail One More Than Tolerable</button>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="learn" class="section">
+      <div class="container">
+        <h2 class="section-title"><span class="title-icon">💿</span> Why Points on a Curve Work</h2>
+        <div class="rs-learn-grid">
+          <div class="rs-learn-card" style="--lc:#06b6d4">
+            <div class="rs-learn-icon">📈</div>
+            <h3>A Line Needs 2 Points</h3>
+            <p>You need exactly 2 points to uniquely determine a straight line — any 2 will do. A degree-(K-1) polynomial works the same way but needs K points. This is the entire idea generalized: encode K data values as K points on a degree-(K-1) curve.</p>
+          </div>
+          <div class="rs-learn-card" style="--lc:#a855f7">
+            <div class="rs-learn-icon">➕</div>
+            <h3>Parity = More Points, Same Curve</h3>
+            <p>Generate M extra points on that exact same curve — these are the parity blocks. They carry no new information individually, but any K points total (data or parity, mixed) are enough to reconstruct the whole curve via Lagrange interpolation.</p>
+          </div>
+          <div class="rs-learn-card" style="--lc:#22c55e">
+            <div class="rs-learn-icon">🔧</div>
+            <h3>RAID 6's Real Mechanism</h3>
+            <p>RAID 6 stores 2 parity blocks per stripe using exactly this math, tolerating any 2 simultaneous disk failures. This is why RAID 6 arrays can survive a second disk dying during the rebuild from the first failure — a real, common failure mode RAID 5 cannot survive.</p>
+          </div>
+          <div class="rs-learn-card" style="--lc:#f59e0b">
+            <div class="rs-learn-icon">📱</div>
+            <h3>QR Codes Use This Too</h3>
+            <p>A QR code's error correction level (L/M/Q/H) directly controls how many Reed-Solomon parity symbols are embedded — which is exactly why a QR code with a logo stamped over part of it, or a scratched corner, still scans correctly.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="../../../auth.js"></script>
+    <script src="../../../script.js"></script>
+    <script src="../../../theme.js"></script>
+    <script src="../../../auth-gate.js"></script>
+    <script src="reed-solomon-visualizer.js"></script>
+    <script>
+      if (typeof loadPartial === 'function') {
+        loadPartial('navbar-placeholder', '/partials/navbar.html').then(function() {
+          if (typeof initNavbar === 'function') initNavbar();
+        });
+        loadPartial('footer-placeholder', '/partials/footer.html');
+      }
+    </script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+  </body>
+</html>

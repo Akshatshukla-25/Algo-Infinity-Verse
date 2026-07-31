@@ -1,10 +1,12 @@
-import fs from "fs/promises";
-import path from "path";
-import crypto from "crypto";
-import { getSession, sendJson, readJsonBody } from "../utils/helpers.js";
-import { initializeFirebase } from "../../firebase.js";
+import fs from 'fs/promises';
+import path from 'path';
+import crypto from 'crypto';
+import { getSession, sendJson, readJsonBody } from '../utils/helpers.js';
+import { validateInterviewExperiencePayload } from '../utils/interviewValidation.js';
+import { initializeFirebase } from '../../firebase.js';
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = path.join(process.cwd(), 'data');
+let fileWriteLock = Promise.resolve();
 
 export async function handleSubmitInterviewExperience(req, res) {
   const session = getSession(req);
@@ -12,26 +14,16 @@ export async function handleSubmitInterviewExperience(req, res) {
   try {
     payload = await readJsonBody(req);
   } catch {
-    return sendJson(res, 400, { error: "Invalid JSON body." });
+    return sendJson(res, 400, { error: 'Invalid JSON body.' });
   }
 
-  const {
-    company,
-    role,
-    difficulty,
-    rating,
-    title,
-    content,
-    topics,
-    rounds,
-    offerStatus,
-  } = payload;
-  
-  if (!company || !role || !difficulty || !rating || !title || !content) {
-    return sendJson(res, 400, {
-      error: "Company, role, difficulty, rating, title, and content are required.",
-    });
+  const validationResult = validateInterviewExperiencePayload(payload);
+  if (!validationResult.isValid) {
+    return sendJson(res, 400, { error: validationResult.error });
   }
+
+  const { company, role, difficulty, rating, title, content, rounds, offerStatus } = payload;
+  const { normalizedTopics } = validationResult;
 
   const experienceData = {
     id: crypto.randomUUID(),
@@ -43,7 +35,7 @@ export async function handleSubmitInterviewExperience(req, res) {
     rating,
     title: title.trim(),
     content: content.trim(),
-    topics: Array.isArray(topics) ? topics : [],
+    topics: normalizedTopics,
     rounds: rounds || null,
     offerStatus: offerStatus || null,
     upvotes: 0,
@@ -53,28 +45,30 @@ export async function handleSubmitInterviewExperience(req, res) {
   try {
     const db = initializeFirebase();
     if (db) {
-      const docRef = await db
-        .collection("interviewExperiences")
-        .add(experienceData);
+      const docRef = await db.collection('interviewExperiences').add(experienceData);
       experienceData.id = docRef.id;
     } else {
-      const filePath = path.join(DATA_DIR, "interview-experiences.json");
+      const filePath = path.join(DATA_DIR, 'interview-experiences.json');
       await fs.mkdir(DATA_DIR, { recursive: true });
-      let list = [];
-      try {
-        const raw = await fs.readFile(filePath, "utf8");
-        list = JSON.parse(raw || "[]");
-      } catch (err) {
-        if (err.code !== "ENOENT") throw err;
-      }
-      list.push(experienceData);
-      await fs.writeFile(filePath, JSON.stringify(list, null, 2) + "\n");
+      const lockPromise = fileWriteLock.then(async () => {
+        let list = [];
+        try {
+          const raw = await fs.readFile(filePath, 'utf8');
+          list = JSON.parse(raw || '[]');
+        } catch (err) {
+          if (err.code !== 'ENOENT') throw err;
+        }
+        list.push(experienceData);
+        await fs.writeFile(filePath, JSON.stringify(list, null, 2) + '\n');
+      });
+      fileWriteLock = lockPromise.catch(() => {});
+      await lockPromise;
     }
     return sendJson(res, 201, { success: true, experience: experienceData });
   } catch (err) {
-    console.error("Error saving interview experience:", err);
+    console.error('Error saving interview experience:', err);
     return sendJson(res, 500, {
-      error: "Failed to save interview experience.",
+      error: 'Failed to save interview experience.',
     });
   }
 }

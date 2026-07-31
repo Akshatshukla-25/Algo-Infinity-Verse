@@ -56,13 +56,13 @@
           if (!element) return;
 
           if (element.tagName === 'INPUT') element.value = '';
-          else element.textContent = 'Learner';
+          element.textContent = 'Learner';
         }
       );
 
       document
         .querySelectorAll('[data-auth-user-name]')
-        .forEach((el) => (el.textContent = 'Learner'));
+        .forEach((el) => (el.textContent = 'Hello Learner'));
 
       document.querySelectorAll('[data-auth-user-email]').forEach((el) => (el.textContent = ''));
 
@@ -84,9 +84,11 @@
       }
     );
 
+    const displayName = user?.name || 'Guest';
+
     document
       .querySelectorAll('[data-auth-user-name]')
-      .forEach((el) => (el.textContent = user.name));
+      .forEach((el) => (el.textContent = `Hello ${displayName}`));
 
     document
       .querySelectorAll('[data-auth-user-email]')
@@ -122,7 +124,7 @@
               <i class="fas fa-user-circle settings-avatar-fallback"></i>
             </div>
             <div class="settings-user-details">
-              <div class="settings-user-name" data-auth-user-name>Learner</div>
+              <div class="settings-user-name" data-auth-user-name>Hello Learner</div>
               <div class="settings-user-email" data-auth-user-email></div>
             </div>
           </div>
@@ -147,13 +149,27 @@
     }
   }
 
+  function syncAuthVisibility() {
+    const isAuth = currentSession?.authenticated;
+
+    document.querySelectorAll('[data-guest-only]').forEach((el) => {
+      el.style.display = isAuth ? 'none' : '';
+    });
+
+    document.querySelectorAll('[data-auth-required]').forEach((el) => {
+      el.style.display = isAuth ? '' : 'none';
+    });
+  }
+
   function wireLogout() {
     document.addEventListener('click', async (event) => {
       const logoutButton = event.target.closest('[data-auth-logout]');
       if (!logoutButton) return;
 
       event.preventDefault();
-      if (!confirm('Are you sure you want to logout?')) return;
+
+      const { confirmed } = await showSignOutModal();
+      if (!confirmed) return;
       logoutButton.disabled = true;
 
       if (location.protocol !== 'file:') {
@@ -164,14 +180,6 @@
           });
 
           if (!response.ok) throw new Error('Logout failed.');
-
-          if (window.__supabaseClient) {
-            try {
-              await window.__supabaseClient.signOutUser();
-            } catch (e) {
-              void 0;
-            }
-          }
         } catch (error) {
           void 0;
           logoutButton.disabled = false;
@@ -182,15 +190,6 @@
       location.href = authUrl('/login');
     }); // ✅ closes addEventListener
   } // ✅ closes wireLogout
-
-  function wireGoogleButton() {
-    document.addEventListener('click', async (event) => {
-      const googleBtn = event.target.closest('[data-auth-google]');
-      if (!googleBtn) return;
-      event.preventDefault();
-      await handleGoogleSignIn(googleBtn);
-    });
-  }
 
   function wireGuestButton() {
     document.addEventListener('click', async (event) => {
@@ -213,6 +212,7 @@
           document.documentElement.classList.remove('auth-unverified', 'auth-loading');
           document.documentElement.classList.add('auth-verified');
           renderAuthNav();
+          syncAuthVisibility();
           updateProfileNames(currentSession.user);
           location.href = getNextDestination();
         } else {
@@ -246,50 +246,6 @@
       return next;
     }
     return '/';
-  }
-
-  async function handleGoogleSignIn(button) {
-    if (!window.__supabaseClient) {
-      setFormMessage(
-        document.querySelector('[data-auth-form]'),
-        'Google sign-in is not available right now.',
-        'error'
-      );
-      return;
-    }
-
-    const form = document.querySelector('[data-auth-form]');
-
-    if (button) {
-      button.disabled = true;
-      button.dataset.loading = 'true';
-      button.innerHTML = '<span class="btn-spinner"></span><span>Signing in with Google...</span>';
-    }
-
-    try {
-      // Begin the OAuth redirect flow. Supabase redirects the browser to
-      // Google; on success we return to the same auth page (with `next`
-      // preserved) where the session is exchanged with our backend.
-      await window.__supabaseClient.signInWithGoogle(getOAuthReturnTo());
-    } catch (error) {
-      if (form) setFormMessage(form, 'Sign-in failed. Please try again.', 'error');
-    } finally {
-      if (button) {
-        button.disabled = false;
-        delete button.dataset.loading;
-        button.innerHTML = `<svg class="google-btn-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg><span>Sign in with Google</span>`;
-      }
-    }
-  }
-
-  function getOAuthReturnTo() {
-    const params = new URLSearchParams(location.search);
-    const next = params.get('next');
-    const url = new URL(location.pathname, window.location.origin);
-    if (next && next.startsWith('/') && !next.startsWith('//')) {
-      url.searchParams.set('next', next);
-    }
-    return url.toString();
   }
 
   function wireAuthForm() {
@@ -477,8 +433,8 @@
       window.algoAuth = currentSession;
 
       renderAuthNav();
+      syncAuthVisibility();
       wireLogout();
-      wireGoogleButton();
       wireAuthForm();
       wireDeactivateAccount();
       wireChangePassword();
@@ -492,38 +448,8 @@
 
     currentSession = await getSession();
 
-    if (!currentSession.authenticated && window.__supabaseClient) {
-      try {
-        const redirectResult = await window.__supabaseClient.getSessionToken();
-        const accessToken = redirectResult?.accessToken;
-
-        if (accessToken) {
-          const response = await fetch('/api/auth/supabase', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accessToken }),
-          });
-          if (response.ok) {
-            const payload = await response.json();
-            currentSession = { authenticated: true, user: payload.user };
-            window.algoAuth = currentSession;
-            document.documentElement.classList.remove('auth-unverified', 'auth-loading');
-            document.documentElement.classList.add('auth-verified');
-            renderAuthNav();
-            updateProfileNames(currentSession.user);
-          } else {
-            const errorBody = await response.text().catch(() => 'Unknown error');
-            console.error('[auth] Supabase bridge failed:', response.status, errorBody);
-          }
-        } else {
-          console.debug('[auth] No Supabase access token in session');
-        }
-      } catch (error) {
-        if (error.message !== 'Supabase not configured')
-          console.error('[auth] Supabase bridge error:', error);
-      }
-    }
+    // Supabase OAuth bridge removed. Auth is now strictly handled by our JWT
+    // cookie session via /api/session + /api/login + /api/signup + /api/guest.
 
     authReady = true;
     window.algoAuth = currentSession;
@@ -536,14 +462,9 @@
       document.documentElement.classList.add('auth-unverified');
     }
 
-    if (currentSession.authenticated && isAuthPage()) {
-      location.href = getNextDestination();
-      return;
-    }
-
     renderAuthNav();
+    syncAuthVisibility();
     wireLogout();
-    wireGoogleButton();
     wireGuestButton();
     wireAuthForm();
     wireDeactivateAccount();
@@ -553,6 +474,18 @@
 
     window.addEventListener('hashchange', guardPrivateHash);
     guardPrivateHash();
+  });
+
+  // Partials (profile section with action buttons) load AFTER DOMContentLoaded,
+  // so re-wire once they're available.
+  // Use a flag to prevent duplicate listeners from repeated wiring calls.
+  let _wired = false;
+  document.addEventListener('partialsLoaded', () => {
+    if (_wired) return;
+    _wired = true;
+    wireDeactivateAccount();
+    wireChangePassword();
+    wireDeleteAccount();
   });
 })();
 
@@ -612,6 +545,7 @@ function showAccountActionModal({ title, message, confirmText, requirePassword =
       if (settled) return;
       settled = true;
       document.removeEventListener('keydown', onKeydown);
+      modal.classList.remove('active');
       modal.remove();
       resolve(result);
     }
@@ -645,18 +579,257 @@ function showAccountActionModal({ title, message, confirmText, requirePassword =
   });
 }
 
+/**
+ * Shows a styled sign-out confirmation modal following the Auth Gate design language.
+ * Replaces native confirm() with a polished, branded experience.
+ * Resolves with { confirmed } — true when user confirms sign-out.
+ */
+function showSignOutModal() {
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'signOutModal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `
+      <div class="modal-content signout-modal-content">
+        <button type="button" class="modal-close" id="signOutModalClose" aria-label="Close">&times;</button>
+        <div class="signout-icon">
+          <div class="signout-icon-ring">
+            <i class="fas fa-right-from-bracket"></i>
+          </div>
+        </div>
+        <h2 class="signout-title" id="signOutModalTitle">Sign Out</h2>
+        <p class="signout-subtitle">Are you sure you want to sign out?</p>
+        <div class="signout-info-box">
+          <p class="signout-info-text">
+            <i class="fas fa-check-circle"></i> Your progress and data are safely saved. Sign back in anytime to continue.
+          </p>
+        </div>
+        <div class="signout-actions">
+          <button type="button" class="signout-btn signout-btn--cancel" id="signOutCancel">Cancel</button>
+          <button type="button" class="signout-btn signout-btn--danger" id="signOutConfirm">
+            <i class="fas fa-right-from-bracket"></i> Sign Out
+          </button>
+        </div>
+        <p class="signout-dismiss">
+          <button type="button" class="signout-dismiss-btn" id="signOutDismiss">Maybe later</button>
+        </p>
+      </div>
+    `;
+
+    modal.setAttribute('aria-labelledby', 'signOutModalTitle');
+
+    document.body.appendChild(modal);
+
+    function settle(confirmed) {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKeydown);
+      modal.classList.remove('active');
+      modal.remove();
+      resolve({ confirmed });
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') settle(false);
+    }
+
+    document.addEventListener('keydown', onKeydown);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) settle(false);
+    });
+    modal.querySelector('#signOutModalClose').addEventListener('click', () => settle(false));
+    modal.querySelector('#signOutCancel').addEventListener('click', () => settle(false));
+    modal.querySelector('#signOutDismiss').addEventListener('click', () => settle(false));
+    modal.querySelector('#signOutConfirm').addEventListener('click', () => settle(true));
+
+    setTimeout(() => modal.querySelector('#signOutCancel').focus(), 50);
+  });
+}
+
+/**
+ * Shows an in-page confirmation modal for a destructive account action,
+ * replacing the native confirm()/prompt() dialogs this codebase avoids.
+ * Resolves with { confirmed, password } — password is only collected when
+ * requirePassword is true, and is null otherwise or on cancel.
+ */
+function showAccountActionModal({ title, message, confirmText, requirePassword = false }) {
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-header">
+          <h3></h3>
+          <button type="button" class="modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p></p>
+          ${
+            requirePassword
+              ? `
+            <div class="password-field">
+              <label for="accountActionPassword">Confirm your password</label>
+              <input type="password" id="accountActionPassword" placeholder="Enter your password" autocomplete="current-password" />
+              <small id="accountActionPasswordError" class="field-error"></small>
+            </div>
+          `
+              : ''
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="accountActionCancel">Cancel</button>
+          <button type="button" class="btn btn-danger" id="accountActionConfirm"></button>
+        </div>
+      </div>
+    `;
+    modal.querySelector('.modal-header h3').textContent = title;
+    modal.querySelector('.modal-body p').textContent = message;
+    modal.querySelector('#accountActionConfirm').textContent = confirmText;
+
+    document.body.appendChild(modal);
+
+    const closeBtn = modal.querySelector('.modal-close');
+    const cancelBtn = modal.querySelector('#accountActionCancel');
+    const confirmBtn = modal.querySelector('#accountActionConfirm');
+    const passwordInput = modal.querySelector('#accountActionPassword');
+    const passwordError = modal.querySelector('#accountActionPasswordError');
+
+    function settle(result) {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKeydown);
+      modal.classList.remove('active');
+      modal.remove();
+      resolve(result);
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') settle({ confirmed: false, password: null });
+    }
+
+    document.addEventListener('keydown', onKeydown);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) settle({ confirmed: false, password: null });
+    });
+    closeBtn.addEventListener('click', () => settle({ confirmed: false, password: null }));
+    cancelBtn.addEventListener('click', () => settle({ confirmed: false, password: null }));
+
+    confirmBtn.addEventListener('click', () => {
+      if (requirePassword) {
+        const password = passwordInput.value;
+        if (!password) {
+          passwordError.textContent = 'Password is required.';
+          passwordInput.focus();
+          return;
+        }
+        settle({ confirmed: true, password });
+        return;
+      }
+      settle({ confirmed: true, password: null });
+    });
+
+    setTimeout(() => (passwordInput || confirmBtn).focus(), 50);
+  });
+}
+
+function showDeactivateAccountModal() {
+  return new Promise((resolve) => {
+    let settled = false;
+    const isGuest =
+      window.algoAuth?.user?.id && String(window.algoAuth.user.id).startsWith('guest-');
+
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `
+      <div class="modal-content deactivate-modal-content">
+        <button type="button" class="modal-close" id="deactivateModalClose" aria-label="Close">
+          &times;
+        </button>
+        <div class="deactivate-icon">
+          <div class="deactivate-icon-ring">
+            <i class="fas ${isGuest ? 'fa-lock' : 'fa-triangle-exclamation'} deactivate-icon-symbol"></i>
+          </div>
+        </div>
+        <h2 class="deactivate-title">Deactivate Account</h2>
+        <p class="deactivate-subtitle">
+          ${isGuest
+            ? 'Guest accounts cannot be deactivated.'
+            : 'Are you sure you want to deactivate your account?'}
+        </p>
+        <div class="deactivate-info-box">
+          <p class="deactivate-info-text">
+            ${isGuest
+              ? 'Sign in to manage your account settings and access all features.'
+              : 'Your profile, progress, and data will be hidden. You can reactivate at any time by logging back in.'}
+          </p>
+        </div>
+        <div class="deactivate-actions">
+          <div class="deactivate-actions__main">
+            <button type="button" class="deactivate-btn deactivate-btn--outline" id="deactivateCancel">Cancel</button>
+            <button type="button" class="deactivate-btn deactivate-btn--danger" id="deactivateConfirm" ${isGuest ? 'disabled' : ''}>
+              <i class="fas fa-user-slash"></i> Deactivate
+            </button>
+          </div>
+        </div>
+        <p class="deactivate-dismiss">
+          <button type="button" class="deactivate-dismiss-btn" id="deactivateDismiss">Maybe later</button>
+        </p>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    function settle(confirmed) {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKeydown);
+      modal.classList.remove('active');
+      modal.remove();
+      resolve({ confirmed });
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') settle(false);
+    }
+
+    document.addEventListener('keydown', onKeydown);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) settle(false);
+    });
+    modal.querySelector('#deactivateModalClose').addEventListener('click', () => settle(false));
+    modal.querySelector('#deactivateCancel').addEventListener('click', () => settle(false));
+    modal.querySelector('#deactivateDismiss').addEventListener('click', () => settle(false));
+    modal.querySelector('#deactivateConfirm').addEventListener('click', () => {
+      if (isGuest) return;
+      settle(true);
+    });
+
+    setTimeout(() => modal.querySelector('#deactivateCancel').focus(), 50);
+  });
+}
+
+let _deactWired = false;
+
 function wireDeactivateAccount() {
+  if (_deactWired) return;
+  _deactWired = true;
+
   const btn = document.getElementById('deactivateAccountBtn');
 
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
-    const { confirmed } = await showAccountActionModal({
-      title: 'Deactivate Account',
-      message:
-        'Are you sure you want to deactivate your account? You can reactivate it by logging in again.',
-      confirmText: 'Deactivate',
-    });
+    const { confirmed } = await showDeactivateAccountModal();
 
     if (!confirmed) return;
 
@@ -688,19 +861,25 @@ function wireDeactivateAccount() {
   });
 }
 
+let _delWired = false;
+
 function wireDeleteAccount() {
+  if (_delWired) return;
+  _delWired = true;
+
   const btn = document.getElementById('deleteAccountBtn');
 
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
-    const { confirmed, password } = await showAccountActionModal({
-      title: 'Delete Account',
-      message:
-        'This will permanently delete your account and all associated data. This action cannot be undone. Enter your password to confirm.',
-      confirmText: 'Delete Account',
-      requirePassword: true,
-    });
+    if (!window.algoAuth?.authenticated) {
+      if (window.authGate) {
+        window.authGate.open('Please log in to delete your account.', 'login');
+      }
+      return;
+    }
+
+    const { confirmed, password } = await showDeleteAccountModal();
 
     if (!confirmed) return;
     if (!password) return;
@@ -739,6 +918,80 @@ function wireDeleteAccount() {
   });
 }
 
+function showDeleteAccountModal() {
+  return new Promise((resolve) => {
+    let settled = false;
+    const modal = document.getElementById('deleteAccountModal');
+
+    if (!modal) {
+      resolve({ confirmed: false, password: null });
+      return;
+    }
+
+    const closeBtn = document.getElementById('deleteAccountModalClose');
+    const cancelBtn = document.getElementById('deleteAccountCancel');
+    const confirmBtn = document.getElementById('deleteAccountConfirm');
+    const passwordInput = document.getElementById('deleteAccountPassword');
+    const passwordError = document.getElementById('deleteAccountPasswordError');
+    const passwordToggle = modal.querySelector('.password-toggle');
+
+    passwordInput.value = '';
+    passwordError.textContent = '';
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Delete Account';
+
+    function onToggle() {
+      passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+      passwordToggle.innerHTML =
+        passwordInput.type === 'password'
+          ? '<i class="fas fa-eye"></i>'
+          : '<i class="fas fa-eye-slash"></i>';
+    }
+
+    passwordToggle.addEventListener('click', onToggle);
+
+    function settle(result) {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKeydown);
+      modal.removeEventListener('click', onOverlayClick);
+      passwordToggle.removeEventListener('click', onToggle);
+      modal.classList.remove('active');
+      resolve(result);
+    }
+
+    function onOverlayClick(e) {
+      if (e.target === modal) settle({ confirmed: false, password: null });
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') settle({ confirmed: false, password: null });
+    }
+
+    document.addEventListener('keydown', onKeydown);
+
+    modal.addEventListener('click', onOverlayClick);
+
+    closeBtn.addEventListener('click', () => settle({ confirmed: false, password: null }));
+    cancelBtn.addEventListener('click', () => settle({ confirmed: false, password: null }));
+
+    confirmBtn.addEventListener('click', () => {
+      const password = passwordInput.value;
+
+      if (!password) {
+        passwordError.textContent = 'Password is required.';
+        passwordInput.focus();
+        return;
+      }
+
+      settle({ confirmed: true, password });
+    });
+
+    modal.classList.add('active');
+    setTimeout(() => passwordInput.focus(), 100);
+  });
+}
+
 function passwordStrength(password) {
   let score = 0;
 
@@ -751,123 +1004,284 @@ function passwordStrength(password) {
   return score;
 }
 
+let _cpwWired = false;
+
 function wireChangePassword() {
-  document.querySelectorAll('.password-toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const input = document.getElementById(btn.dataset.target);
+  // Guard: already fully wired (prevents duplicate listeners from partialsLoaded retry)
+  if (_cpwWired) return;
+  _cpwWired = true;
 
-      input.type = input.type === 'password' ? 'text' : 'password';
-
-      btn.innerHTML =
-        input.type === 'password'
-          ? '<i class="fas fa-eye"></i>'
-          : '<i class="fas fa-eye-slash"></i>';
-    });
+  // ── Toggle password visibility (delegated — works even when partial loads late) ──
+  document.addEventListener('click', (e) => {
+    const toggle = e.target.closest('.cpw-toggle, .password-toggle');
+    if (!toggle) return;
+    const input = document.getElementById(toggle.dataset.target);
+    if (!input) return;
+    const wasPassword = input.type === 'password';
+    input.type = wasPassword ? 'text' : 'password';
+    toggle.innerHTML = wasPassword
+      ? '<i class="fas fa-eye-slash"></i>'
+      : '<i class="fas fa-eye"></i>';
+    if (toggle.classList.contains('password-toggle')) {
+      toggle.setAttribute('aria-pressed', String(wasPassword));
+      toggle.setAttribute('aria-label', wasPassword ? 'Hide password' : 'Show password');
+    }
   });
-  const passwordInput = document.getElementById('newPassword');
 
-  const strengthBar = document.getElementById('passwordStrengthBar');
-
-  const strengthText = document.getElementById('passwordStrengthText');
-
-  if (passwordInput && strengthBar && strengthText) {
-    passwordInput.addEventListener('input', () => {
-      const score = passwordStrength(passwordInput.value);
-
-      strengthBar.style.width = `${score * 20}%`;
-
-      const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Excellent'];
-
-      strengthText.textContent = labels[score];
-
-      if (score <= 1) {
-        strengthBar.style.background = '#ef4444';
-      } else if (score <= 3) {
-        strengthBar.style.background = '#f59e0b';
-      } else {
-        strengthBar.style.background = '#22c55e';
-      }
-    });
-  }
-  const confirmPassword = document.getElementById('confirmNewPassword');
-
-  if (confirmPassword) {
-    confirmPassword.addEventListener('input', () => {
-      const error = document.getElementById('confirmPasswordError');
-
-      if (confirmPassword.value && confirmPassword.value !== passwordInput.value) {
-        error.textContent = 'Passwords do not match';
-      } else {
-        error.textContent = '';
-      }
-    });
-  }
+  // ── DOM refs ──
   const modal = document.getElementById('changePasswordModal');
-
   const openBtn = document.getElementById('changePasswordBtn');
-
   if (!modal || !openBtn) return;
 
   const closeBtn = document.getElementById('changePasswordClose');
-
   const cancelBtn = document.getElementById('cancelPasswordChange');
-
   const saveBtn = document.getElementById('savePasswordBtn');
-
   const message = document.getElementById('changePasswordMessage');
+  const formBody = document.getElementById('cpwFormBody');
+  const guestNotice = document.getElementById('cpwGuestNotice');
+  const currentPasswordInput = document.getElementById('currentPassword');
+  const newPasswordInput = document.getElementById('newPassword');
+  const confirmPasswordInput = document.getElementById('confirmNewPassword');
+  const strengthBar = document.getElementById('passwordStrengthBar');
+  const strengthText = document.getElementById('passwordStrengthText');
+  const confirmError = document.getElementById('confirmPasswordError');
 
-  function closeModal() {
-    modal.classList.remove('active');
+  // ── Password strengths labels and colors ──
+  const STRENGTH_LABELS = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Excellent'];
+  const STRENGTH_COLORS = [
+    '#ef4444', '#ef4444', '#f97316', '#facc15', '#22c55e', '#22c55e',
+  ];
+
+  // ── Helper: show/hide guest notice ──
+  function isAuthenticatedUser() {
+    // Use the <html> class set by auth.js as primary indicator,
+    // fall back to window.algoAuth for in-memory guest upgrades.
+    return document.documentElement.classList.contains('auth-verified') ||
+           !!(window.algoAuth && window.algoAuth.authenticated);
   }
 
+  function updateGuestState() {
+    const isAuth = isAuthenticatedUser();
+    if (guestNotice) guestNotice.hidden = isAuth;
+    if (formBody) formBody.hidden = !isAuth;
+    if (saveBtn) saveBtn.disabled = !isAuth;
+    if (message) {
+      message.hidden = true;
+      message.className = 'cpw-message';
+      message.textContent = '';
+    }
+  }
+
+  // ── Close modal with scroll restoration ──
+  function closeModal() {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    // Safety net: restore scroll only when no other modal is active
+    if (!document.querySelector('.modal.active')) {
+      document.body.classList.remove('modal-open');
+      document.documentElement.style.removeProperty('--scrollbar-width');
+    }
+  }
+
+  // ── Open modal ──
   openBtn.addEventListener('click', () => {
     modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    resetForm();
+    // Must run after resetForm() so guest state (diasbled button) wins
+    updateGuestState();
+    // Focus first field when not guest
+    if (currentPasswordInput && !guestNotice?.hidden) {
+      setTimeout(() => currentPasswordInput.focus(), 100);
+    }
   });
 
+  // ── Close handlers ──
   closeBtn?.addEventListener('click', closeModal);
-
   cancelBtn?.addEventListener('click', closeModal);
 
+  // Close on overlay click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // ── Reset form fields ──
+  function resetForm() {
+    [currentPasswordInput, newPasswordInput, confirmPasswordInput].forEach((el) => {
+      if (el) {
+        el.value = '';
+        el.classList.remove('input-error');
+      }
+    });
+    if (strengthBar) {
+      strengthBar.style.width = '0%';
+      strengthBar.style.background = '#ef4444';
+    }
+    if (strengthText) strengthText.textContent = 'Password strength';
+    if (confirmError) confirmError.textContent = '';
+    if (message) {
+      message.hidden = true;
+      message.className = 'cpw-message';
+      message.textContent = '';
+    }
+    // Reset rules (scoped to this modal)
+    modal.querySelectorAll('.cpw-rule').forEach((r) => {
+      r.classList.remove('valid', 'invalid');
+      const icon = r.querySelector('.cpw-rule-icon i');
+      if (icon) icon.className = 'fas fa-circle';
+    });
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fas fa-key"></i><span>Change Password</span>';
+    }
+  }
+
+  // ── Live password strength & rules ──
+  if (newPasswordInput && strengthBar && strengthText) {
+    newPasswordInput.addEventListener('input', () => {
+      const val = newPasswordInput.value;
+      const score = passwordStrength(val);
+
+      strengthBar.style.width = `${score * 20}%`;
+      strengthBar.style.background = STRENGTH_COLORS[score] || '#ef4444';
+      strengthText.textContent = STRENGTH_LABELS[score] || 'Very Weak';
+
+      // Update rule icons
+      updateRule('ruleLength', val.length >= 8);
+      updateRule('ruleUpper', /[A-Z]/.test(val));
+      updateRule('ruleLower', /[a-z]/.test(val));
+      updateRule('ruleNumber', /\d/.test(val));
+      updateRule('ruleSpecial', /[^A-Za-z0-9]/.test(val));
+
+      // Re-check confirm match
+      if (confirmPasswordInput && confirmPasswordInput.value) {
+        checkConfirmMatch();
+      }
+    });
+  }
+
+  function updateRule(id, isValid) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('valid', 'invalid');
+    el.classList.add(isValid ? 'valid' : 'invalid');
+    const icon = el.querySelector('.cpw-rule-icon i');
+    if (icon) {
+      icon.className = isValid ? 'fas fa-check-circle' : 'fas fa-circle';
+    }
+  }
+
+  // ── Confirm password matching ──
+  function checkConfirmMatch() {
+    if (!confirmPasswordInput || !newPasswordInput || !confirmError) return;
+    if (confirmPasswordInput.value && confirmPasswordInput.value !== newPasswordInput.value) {
+      confirmError.textContent = 'Passwords do not match';
+      confirmPasswordInput.classList.add('input-error');
+    } else {
+      confirmError.textContent = '';
+      confirmPasswordInput.classList.remove('input-error');
+    }
+  }
+
+  if (confirmPasswordInput) {
+    confirmPasswordInput.addEventListener('input', checkConfirmMatch);
+  }
+
+  // ── Save / submit ──
   saveBtn?.addEventListener('click', async () => {
-    const currentPassword = document.getElementById('currentPassword').value;
+    const currentPassword = currentPasswordInput?.value || '';
+    const newPassword = newPasswordInput?.value || '';
+    const confirmPassword = confirmPasswordInput?.value || '';
 
-    const newPassword = document.getElementById('newPassword').value;
+    // ── Client-side validation ──
+    if (!currentPassword) {
+      showMessage('Please enter your current password.', 'error');
+      currentPasswordInput?.focus();
+      return;
+    }
+    if (!newPassword) {
+      showMessage('Please enter a new password.', 'error');
+      newPasswordInput?.focus();
+      return;
+    }
+    if (passwordStrength(newPassword) < 3) {
+      showMessage('Password is too weak. Aim for at least "Good" strength.', 'error');
+      newPasswordInput?.focus();
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showMessage('New passwords do not match.', 'error');
+      confirmPasswordInput?.focus();
+      return;
+    }
 
-    const confirmPassword = document.getElementById('confirmNewPassword').value;
-
-    message.textContent = '';
+    // ── Loading state ──
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="cpw-btn-spinner"></span><span>Saving...</span>';
+    showMessage('Changing password...', 'info');
 
     try {
+      // ── Fetch CSRF token ──
+      let csrfToken = null;
+      if (location.protocol !== 'file:') {
+        try {
+          const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+          if (csrfRes.ok) {
+            const csrfData = await csrfRes.json();
+            csrfToken = csrfData.csrfToken;
+          }
+        } catch (e) {
+          // Non-critical; proceed without CSRF
+        }
+      }
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (csrfToken) headers['x-csrf-token'] = csrfToken;
+
       const response = await fetch('/api/change-password', {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-          confirmPassword,
-        }),
+        headers,
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error);
+        throw new Error(data.error || 'Failed to change password.');
       }
 
-      message.className = 'password-message success';
+      showMessage('Password changed successfully. Redirecting to login...', 'success');
 
-      message.textContent = 'Password changed successfully. Redirecting...';
+      // Reset button state
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-check"></i><span>Done</span>';
 
       setTimeout(() => {
         window.location.href = '/login';
       }, 1500);
     } catch (error) {
-      message.className = 'password-message error';
-
-      message.textContent = error.message;
+      showMessage(error.message || 'Something went wrong. Please try again.', 'error');
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fas fa-key"></i><span>Change Password</span>';
     }
   });
+
+  // ── Helper: show message ──
+  function showMessage(text, type) {
+    if (!message) return;
+    message.hidden = false;
+    message.className = `cpw-message ${type}`;
+    message.textContent = text;
+  }
+
+  // ── Escape key handler ──
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeModal();
+    }
+  });
+
+  // ── Initial guest check ──
+  updateGuestState();
 }

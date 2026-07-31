@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join Optimizer Visualizer | Algo Infinity Verse</title>
+  <meta name="description" content="Explore database join order optimization, visualizing how a query planner estimates costs across join strategies." />
+  <link rel="stylesheet" href="join-optimizer.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+</head>
+<body>
+
+  <div class="starfield"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <i class="fa-solid fa-infinity"></i>
+      <div class="brand-text">
+        <span class="brand-name">Algo</span>
+        <span class="brand-sub">INFINITY VERSE</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="lang-badge"><i class="fa-solid fa-diagram-project"></i> Join Optimizer</span>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+    </div>
+  </header>
+
+  <main class="page-shell">
+
+    <section class="hero">
+      <h1>Cost-Based Join Optimizer Visualizer</h1>
+      <p>Configure two tables, parse a JOIN query into an execution plan, and see exactly why the optimizer
+         picks a Nested Loop, Hash Join, or Sort-Merge Join — with the disk I/O math and the memory
+         mechanics animated step by step.</p>
+    </section>
+
+    <section class="panel query-panel">
+      <div class="panel-header">
+        <i class="fa-solid fa-terminal"></i>
+        <h2>1. Query</h2>
+      </div>
+      <div class="query-row">
+        <input type="text" id="queryInput" class="query-input" spellcheck="false"
+          value="SELECT a.id, b.total FROM orders a JOIN payments b ON a.id = b.order_id WHERE b.total > 100" />
+        <button class="btn btn-ghost" id="parseBtn"><i class="fa-solid fa-diagram-project"></i> Parse to Plan</button>
+      </div>
+      <div id="parseError" class="parse-error" hidden></div>
+      <div id="astTree" class="ast-tree"></div>
+    </section>
+
+    <section class="panel config-panel">
+      <div class="panel-header">
+        <i class="fa-solid fa-table"></i>
+        <h2>2. Table &amp; Environment Config</h2>
+      </div>
+
+      <div class="config-grid">
+        <div class="table-config" id="configA">
+          <h3><i class="fa-solid fa-table-cells"></i> Table A (outer / build candidate)</h3>
+          <label>Name
+            <input type="text" id="nameA" value="orders" />
+          </label>
+          <label>Row count
+            <input type="number" id="rowsA" value="20000" min="1" />
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="indexedA" />
+            Index on join column
+          </label>
+        </div>
+
+        <div class="table-config" id="configB">
+          <h3><i class="fa-solid fa-table-cells"></i> Table B (inner / probe candidate)</h3>
+          <label>Name
+            <input type="text" id="nameB" value="payments" />
+          </label>
+          <label>Row count
+            <input type="number" id="rowsB" value="500000" min="1" />
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="indexedB" />
+            Index on join column
+          </label>
+        </div>
+
+        <div class="table-config env-config">
+          <h3><i class="fa-solid fa-microchip"></i> Environment</h3>
+          <label>Rows per disk page
+            <input type="number" id="rowsPerPage" value="100" min="1" />
+          </label>
+          <label>Available buffer memory (pages)
+            <input type="number" id="memoryPages" value="500" min="1" />
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="analyzeBtn">
+        <i class="fa-solid fa-calculator"></i> Analyze &amp; Compare Plans
+      </button>
+    </section>
+
+    <section class="panel dashboard-panel" id="dashboardPanel" hidden>
+      <div class="panel-header">
+        <i class="fa-solid fa-chart-column"></i>
+        <h2>3. Execution Dashboard</h2>
+      </div>
+      <div class="savings-banner" id="savingsBanner"></div>
+      <div class="cost-cards" id="costCards"></div>
+    </section>
+
+    <section class="panel animation-panel" id="animationPanel" hidden>
+      <div class="panel-header">
+        <i class="fa-solid fa-play"></i>
+        <h2>4. Memory Mechanics Animation</h2>
+      </div>
+
+      <div class="animation-controls">
+        <div class="algo-tabs" id="algoTabs"></div>
+        <div class="playback-controls">
+          <button class="btn btn-ghost" id="playBtn"><i class="fa-solid fa-play"></i> Play</button>
+          <button class="btn btn-ghost" id="resetBtn"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+        </div>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="stage-row" id="stageRowA">
+          <span class="stage-row-label" id="stageLabelA">Table A</span>
+          <div class="chip-strip" id="chipStripA"></div>
+        </div>
+
+        <div class="bucket-area" id="bucketArea" hidden></div>
+
+        <div class="stage-row" id="stageRowB">
+          <span class="stage-row-label" id="stageLabelB">Table B</span>
+          <div class="chip-strip" id="chipStripB"></div>
+        </div>
+
+        <div class="stage-status">
+          <span id="stageStatus">Choose an algorithm and press Play.</span>
+          <span class="stage-counter">Comparisons: <strong id="comparisonCounter">0</strong></span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="editor-footer">
+    <span>Join Optimizer Visualizer · costs are computed with simplified textbook I/O formulas for teaching purposes</span>
+  </footer>
+
+  <script src="join-optimizer.js"></script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+</body>
+</html>

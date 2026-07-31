@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loop Invariant Lab | Algo Infinity Verse</title>
+  <meta name="description" content="Write a loop invariant and step through classic algorithms to see when it holds or breaks." />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="loop-invariant-lab.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        if (t === 'light') document.documentElement.classList.add('light-mode');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="lil-body" data-page="loop-invariant-lab">
+  <a href="#lil-main" class="lil-skip">Skip to main content</a>
+  <div id="navbar-placeholder"></div>
+
+  <header class="lil-hero">
+    <div class="lil-badge"><i class="fas fa-infinity" aria-hidden="true"></i> Invariant Lab</div>
+    <h1>Loop <span>Invariant</span> Checker</h1>
+    <p>Pick an algorithm, write an invariant in plain English (plus optional formal checks), then step through execution and see when it holds or breaks.</p>
+  </header>
+
+  <main id="lil-main" class="lil-main">
+    <section class="lil-card">
+      <label for="lil-algo">Algorithm template</label>
+      <select id="lil-algo">
+        <option value="binary-search">Binary Search</option>
+        <option value="insertion-sort">Insertion Sort</option>
+        <option value="two-pointers">Two Pointers (pair sum)</option>
+      </select>
+
+      <label for="lil-invariant">Invariant (plain English)</label>
+      <textarea id="lil-invariant" rows="3" placeholder="e.g. Everything left of mid is &lt; target…"></textarea>
+
+      <label for="lil-checks">Optional formal checks (one per line)</label>
+      <textarea id="lil-checks" rows="3" placeholder="0 &lt;= lo&#10;lo &lt;= hi&#10;hi &lt; n"></textarea>
+      <p class="lil-hint">Supported atoms: <code>lo</code>, <code>hi</code>, <code>mid</code>, <code>i</code>, <code>j</code>, <code>n</code>, <code>sortedPrefix</code>, <code>target</code> with comparisons <code>&lt;= &lt; &gt;= &gt; ==</code>.</p>
+
+      <div class="lil-actions">
+        <button type="button" id="lil-example" class="lil-btn ghost"><i class="fas fa-lightbulb" aria-hidden="true"></i> Load example</button>
+        <button type="button" id="lil-reset" class="lil-btn ghost"><i class="fas fa-undo" aria-hidden="true"></i> Reset</button>
+        <button type="button" id="lil-step" class="lil-btn"><i class="fas fa-step-forward" aria-hidden="true"></i> Step</button>
+        <button type="button" id="lil-play" class="lil-btn"><i class="fas fa-play" aria-hidden="true"></i> Play</button>
+      </div>
+    </section>
+
+    <section class="lil-card">
+      <h2>State</h2>
+      <div id="lil-array" class="lil-array" aria-live="polite"></div>
+      <pre id="lil-vars" class="lil-vars"></pre>
+      <div id="lil-status" class="lil-status holds" role="status">Ready — press Step.</div>
+      <div id="lil-explain" class="lil-explain"></div>
+    </section>
+  </main>
+
+  <script src="/theme.js"></script>
+  <script src="loop-invariant-lab.js"></script>
+</body>
+</html>

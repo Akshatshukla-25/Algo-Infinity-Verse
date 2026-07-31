@@ -1,5 +1,6 @@
 let currentFilter = 'all';
 let currentSearch = '';
+let currentTopic = 'all';
 let currentNotesProblemId = null;
 let virtualizedGrid = null;
 import { VirtualizedGrid } from './virtualizedGrid.js';
@@ -26,6 +27,7 @@ function initPracticeSection() {
       const state = JSON.parse(savedStateStr);
       if (state.filter) currentFilter = state.filter;
       if (state.search) currentSearch = state.search;
+      if (state.topic) currentTopic = state.topic;
       restoredScrollY = state.scrollY || 0;
     } catch (e) {
       // ignore parsing errors
@@ -50,25 +52,25 @@ function initPracticeSection() {
       currentFilter = btn.dataset.filter;
       renderProblems();
     });
-    // Topic filter buttons
-  let currentTopic = 'all';
-  const topicButtons = document.querySelectorAll(".topic-btn");
-  topicButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      topicButtons.forEach((b) => b.classList.remove("active-topic"));
-      btn.classList.add("active-topic");
-      currentTopic = btn.dataset.topic;
-      renderProblems();
-    });
-  });
-
-  // Override renderProblems to include topic filter
-  const originalRenderProblems = window.renderProblems;
-  window.currentTopic = 'all';
     // Set active state on load if restored
     if (btn.dataset.filter === currentFilter) {
       filterButtons.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
+    }
+  });
+
+  const topicButtons = document.querySelectorAll('.topic-btn');
+  topicButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      topicButtons.forEach((b) => b.classList.remove('active-topic'));
+      btn.classList.add('active-topic');
+      currentTopic = btn.dataset.topic;
+      renderProblems();
+    });
+    // Set active state on load if restored
+    if (btn.dataset.topic === currentTopic) {
+      topicButtons.forEach((b) => b.classList.remove('active-topic'));
+      btn.classList.add('active-topic');
     }
   });
 
@@ -114,22 +116,11 @@ function initPracticeSection() {
     });
   }
   if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      currentSearch = "";
-      clearBtn.classList.remove("visible");
-      // Topic filter buttons
-  const topicButtons = document.querySelectorAll(".topic-btn");
-  topicButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      topicButtons.forEach((b) => b.classList.remove("active-topic"));
-      btn.classList.add("active-topic");
-      currentTopic = btn.dataset.topic;
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      currentSearch = '';
+      clearBtn.classList.remove('visible');
       renderProblems();
-    });
-  });
-
-  renderProblems();
       searchInput.focus();
     });
     if (currentSearch) {
@@ -161,20 +152,19 @@ function initPracticeSection() {
       JSON.stringify({
         filter: currentFilter,
         search: currentSearch,
+        topic: currentTopic,
         scrollY: window.scrollY,
       })
     );
   });
 }
 
-let currentTopic = 'all';
-
-function getFilteredProblems() {
+async function getFilteredProblems() {
   const userProgress = window.userProgress || {};
   const practiceProblems = window.practiceProblems || [];
   let filtered = practiceProblems;
   if (currentSearch && window.dsaSearchEngine) {
-    filtered = window.dsaSearchEngine.search(currentSearch);
+    filtered = await window.dsaSearchEngine.search(currentSearch);
   } else if (currentSearch) {
     const searchLower = currentSearch.toLowerCase();
     filtered = filtered.filter(
@@ -184,21 +174,23 @@ function getFilteredProblems() {
     );
   }
   if (currentFilter !== 'all') {
-    if (currentFilter === 'favorites') filtered = filtered.filter(p => userProgress.favoriteProblems?.includes(p.id));
-    else filtered = filtered.filter(p => p.difficulty === currentFilter);
+    if (currentFilter === 'favorites')
+      filtered = filtered.filter((p) => userProgress.favoriteProblems?.includes(p.id));
+    else filtered = filtered.filter((p) => p.difficulty === currentFilter);
   }
   // Topic filter
   if (currentTopic !== 'all') {
-    filtered = filtered.filter(p =>
-      p.category === currentTopic ||
-      p.tags?.some(tag => tag.toLowerCase().includes(currentTopic.toLowerCase()))
+    filtered = filtered.filter(
+      (p) =>
+        p.category === currentTopic ||
+        p.tags?.some((tag) => tag.toLowerCase().includes(currentTopic.toLowerCase()))
     );
   }
   return filtered;
 }
 
-function renderProblems() {
-  const filtered = getFilteredProblems();
+async function renderProblems() {
+  const filtered = await getFilteredProblems();
   const totalProblems = filtered.length;
 
   const visibleCountEl = document.getElementById('visible-count');
@@ -245,14 +237,15 @@ function renderProblemCardHtml(problem) {
 
   let isRec = false,
     recLabel = '';
+  const problemDifficulty = (problem.difficulty || '').toLowerCase();
   if (cpType === 'brute-force first') {
-    if (problem.difficulty === 'easy' || problem.tags.includes('Arrays')) {
+    if (problemDifficulty === 'easy' || problem.tags.includes('Arrays')) {
       isRec = true;
       recLabel = 'Plan First!';
     }
   } else if (cpType === 'over-optimizer') {
     if (
-      problem.difficulty === 'hard' ||
+      problemDifficulty === 'hard' ||
       problem.tags.includes('Dynamic Programming') ||
       problem.tags.includes('Hash Table')
     ) {
@@ -260,7 +253,7 @@ function renderProblemCardHtml(problem) {
       recLabel = 'Optimize Metrics';
     }
   } else if (cpType === 'slow but accurate') {
-    if (problem.difficulty === 'medium') {
+    if (problemDifficulty === 'medium') {
       isRec = true;
       recLabel = 'Speed Practice';
     }

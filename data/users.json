@@ -1,46 +1,30 @@
 [
   {
-    "id": "0b26ddbc-ad75-4320-9009-87d01cf900a8",
-    "name": "Refresh Tester",
-    "email": "reftest-signup-1783943244125@example.com",
+    "id": "1f936e20-4432-4cef-8fd8-ce107e978192",
+    "name": "Aritro",
+    "email": "aritrobag362@gmail.com",
     "password": {
-      "salt": "3d3ff4be462cb4e40086b383c13b6bae",
-      "hash": "61e2c42c7ad746bdab709c2198b04905e7a042be3e9ddbedf52b539a63c21f77",
+      "salt": "cd29ffc25c4e1a1c246060611100a5a4",
+      "hash": "426c443293b76ae2ded6ce2747e4fbe4e1a1d662f3eccc37c1ba56040dd69e58",
       "iterations": 210000,
       "digest": "sha256"
     },
-    "createdAt": "2026-07-13T11:47:24.913Z",
+    "createdAt": "2026-07-19T11:50:35.458Z",
     "isDeactivated": false,
     "deactivatedAt": null,
     "emailVerified": true,
     "verifyToken": null,
-    "verifyTokenExpiry": null
-  },
-  {
-    "id": "bbe0a818-87c6-470f-9602-3d0dea84588c",
-    "name": "Refresh Roundtrip",
-    "email": "reftest-roundtrip-1783943244963@example.com",
-    "password": {
-      "salt": "83b1c7101877ad9c597218e6906de59c",
-      "hash": "83c1cf8c0adfe6a1ec75ace4f460aeb1bc8242ff8bae25bec025a8bda49953cf",
-      "iterations": 210000,
-      "digest": "sha256"
+    "verifyTokenExpiry": null,
+    "xp": 988519,
+    "level": 8,
+    "avatar": {
+      "initial": "A",
+      "bg": "#7c3aed"
     },
-    "createdAt": "2026-07-13T11:47:25.332Z",
-    "isDeactivated": false,
-    "deactivatedAt": null,
-    "emailVerified": true,
-    "verifyToken": null,
-    "verifyTokenExpiry": null
-  },
-  {
-    "id": "user-supabase-1",
-    "name": "Real User",
-    "email": "real@example.com",
-    "avatar": "https://example.com/avatar.png",
-    "supabaseId": "user-supabase-1",
-    "authProvider": "google",
-    "createdAt": "2026-07-13T11:47:30.558Z",
-    "lastLogin": "2026-07-13T11:47:30.558Z"
+    "activityData": {
+      "2026-07-19": 3,
+      "2026-07-29": 24,
+      "2026-07-30": 46
+    }
   }
 ]

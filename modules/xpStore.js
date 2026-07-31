@@ -409,9 +409,33 @@ function bindStoreEvents() {
       if (!btn) return;
       const itemKey = btn.dataset.item;
       const price = parseInt(btn.dataset.price, 10);
-      handlePurchase(itemKey, price, btn);
+      showConfirmDialog(itemKey, price, btn);
     };
     body.addEventListener('click', body._buyHandler);
+  }
+
+  const confirmBuy = document.getElementById('xpConfirmBuy');
+  const confirmCancel = document.getElementById('xpConfirmCancel');
+  const confirmOverlay = document.getElementById('xpConfirmOverlay');
+  if (confirmBuy) {
+    confirmBuy.addEventListener('click', () => {
+      document.getElementById('xpConfirmOverlay').classList.remove('active');
+      executePendingPurchase();
+    });
+  }
+  if (confirmCancel) {
+    confirmCancel.addEventListener('click', () => {
+      document.getElementById('xpConfirmOverlay').classList.remove('active');
+      _pendingPurchase = null;
+    });
+  }
+  if (confirmOverlay) {
+    confirmOverlay.addEventListener('click', (e) => {
+      if (e.target === confirmOverlay) {
+        confirmOverlay.classList.remove('active');
+        _pendingPurchase = null;
+      }
+    });
   }
 }
 
@@ -420,6 +444,9 @@ function closeStoreModal() {
   if (modal) {
     modal.classList.remove('active');
   }
+  const confirmOverlay = document.getElementById('xpConfirmOverlay');
+  if (confirmOverlay) confirmOverlay.classList.remove('active');
+  _pendingPurchase = null;
 }
 
 function renderStoreUI() {
@@ -465,7 +492,24 @@ function renderStoreUI() {
   });
 }
 
-function handlePurchase(itemKey, price, btnElement) {
+let _pendingPurchase = null;
+
+function showConfirmDialog(itemKey, price, btnElement) {
+  const item = STORE_ITEMS[itemKey];
+  if (!item) return;
+
+  document.getElementById('xpConfirmItem').textContent = item.name;
+  document.getElementById('xpConfirmPrice').textContent = price.toLocaleString();
+  document.getElementById('xpConfirmOverlay').classList.add('active');
+
+  _pendingPurchase = { itemKey, price, btnElement };
+}
+
+function executePendingPurchase() {
+  if (!_pendingPurchase) return;
+  const { itemKey, price, btnElement } = _pendingPurchase;
+  _pendingPurchase = null;
+
   const userProgress = window.userProgress || {};
   const result = purchaseItem(userProgress, itemKey);
 

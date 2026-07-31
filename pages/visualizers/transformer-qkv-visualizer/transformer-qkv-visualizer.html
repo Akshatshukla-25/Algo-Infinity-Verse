@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transformer QKV Attention Visualizer | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Interactive visualizer for the Query, Key, and Value (QKV) dot-product attention mechanism in Transformers."
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="/modules/lazyVisualizer.js"></script>
+
+    <link rel="stylesheet" href="transformer-qkv-visualizer.css" />
+    <script src="/theme.js"></script>
+    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+  </head>
+  <body class="qkv-body">
+    <nav class="navbar qkv-nav">
+      <div class="nav-logo">
+        <span class="logo-text">∞</span>
+        <span class="logo-title">Algo Infinity Verse</span>
+      </div>
+      <div class="engine-badge" id="engineBadge">
+        <i class="fas fa-network-wired"></i> QKV Visualizer
+      </div>
+    </nav>
+
+    <main class="qkv-workspace">
+      <!-- Left Panel: Controls -->
+      <div class="panel-left">
+        <div class="panel-header">
+          <h3><i class="fas fa-sliders-h"></i> Attention Parameters</h3>
+        </div>
+
+        <div class="control-section">
+          <p class="desc-text">
+            Input a sentence to visualize the Self-Attention mechanism. Watch how tokens attend to
+            each other via the Query (Q), Key (K), and Value (V) matrices.
+          </p>
+
+          <div class="input-group mt-3">
+            <label>Input Sentence</label>
+            <input
+              type="text"
+              id="promptInput"
+              value="The quick brown fox jumps over the lazy dog"
+            />
+          </div>
+
+          <div class="action-row">
+            <button type="button" class="btn btn-primary w-100" id="btnGenerate">
+              <i class="fas fa-play"></i> Compute Attention
+            </button>
+          </div>
+        </div>
+
+        <div class="telemetry-section">
+          <h4><i class="fas fa-info-circle"></i> Mathematical Formulation</h4>
+          <p
+            class="desc-text"
+            style="font-size: 0.85rem; margin-top: 0.5rem; font-family: 'Fira Code', monospace"
+          >
+            Attention(Q, K, V) = softmax(QK<sup>T</sup> / &radic;d<sub>k</sub>)V
+          </p>
+          <ul class="qkv-list">
+            <li>
+              <span class="highlight query">Query (Q):</span> What the current token is looking for.
+            </li>
+            <li><span class="highlight key">Key (K):</span> What other tokens offer.</li>
+            <li>
+              <span class="highlight value">Value (V):</span> The actual information passed forward.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right Panel: Matrix Visualization -->
+      <div class="panel-right">
+        <div class="canvas-header">
+          <span><i class="fas fa-th"></i> Attention Heatmap Matrix</span>
+          <div class="legend">
+            <span class="legend-item"
+              ><span class="node-swatch low-attention"></span> Low (0.0)</span
+            >
+            <span class="legend-item"
+              ><span class="node-swatch high-attention"></span> High (1.0)</span
+            >
+          </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <div id="d3Container"></div>
+          <div class="empty-state" id="emptyState">
+            <i class="fas fa-project-diagram"></i>
+            <p>Click "Compute Attention" to generate the heatmap.</p>
+          </div>
+        </div>
+
+        <!-- Tooltip for attention values -->
+        <div id="tooltip" class="qkv-tooltip hidden"></div>
+      </div>
+    </main>
+
+    <script src="transformer-qkv-visualizer.js"></script>
+    <script src="/modules/quick-notes/quick-notes.js"></script>
+  </body>
+</html>

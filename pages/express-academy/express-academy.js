@@ -1,142 +1,4 @@
-// --- Curriculum Data ---
-const curriculum = [
-  {
-    id: 'express-basics',
-    title: 'Express Basics & Routing',
-    lessons: [
-      {
-        id: 'eb-1',
-        title: 'Hello Express',
-        content: `
-                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Fast, unopinionated, minimalist web framework</h3>
-                    <p class="mb-4 text-gray-700 leading-relaxed">Express is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications.</p>
-                    <p class="mb-4 text-gray-700 leading-relaxed">Routing refers to determining how an application responds to a client request to a particular endpoint, which is a URI (or path) and a specific HTTP request method (GET, POST, and so on).</p>
-                    <div class="bg-blue-50 border-l-4 border-blue-600 p-4 my-6 rounded-r-lg">
-                        <p class="text-blue-800 font-medium">Head over to the API Simulator tab, start the server, and send a GET request to <code>/</code> or <code>/api/users</code>!</p>
-                    </div>
-                `,
-        defaultCode: `const express = require('express');
-const app = express();
-const port = 3000;
-
-// Basic GET route
-app.get('/', (req, res) => {
-  console.log("Received GET request at /");
-  res.send('Hello World!');
-});
-
-// JSON API route
-app.get('/api/users', (req, res) => {
-  console.log("Fetching users from database...");
-  res.json([
-    { id: 1, name: 'Alice' },
-    { id: 2, name: 'Bob' }
-  ]);
-});
-
-app.listen(port, () => {
-  console.log(\`Example app listening on port \${port}\`);
-});`,
-      },
-    ],
-    quiz: [
-      {
-        id: 'q-eb-1',
-        question:
-          'Which Express application method is used to route HTTP GET requests to a specified path with a callback function?',
-        options: ['app.post()', 'app.request()', 'app.get()', 'app.route()'],
-        correct: 2,
-      },
-    ],
-  },
-  {
-    id: 'middleware',
-    title: 'Middleware Magic',
-    lessons: [
-      {
-        id: 'mw-1',
-        title: 'Understanding Middleware',
-        content: `
-                    <h3 class="text-2xl font-bold mb-4 text-gray-900">The Middleware Chain</h3>
-                    <p class="mb-4 text-gray-700 leading-relaxed">Middleware functions are functions that have access to the request object (req), the response object (res), and the next middleware function in the application's request-response cycle.</p>
-                    <p class="mb-4 text-gray-700 leading-relaxed">They can execute any code, make changes to the request and the response objects, end the request-response cycle, or call the next middleware function in the stack using <code>next()</code>.</p>
-                `,
-        defaultCode: `const express = require('express');
-const app = express();
-
-// Custom Logger Middleware
-const loggerMiddleware = (req, res, next) => {
-  console.log(\`[LOG]: \${req.method} request to \${req.url}\`);
-  next(); // Pass control to the next handler
-};
-
-// Register middleware globally
-app.use(loggerMiddleware);
-
-app.get('/secret', (req, res) => {
-  res.send('You found the secret page!');
-});
-
-app.listen(3000, () => console.log('Server started'));`,
-      },
-    ],
-    quiz: [
-      {
-        id: 'q-mw-1',
-        question:
-          'If a middleware function does not end the request-response cycle, what MUST it call to pass control to the next middleware function?',
-        options: ['continue()', 'res.send()', 'next()', 'return'],
-        correct: 2,
-      },
-    ],
-  },
-  {
-    id: 'rest-crud',
-    title: 'Building REST APIs (CRUD)',
-    lessons: [
-      {
-        id: 'crud-1',
-        title: 'Handling POST Requests',
-        content: `
-                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Creating Resources</h3>
-                    <p class="mb-4 text-gray-700 leading-relaxed">To handle POST requests (Create), you typically need to parse the incoming request body. Express provides built-in middleware for this: <code>express.json()</code>.</p>
-                    <p class="mb-4 text-gray-700 leading-relaxed">Once parsed, the body data is available on the <code>req.body</code> property.</p>
-                `,
-        defaultCode: `const express = require('express');
-const app = express();
-
-// Middleware to parse JSON bodies
-app.use(express.json());
-
-let items = [];
-
-app.post('/api/items', (req, res) => {
-  console.log("Received new item:", req.body);
-  
-  if (!req.body.name) {
-    return res.status(400).json({ error: "Name is required" });
-  }
-
-  const newItem = { id: items.length + 1, name: req.body.name };
-  items.push(newItem);
-  
-  res.status(201).json(newItem);
-});
-
-app.listen(3000, () => console.log('API Server running'));`,
-      },
-    ],
-    quiz: [
-      {
-        id: 'q-crud-1',
-        question:
-          'Which built-in middleware parses incoming requests with JSON payloads and makes them available on req.body?',
-        options: ['express.text()', 'express.json()', 'app.parseJSON()', 'express.urlencoded()'],
-        correct: 1,
-      },
-    ],
-  },
-];
+// ─── Curriculum data is loaded from express-academy-data.js ───
 
 // --- State & Progress ---
 let state = {
@@ -389,14 +251,50 @@ function renderActiveState() {
 function renderLesson(lesson) {
   const isCompleted = state.completedItems.includes(lesson.id);
 
+  // Build objectives HTML
+  const objectivesHtml = lesson.objectives && lesson.objectives.length
+    ? `
+      <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 my-6 rounded-r-lg">
+        <h4 class="font-semibold text-indigo-800 mb-2"><i class="fa-solid fa-bullseye mr-2"></i>Learning Objectives</h4>
+        <ul class="list-disc pl-5 text-indigo-700 space-y-1 text-sm">
+          ${lesson.objectives.map(o => `<li>${o}</li>`).join('')}
+        </ul>
+      </div>`
+    : '';
+
+  // Build takeaways HTML
+  const takeawaysHtml = lesson.takeaways && lesson.takeaways.length
+    ? `
+      <div class="mt-10 p-5 bg-gray-50 border border-gray-200 rounded-xl">
+        <h4 class="font-semibold text-gray-800 mb-3"><i class="fa-solid fa-check-double mr-2 text-green-600"></i>Key Takeaways</h4>
+        <ul class="space-y-2">
+          ${lesson.takeaways.map(t => `
+            <li class="flex items-start gap-2 text-gray-700">
+              <i class="fa-solid fa-circle-check text-green-500 mt-1 text-sm"></i>
+              <span>${t}</span>
+            </li>
+          `).join('')}
+        </ul>
+      </div>`
+    : '';
+
+  // Get ELI5 content
+  const eli5Html = (window.eli5Toggle && window.eli5ExpressData)
+    ? window.eli5ExpressData[lesson.id] || ''
+    : '';
+
   DOM.tabLesson.innerHTML = `
         <div class="max-w-3xl mx-auto animate-fade-in">
             <h2 class="text-3xl font-bold text-gray-900 mb-6">${lesson.title}</h2>
+            ${objectivesHtml}
             <div class="prose max-w-none text-gray-800">
-                ${lesson.content}
+                ${window.eli5Toggle ? window.eli5Toggle.wrapContent(lesson.content, eli5Html) : lesson.content}
             </div>
             
-            <div class="mt-12 pt-6 border-t border-gray-200 flex justify-end">
+            ${takeawaysHtml}
+            
+            <div class="mt-12 pt-6 border-t border-gray-200 flex justify-between items-center">
+                <span class="text-sm text-gray-500"><i class="fa-solid fa-lightbulb mr-1"></i> ${lesson.id}</span>
                 <button id="mark-lesson-complete" class="px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${isCompleted ? 'bg-gray-200 text-gray-800 cursor-default' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'}">
                     ${isCompleted ? '<i class="fa-solid fa-check"></i> Completed' : 'Mark as Complete & Continue'}
                 </button>
@@ -404,7 +302,12 @@ function renderLesson(lesson) {
         </div>
     `;
 
+  /* ELI5 toggle */
+  if (window.eli5Toggle) {
+    window.eli5Toggle.initToggle('express', DOM.tabLesson);
+  }
   const btn = document.getElementById('mark-lesson-complete');
+   copyCode.init(DOM.tabLesson);
   if (!isCompleted) {
     btn.addEventListener('click', () => {
       markItemComplete(lesson.id);
@@ -428,6 +331,7 @@ function renderQuiz(mod) {
         <div class="max-w-3xl mx-auto animate-fade-in pb-12">
             <div class="mb-8 border-b pb-4">
                 <h2 class="text-3xl font-bold text-gray-900">Module Quiz</h2>
+                <p class="text-gray-500 mt-1">${mod.quiz.length} questions — score 100% to pass</p>
                 ${isCompleted ? '<span class="inline-block mt-3 bg-gray-200 text-gray-900 px-3 py-1 rounded-full text-sm font-semibold"><i class="fa-solid fa-check mr-1"></i> Passed</span>' : ''}
             </div>
             <div id="quiz-questions-container" class="space-y-8">
@@ -435,7 +339,7 @@ function renderQuiz(mod) {
 
   mod.quiz.forEach((q, index) => {
     html += `
-            <div class="bg-white border rounded-xl p-6 shadow-sm">
+            <div class="bg-white border rounded-xl p-6 shadow-sm" data-question-id="${q.id}">
                 <h4 class="font-semibold text-lg text-gray-800 mb-4"><span class="text-blue-600 mr-2">${index + 1}.</span>${q.question}</h4>
                 <div class="space-y-3">
         `;
@@ -487,7 +391,7 @@ function renderQuiz(mod) {
     }
 
     if (score === mod.quiz.length) {
-      feedback.innerHTML = '<i class="fa-solid fa-party-horn"></i> Perfect! You passed.';
+      feedback.innerHTML = '<i class="fa-solid fa-check-circle"></i> Perfect! You passed.';
       feedback.classList.add('text-green-600');
       markItemComplete(quizId);
       renderSidebar();
@@ -503,12 +407,12 @@ window.handleQuizSelection = function (questionId, optionIndex) {
   renderQuiz(getActiveModule());
 };
 
-// --- Express API Simulator Engine (CRITICAL) ---
+// --- Express API Simulator Engine ---
 
 let simState = {
   isRunning: false,
-  routes: [], // { method: 'GET', path: '/', handler: fn }
-  middlewares: [], // { handler: fn, path?: '/' }
+  routes: [],
+  middlewares: [],
   originalConsole: {},
 };
 
@@ -544,17 +448,14 @@ function formatOutput(args) {
 
 function toggleServer() {
   if (simState.isRunning) {
-    // STOP SERVER
     simState.isRunning = false;
 
-    // Restore console
     if (simState.originalConsole.log) {
       console.log = simState.originalConsole.log;
       console.error = simState.originalConsole.error;
       console.warn = simState.originalConsole.warn;
     }
 
-    // Update UI
     DOM.runServerBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> Start Server';
     DOM.runServerBtn.className =
       'bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded shadow text-xs font-sans transition-colors font-semibold';
@@ -562,29 +463,27 @@ function toggleServer() {
     DOM.sendRequestBtn.disabled = true;
     printToTerminal('[SYSTEM]: Server stopped.', 'system');
   } else {
-    // START SERVER
     const userCode = DOM.codeEditor.value;
     simState.routes = [];
     simState.middlewares = [];
 
-    // Intercept console
     simState.originalConsole = { log: console.log, error: console.error, warn: console.warn };
     console.log = (...args) => printToTerminal(formatOutput(args), 'output');
     console.error = (...args) => printToTerminal(formatOutput(args), 'error');
     console.warn = (...args) => printToTerminal(formatOutput(args), 'warn');
 
-    // Mock Express App
     const mockApp = {
       get: (path, handler) => simState.routes.push({ method: 'GET', path, handler }),
       post: (path, handler) => simState.routes.push({ method: 'POST', path, handler }),
+      put: (path, handler) => simState.routes.push({ method: 'PUT', path, handler }),
+      patch: (path, handler) => simState.routes.push({ method: 'PATCH', path, handler }),
+      delete: (path, handler) => simState.routes.push({ method: 'DELETE', path, handler }),
       use: (pathOrMiddleware, middlewareObj) => {
-        // Simplified use() for simulator
         if (typeof pathOrMiddleware === 'function') {
           simState.middlewares.push({ handler: pathOrMiddleware, path: '*' });
         } else if (typeof middlewareObj === 'function') {
           simState.middlewares.push({ handler: middlewareObj, path: pathOrMiddleware });
         } else if (pathOrMiddleware && pathOrMiddleware.isParser) {
-          // It's our fake express.json()
           simState.middlewares.push({ handler: pathOrMiddleware, path: '*' });
         }
       },
@@ -593,30 +492,48 @@ function toggleServer() {
       },
     };
 
-    // Mock Express Module
     const mockExpress = function () {
       return mockApp;
     };
     mockExpress.json = () => {
       const parser = (req, res, next) => next();
-      parser.isParser = true; // flag to identify it
+      parser.isParser = true;
       return parser;
+    };
+    mockExpress.urlencoded = () => {
+      const parser = (req, res, next) => next();
+      parser.isParser = true;
+      return parser;
+    };
+    mockExpress.Router = () => ({
+      get: (path, handler) => simState.routes.push({ method: 'GET', path, handler }),
+      post: (path, handler) => simState.routes.push({ method: 'POST', path, handler }),
+      put: (path, handler) => simState.routes.push({ method: 'PUT', path, handler }),
+      patch: (path, handler) => simState.routes.push({ method: 'PATCH', path, handler }),
+      delete: (path, handler) => simState.routes.push({ method: 'DELETE', path, handler }),
+      use: (fn) => {
+        if (typeof fn === 'function') simState.middlewares.push({ handler: fn, path: '*' });
+      },
+    });
+    mockExpress.static = () => {
+      const mw = (req, res, next) => next();
+      return mw;
     };
 
     const mockRequire = function (moduleName) {
       if (moduleName === 'express') return mockExpress;
+      if (moduleName === 'path') return { join: (...args) => args.join('/') };
+      if (moduleName === 'fs') return { readFileSync: () => '' };
       return {};
     };
 
-    // Execute User Code
     try {
-      printToTerminal(`> node app.js`, 'term-prompt');
+      printToTerminal('> node app.js', 'term-prompt');
       const executeNode = new Function('require', 'console', userCode);
       executeNode(mockRequire, console);
 
       simState.isRunning = true;
 
-      // Update UI
       DOM.runServerBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> Stop Server';
       DOM.runServerBtn.className =
         'bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded shadow text-xs font-sans transition-colors font-semibold';
@@ -624,12 +541,37 @@ function toggleServer() {
       DOM.sendRequestBtn.disabled = false;
     } catch (e) {
       console.error('Runtime Exception:', e.message);
-      // Revert on error
       console.log = simState.originalConsole.log;
       console.error = simState.originalConsole.error;
       console.warn = simState.originalConsole.warn;
     }
   }
+}
+
+function findRoute(method, path, routes) {
+  for (const route of routes) {
+    if (route.method !== method) continue;
+
+    const routeParts = route.path.split('/');
+    const urlParts = path.split('/');
+
+    if (routeParts.length !== urlParts.length) continue;
+
+    const params = {};
+    let match = true;
+
+    for (let i = 0; i < routeParts.length; i++) {
+      if (routeParts[i].startsWith(':')) {
+        params[routeParts[i].slice(1)] = urlParts[i];
+      } else if (routeParts[i] !== urlParts[i]) {
+        match = false;
+        break;
+      }
+    }
+
+    if (match) return { handler: route.handler, params };
+  }
+  return null;
 }
 
 function sendMockRequest() {
@@ -645,9 +587,8 @@ function sendMockRequest() {
 
   printToTerminal(`\n[REQ]: Client sending ${method} request to ${path}`, 'req');
 
-  // Parse Body
   let parsedBody = {};
-  if (method === 'POST') {
+  if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
     try {
       parsedBody = JSON.parse(bodyStr);
     } catch (e) {
@@ -658,15 +599,16 @@ function sendMockRequest() {
     }
   }
 
-  // Fake Request Object
   const req = {
     method: method,
     url: path,
     body: parsedBody,
-    params: {}, // Simplified for simulator
+    params: {},
+    query: Object.fromEntries(new URLSearchParams(path.split('?')[1] || '').entries()),
+    headers: { authorization: '', 'content-type': 'application/json' },
+    get: function (name) { return this.headers[name.toLowerCase()]; },
   };
 
-  // Fake Response Object
   let isResponded = false;
   let statusCode = 200;
 
@@ -678,7 +620,7 @@ function sendMockRequest() {
     json: function (data) {
       if (isResponded) return;
       isResponded = true;
-      DOM.responseStatus.innerText = `${statusCode} OK`;
+      DOM.responseStatus.innerText = `${statusCode} ${statusCode >= 400 ? 'Error' : 'OK'}`;
       DOM.responseStatus.className =
         statusCode >= 400
           ? 'text-red-500 font-mono font-bold'
@@ -695,18 +637,16 @@ function sendMockRequest() {
           : 'text-green-500 font-mono font-bold';
       DOM.apiResponse.innerText = String(data);
     },
+    end: function () { isResponded = true; },
   };
 
-  // Execute Middleware Chain
   let middlewareIndex = 0;
 
   function next() {
     if (middlewareIndex < simState.middlewares.length) {
       const mw = simState.middlewares[middlewareIndex++];
-      // Simplistic path matching for middleware
       if (mw.path === '*' || mw.path === req.url) {
         if (mw.handler.isParser) {
-          // built in json parser does nothing in mock since we already parsed body
           next();
         } else {
           try {
@@ -720,11 +660,13 @@ function sendMockRequest() {
         next();
       }
     } else {
-      // After middlewares, find matching route
-      const route = simState.routes.find((r) => r.method === method && r.path === path);
-      if (route) {
+      const cleanPath = path.split('?')[0];
+      const matched = findRoute(method, cleanPath, simState.routes);
+
+      if (matched) {
+        req.params = matched.params;
         try {
-          route.handler(req, res);
+          matched.handler(req, res);
         } catch (e) {
           console.error('Route Handler Error:', e.message);
           if (!isResponded) res.status(500).send('Internal Server Error');
@@ -735,7 +677,6 @@ function sendMockRequest() {
     }
   }
 
-  // Start chain
   next();
 }
 
