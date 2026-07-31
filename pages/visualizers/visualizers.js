@@ -1617,6 +1617,13 @@ const visualizers = [
     desc: 'Interactive BGP Route Propagation & Hijacking Simulator | Algo-Infinity-Verse visualization.',
   },
   {
+    name: 'BGP Route Dampening Sandbox | Algo-Infinity-Verse',
+    path: '/pages/visualizers/bgp-route-dampening-sandbox/bgp-route-dampening-sandbox.html',
+    category: 'Algorithms',
+    icon: 'fa-bolt',
+    desc: 'Interactive BGP Route Dampening Sandbox | Algo-Infinity-Verse visualization.',
+  },
+  {
     name: 'Centroid Decomposition Visualizer · Algo Infinity Verse',
     path: '/pages/visualizers/centroid/centroid.html',
     category: 'Algorithms',
