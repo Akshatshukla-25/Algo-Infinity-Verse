@@ -1,411 +1,550 @@
-/**
- * zkp-visualizer.js
- * Educational Simulation of a Zero-Knowledge Proof constraint system.
- * Converts the circuit f(x, y) = x * y + 2 into Rank-1 Constraint System (R1CS) matrices,
- * generates a witness vector based on a finite prime field, and mathematically verifies it.
- */
-
 document.addEventListener('DOMContentLoaded', () => {
-  initZKPVisualizer();
-  initZKCanvas();
+  initZKP();
 });
 
 // ==========================================
-// 1. ZKP MATHEMATICS & STATE
+// 1. STATE & TABS
 // ==========================================
-const PRIME = 97; // Finite field modulo
+let currentTab = 'colorblind';
+let roundsPassed = 0;
 
-// Modular Arithmetic Helpers
-const mod = (n, p = PRIME) => ((n % p) + p) % p;
-const addMod = (a, b) => mod(a + b);
-const mulMod = (a, b) => mod(a * b);
-
-// R1CS Matrices for the equation: out = x * y + 2
-// Gates:
-// 1. v1 = x * y
-// 2. out = v1 + 2 * 1
-// Witness vector s = [~one, ~out, x, y, v1]
-const A = [
-  [0, 0, 1, 0, 0], // x
-  [2, 0, 0, 0, 1], // 2*1 + v1
-];
-const B = [
-  [0, 0, 0, 1, 0], // y
-  [1, 0, 0, 0, 0], // 1
-];
-const C = [
-  [0, 0, 0, 0, 1], // v1
-  [0, 1, 0, 0, 0], // out
-];
-
-let state = {
-  x: 3,
-  y: 4,
-  out: 0,
-  witness: [], // s
-  isProofGenerated: false,
-  isFiatShamir: false,
-  challenge: null,
-};
-
-// DOM Elements
 const els = {
-  inputX: document.getElementById('inputX'),
-  inputY: document.getElementById('inputY'),
-  proverCalculation: document.getElementById('proverCalculation'),
-
-  btnGenerateWitness: document.getElementById('btnGenerateWitness'),
-  witnessContainer: document.getElementById('witnessContainer'),
-  witnessVector: document.getElementById('witnessVector'),
-  btnGenerateProof: document.getElementById('btnGenerateProof'),
-
-  matrixA: document.getElementById('matrixA'),
-  matrixB: document.getElementById('matrixB'),
-  matrixC: document.getElementById('matrixC'),
-  networkAnim: document.getElementById('networkAnim'),
-
-  verifierOutput: document.getElementById('verifierOutput'),
-  verifierProofStatus: document.getElementById('verifierProofStatus'),
-  btnVerify: document.getElementById('btnVerify'),
-
-  verificationResults: document.getElementById('verificationResults'),
-  checkGate1: document.getElementById('checkGate1'),
-  checkGate2: document.getElementById('checkGate2'),
-  finalVerdict: document.getElementById('finalVerdict'),
-
-  // New UI Hooks
-  fiatShamirToggle: document.getElementById('fiatShamirToggle'),
-  interactiveLabel: document.querySelector('.interactive-label'),
-  fsLabel: document.querySelector('.fs-label'),
-  challengeBox: document.getElementById('challengeBox'),
-  challengeValue: document.getElementById('challengeValue'),
-  verifierHeading: document.getElementById('verifierHeading'),
-  verifierTitle: document.getElementById('verifierTitle'),
-  verifierInstruction: document.getElementById('verifierInstruction'),
-  verifierPanel: document.getElementById('verifierPanel'),
-  animPacket: document.getElementById('animPacket'),
-  packetLabel: document.getElementById('packetLabel'),
+  tabs: document.querySelectorAll('.zkp-tab-btn'),
+  contents: document.querySelectorAll('.zkp-tab-content'),
+  statRounds: document.getElementById('statRounds'),
+  statConfidence: document.getElementById('statConfidence'),
+  statCheatProb: document.getElementById('statCheatProb'),
+  graphCanvas: document.getElementById('confidenceGraph'),
 };
 
 // ==========================================
-// 2. INITIALIZATION & UI BINDING
+// 2. PROBABILITY ENGINE & GRAPH
 // ==========================================
-function initZKPVisualizer() {
-  renderMatrices();
-  updateProverCalculation();
+let graphCtx;
+let dataPoints = [];
 
-  // Bind Inputs
-  els.inputX.addEventListener('input', updateProverCalculation);
-  els.inputY.addEventListener('input', updateProverCalculation);
-
-  // Bind Buttons
-  els.btnGenerateWitness.addEventListener('click', handleGenerateWitness);
-  els.btnGenerateProof.addEventListener('click', handleGenerateProof);
-  els.btnVerify.addEventListener('click', handleVerification);
-
-  // Bind Toggle
-  if (els.fiatShamirToggle) {
-    els.fiatShamirToggle.addEventListener('change', handleToggleMode);
-  }
+function initGraph() {
+  els.graphCanvas.width = els.graphCanvas.parentElement.clientWidth;
+  els.graphCanvas.height = 150;
+  graphCtx = els.graphCanvas.getContext('2d');
+  drawGraph();
 }
 
-function handleToggleMode(e) {
-  state.isFiatShamir = e.target.checked;
-
-  if (state.isFiatShamir) {
-    els.interactiveLabel.classList.remove('active');
-    els.fsLabel.classList.add('active');
-
-    // Morph Verifier into Hash Function
-    els.verifierTitle.innerHTML = 'Smart Contract / Hash Function';
-    els.verifierHeading.innerHTML = '<i class="fas fa-link"></i> ' + els.verifierTitle.outerHTML;
-    els.verifierInstruction.innerHTML =
-      'The verifier is completely <strong>non-interactive</strong>. It verifies the cryptographic Hash(Commitment) directly and mathematical equations in a single step.';
-    els.verifierPanel.classList.add('fiat-shamir-mode');
+function updateProbability(passed) {
+  if (passed) {
+    roundsPassed++;
   } else {
-    els.fsLabel.classList.remove('active');
-    els.interactiveLabel.classList.add('active');
-
-    // Morph back to Bob
-    els.verifierTitle.innerHTML = 'The Verifier (Bob)';
-    els.verifierHeading.innerHTML =
-      '<i class="fas fa-shield-alt"></i> ' + els.verifierTitle.outerHTML;
-    els.verifierInstruction.innerHTML =
-      'The Verifier only receives the <strong>Public Output</strong> and the <strong>Proof π</strong>. They never see x or y.';
-    els.verifierPanel.classList.remove('fiat-shamir-mode');
+    roundsPassed = 0; // Failed challenge resets everything
   }
 
-  updateProverCalculation();
+  let confidence = 0;
+  let cheatProb = 100;
+
+  if (roundsPassed > 0) {
+    cheatProb = Math.pow(0.5, roundsPassed) * 100;
+    confidence = 100 - cheatProb;
+  }
+
+  els.statRounds.textContent = roundsPassed;
+  els.statConfidence.textContent = confidence.toFixed(roundsPassed > 10 ? 5 : 2) + '%';
+  els.statCheatProb.textContent = cheatProb.toFixed(roundsPassed > 10 ? 5 : 2) + '%';
+
+  if (!passed) {
+    els.statConfidence.classList.remove('text-success');
+    els.statConfidence.classList.add('text-danger');
+  } else {
+    els.statConfidence.classList.add('text-success');
+    els.statConfidence.classList.remove('text-danger');
+  }
+
+  dataPoints.push({ x: dataPoints.length, y: confidence });
+  if (dataPoints.length > 50) dataPoints.shift(); // Keep last 50 points
+
+  drawGraph();
 }
 
-function renderMatrices() {
-  renderMatrix(A, els.matrixA);
-  renderMatrix(B, els.matrixB);
-  renderMatrix(C, els.matrixC);
+function resetProbability() {
+  roundsPassed = 0;
+  dataPoints = [];
+  updateProbability(false); // reset UI
+  els.statConfidence.classList.remove('text-danger');
+  els.statConfidence.classList.add('text-success');
 }
 
-function renderMatrix(matrix, container) {
-  container.innerHTML = '';
-  matrix.forEach((row) => {
-    row.forEach((val) => {
-      const cell = document.createElement('div');
-      cell.className = `m-cell ${val > 0 ? 'active val-' + val : ''}`;
-      cell.textContent = val;
-      container.appendChild(cell);
-    });
+function drawGraph() {
+  if (!graphCtx) return;
+  const w = els.graphCanvas.width;
+  const h = els.graphCanvas.height;
+
+  graphCtx.clearRect(0, 0, w, h);
+
+  // Draw axes
+  graphCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+  graphCtx.lineWidth = 1;
+  graphCtx.beginPath();
+  graphCtx.moveTo(40, 10);
+  graphCtx.lineTo(40, h - 20);
+  graphCtx.lineTo(w - 10, h - 20);
+  graphCtx.stroke();
+
+  // Labels
+  graphCtx.fillStyle = '#94a3b8';
+  graphCtx.font = '10px "Fira Code"';
+  graphCtx.fillText('100%', 10, 15);
+  graphCtx.fillText('50%', 15, h / 2);
+  graphCtx.fillText('0%', 20, h - 20);
+
+  if (dataPoints.length === 0) return;
+
+  // Draw Curve
+  graphCtx.strokeStyle = '#10b981';
+  graphCtx.lineWidth = 3;
+  graphCtx.beginPath();
+
+  const xStep = (w - 60) / 50;
+
+  dataPoints.forEach((pt, i) => {
+    const px = 40 + i * xStep;
+    const py = h - 20 - (pt.y / 100) * (h - 30);
+
+    if (i === 0) graphCtx.moveTo(px, py);
+    else graphCtx.lineTo(px, py);
   });
+
+  graphCtx.stroke();
+
+  // Fill under curve
+  graphCtx.lineTo(40 + (dataPoints.length - 1) * xStep, h - 20);
+  graphCtx.lineTo(40, h - 20);
+  graphCtx.fillStyle = 'rgba(16, 185, 129, 0.1)';
+  graphCtx.fill();
 }
 
 // ==========================================
-// 3. THE PROVER (Generating Witness & Proof)
+// 3. COLORBLIND FRIEND PROTOCOL
 // ==========================================
-function updateProverCalculation() {
-  const x = parseInt(els.inputX.value) || 0;
-  const y = parseInt(els.inputY.value) || 0;
+const cb = {
+  malicious: document.getElementById('cbMaliciousToggle'),
+  btnSingle: document.getElementById('btnCbSingleRound'),
+  btnBatch: document.getElementById('btnCbBatchRun'),
+  btnReset: document.getElementById('btnCbReset'),
+  log: document.getElementById('cbLog'),
+  ball1: document.getElementById('cbBall1'),
+  ball2: document.getElementById('cbBall2'),
+  vDialog: document.getElementById('cbVerifierDialog'),
+  pDialog: document.getElementById('cbProverDialog'),
+};
 
-  // Reset down-stream UI
-  els.witnessContainer.classList.add('hidden');
-  els.challengeBox.classList.add('hidden');
-  els.networkAnim.classList.add('hidden');
-  els.verificationResults.classList.add('hidden');
-  els.verifierOutput.textContent = '?';
-  els.verifierProofStatus.textContent = 'Waiting...';
-  els.verifierProofStatus.className = 'text-secondary';
-  els.btnVerify.disabled = true;
-  els.btnGenerateProof.disabled = true;
-  state.isProofGenerated = false;
-  state.challenge = null;
+let cbAnimating = false;
+let cbSwapped = false; // Tracks if balls were physically swapped in animation
 
-  // Modulo arithmetic
-  const v1 = mulMod(x, y);
-  const out = addMod(v1, 2);
+function logCb(msg, type = 'info') {
+  const div = document.createElement('div');
+  div.className = `log-line log-${type}`;
+  div.textContent = `> ${msg}`;
+  cb.log.appendChild(div);
+  cb.log.scrollTop = cb.log.scrollHeight;
+}
 
-  els.proverCalculation.innerHTML = `
-        v1 = (${x} * ${y}) mod 97 = ${v1}<br>
-        out = (v1 + 2) mod 97 = ${out}
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function showDialog(el, text, duration = 2000) {
+  el.textContent = text;
+  el.classList.add('visible');
+  if (duration > 0) {
+    setTimeout(() => el.classList.remove('visible'), duration);
+  }
+}
+
+async function runCbSingleRound() {
+  if (cbAnimating) return;
+  cbAnimating = true;
+  cb.btnSingle.disabled = true;
+  cb.btnBatch.disabled = true;
+
+  const isLying = cb.malicious.checked;
+
+  logCb('--- Starting New Round ---', 'info');
+  if (isLying) {
+    logCb('Prover is lying (Using two green balls)', 'fail');
+    cb.ball1.style.background = '#10b981'; // Fake red to green
+  } else {
+    cb.ball1.style.background = '#ef4444';
+  }
+
+  // Step 1: Hide Balls
+  showDialog(cb.vDialog, 'Hide the balls!', 1500);
+  logCb('Verifier puts balls behind their back.', 'verifier');
+  cb.ball1.classList.add('ball-hidden');
+  cb.ball2.classList.add('ball-hidden');
+  await sleep(1500);
+
+  // Step 2: Shuffle (or not)
+  const didSwitch = Math.random() > 0.5;
+  if (didSwitch) {
+    logCb('Verifier secretly switches hands.', 'verifier');
+    showDialog(cb.vDialog, '*Shuffles*', 1500);
+
+    // Visual physical swap of div positions
+    cb.ball1.classList.add('swapping-1');
+    cb.ball2.classList.add('swapping-2');
+    await sleep(500);
+
+    // Hard swap positions in DOM order implicitly by swapping classes
+    if (!cbSwapped) {
+      cb.ball1.style.left = 'calc(50% + 10px)';
+      cb.ball2.style.left = 'calc(50% - 70px)';
+    } else {
+      cb.ball1.style.left = 'calc(50% - 70px)';
+      cb.ball2.style.left = 'calc(50% + 10px)';
+    }
+    cbSwapped = !cbSwapped;
+
+    cb.ball1.classList.remove('swapping-1');
+    cb.ball2.classList.remove('swapping-2');
+  } else {
+    logCb('Verifier does NOT switch hands.', 'verifier');
+    showDialog(cb.vDialog, '*Waits*', 1500);
+  }
+  await sleep(1500);
+
+  // Step 3: Reveal and Challenge
+  showDialog(cb.vDialog, 'Did I switch them?', 0); // Keep visible
+  logCb('Verifier reveals balls: "Did I switch them?"', 'verifier');
+  cb.ball1.classList.remove('ball-hidden');
+  cb.ball2.classList.remove('ball-hidden');
+  await sleep(1500);
+
+  // Step 4: Prover Answers
+  let proverAnswer = didSwitch; // Honest prover knows!
+  if (isLying) {
+    // Lying prover has to guess because balls are identical colors to them too!
+    proverAnswer = Math.random() > 0.5;
+    logCb('Prover panics. They cannot tell! Guessing blindly...', 'fail');
+  }
+
+  const ansText = proverAnswer ? 'Yes, you switched!' : 'No, you did not!';
+  showDialog(cb.pDialog, ansText, 2500);
+  logCb(`Prover answers: "${ansText}"`, 'prover');
+  await sleep(1500);
+
+  // Step 5: Verification
+  cb.vDialog.classList.remove('visible');
+  const passed = proverAnswer === didSwitch;
+
+  if (passed) {
+    logCb('Result: Correct! Prover passes this round.', 'success');
+    updateProbability(true);
+  } else {
+    logCb('Result: WRONG! Prover caught lying!', 'fail');
+    updateProbability(false);
+  }
+
+  cb.btnSingle.disabled = false;
+  cb.btnBatch.disabled = false;
+  cbAnimating = false;
+}
+
+async function runCbBatch() {
+  if (cbAnimating) return;
+  cbAnimating = true;
+  cb.btnSingle.disabled = true;
+  cb.btnBatch.disabled = true;
+
+  const isLying = cb.malicious.checked;
+  logCb('--- Starting 100 Rounds Batch ---', 'info');
+
+  for (let i = 1; i <= 100; i++) {
+    const didSwitch = Math.random() > 0.5;
+    let proverAnswer = didSwitch;
+    if (isLying) proverAnswer = Math.random() > 0.5;
+
+    const passed = proverAnswer === didSwitch;
+    updateProbability(passed);
+
+    if (!passed) {
+      logCb(`Failed at round ${i}. Prover caught lying!`, 'fail');
+      break;
+    }
+
+    if (i % 10 === 0) {
+      logCb(
+        `Passed ${i} rounds. Confidence: ${document.getElementById('statConfidence').textContent}`,
+        'success'
+      );
+      await sleep(50); // tiny visual delay to see graph update
+    }
+  }
+
+  if (roundsPassed === 100) {
+    logCb('Passed 100 rounds successfully!', 'success');
+  }
+
+  cb.btnSingle.disabled = false;
+  cb.btnBatch.disabled = false;
+  cbAnimating = false;
+}
+
+// ==========================================
+// 4. ALI BABA CAVE PROTOCOL
+// ==========================================
+const ab = {
+  malicious: document.getElementById('abMaliciousToggle'),
+  btnSingle: document.getElementById('btnAbSingleRound'),
+  btnBatch: document.getElementById('btnAbBatchRun'),
+  btnReset: document.getElementById('btnAbReset'),
+  log: document.getElementById('abLog'),
+  prover: document.getElementById('abProver'),
+  door: document.getElementById('abMagicDoor'),
+  vDialog: document.getElementById('abVerifierDialog'),
+};
+
+let abAnimating = false;
+
+function logAb(msg, type = 'info') {
+  const div = document.createElement('div');
+  div.className = `log-line log-${type}`;
+  div.textContent = `> ${msg}`;
+  ab.log.appendChild(div);
+  ab.log.scrollTop = ab.log.scrollHeight;
+}
+
+async function runAbSingleRound() {
+  if (abAnimating) return;
+  abAnimating = true;
+  ab.btnSingle.disabled = true;
+  ab.btnBatch.disabled = true;
+
+  const isLying = ab.malicious.checked;
+
+  logAb('--- Starting New Cave Round ---', 'info');
+
+  // Step 1: Prover enters A or B
+  const enteredA = Math.random() > 0.5;
+  logAb(`Prover secretly enters Path ${enteredA ? 'A' : 'B'}.`, 'prover');
+
+  // Animate Prover moving
+  ab.prover.style.transform = `translate(${enteredA ? '-60px' : '60px'}, -140px)`;
+  await sleep(1000);
+
+  // Step 2: Verifier challenges
+  const challengeA = Math.random() > 0.5;
+  showDialog(ab.vDialog, `Exit via Path ${challengeA ? 'A' : 'B'}!`, 2500);
+  logAb(`Verifier challenges: "Exit via Path ${challengeA ? 'A' : 'B'}!"`, 'verifier');
+  await sleep(1500);
+
+  // Step 3: Prover attempts to exit
+  let passed = false;
+
+  if (!isLying) {
+    // Honest prover knows the password. They can traverse the door if needed.
+    if (enteredA !== challengeA) {
+      logAb('Prover uses Magic Door password to cross paths.', 'success');
+      ab.door.classList.add('open');
+      await sleep(500);
+    }
+    passed = true;
+  } else {
+    // Lying prover does NOT know the password.
+    if (enteredA !== challengeA) {
+      logAb('Prover is trapped! Does not know magic word.', 'fail');
+      passed = false;
+    } else {
+      logAb('Prover got lucky! Already on the correct path.', 'warning');
+      passed = true;
+    }
+  }
+
+  // Animate Exit
+  if (passed) {
+    // Move to exit via challenge path
+    ab.prover.style.transform = `translate(${challengeA ? '-60px' : '60px'}, -60px)`;
+    await sleep(500);
+    ab.prover.style.transform = `translate(0px, 0px)`; // Back to start
+    logAb('Result: Correct! Prover exits correctly.', 'success');
+    updateProbability(true);
+  } else {
+    // Stuck!
+    logAb('Result: FAILED! Prover caught lying!', 'fail');
+    updateProbability(false);
+    await sleep(1000);
+    ab.prover.style.transform = `translate(0px, 0px)`; // Force reset
+  }
+
+  ab.door.classList.remove('open');
+
+  ab.btnSingle.disabled = false;
+  ab.btnBatch.disabled = false;
+  abAnimating = false;
+}
+
+async function runAbBatch() {
+  if (abAnimating) return;
+  abAnimating = true;
+  ab.btnSingle.disabled = true;
+  ab.btnBatch.disabled = true;
+
+  const isLying = ab.malicious.checked;
+  logAb('--- Starting 100 Rounds Batch ---', 'info');
+
+  for (let i = 1; i <= 100; i++) {
+    const enteredA = Math.random() > 0.5;
+    const challengeA = Math.random() > 0.5;
+
+    let passed = true;
+    if (isLying && enteredA !== challengeA) {
+      passed = false;
+    }
+
+    updateProbability(passed);
+
+    if (!passed) {
+      logAb(`Failed at round ${i}. Prover caught lying without password!`, 'fail');
+      break;
+    }
+
+    if (i % 10 === 0) {
+      logAb(
+        `Passed ${i} rounds. Confidence: ${document.getElementById('statConfidence').textContent}`,
+        'success'
+      );
+      await sleep(50);
+    }
+  }
+
+  ab.btnSingle.disabled = false;
+  ab.btnBatch.disabled = false;
+  abAnimating = false;
+}
+
+// ==========================================
+// 5. R1CS SNARK MATRIX PROTOCOL
+// ==========================================
+const r1cs = {
+  x: document.getElementById('inputX'),
+  y: document.getElementById('inputY'),
+  calc: document.getElementById('proverCalculation'),
+  btnWit: document.getElementById('btnGenerateWitness'),
+  witCont: document.getElementById('witnessContainer'),
+  witVec: document.getElementById('witnessVector'),
+  matDisp: document.getElementById('r1csMatrices'),
+  res: document.getElementById('r1csResult'),
+};
+
+function initR1CS() {
+  // Generate static Matrices for f(x,y) = x*y+2
+  // witness s = [1, out, x, y, v1]
+  // where v1 = x * y
+  // Constraint 1: x * y = v1 => A=[0,0,1,0,0], B=[0,0,0,1,0], C=[0,0,0,0,1]
+  // Constraint 2: v1 + 2 = out => (v1 + 2) * 1 = out => A=[2,0,0,0,1], B=[1,0,0,0,0], C=[0,1,0,0,0]
+
+  const A = [
+    [0, 0, 1, 0, 0],
+    [2, 0, 0, 0, 1],
+  ];
+  const B = [
+    [0, 0, 0, 1, 0],
+    [1, 0, 0, 0, 0],
+  ];
+  const C = [
+    [0, 0, 0, 0, 1],
+    [0, 1, 0, 0, 0],
+  ];
+
+  r1cs.matDisp.innerHTML = `
+        <div class="matrix-wrapper"><span class="matrix-label">Matrix A</span>${buildMatrixHTML(A)}</div>
+        <div class="matrix-operator">*</div>
+        <div class="matrix-wrapper"><span class="matrix-label">Matrix B</span>${buildMatrixHTML(B)}</div>
+        <div class="matrix-operator">=</div>
+        <div class="matrix-wrapper"><span class="matrix-label">Matrix C</span>${buildMatrixHTML(C)}</div>
     `;
 
-  state.x = x;
-  state.y = y;
-  state.out = out;
-}
+  r1cs.btnWit.addEventListener('click', () => {
+    const x = parseInt(r1cs.x.value);
+    const y = parseInt(r1cs.y.value);
+    const out = (x * y + 2) % 97;
+    const v1 = (x * y) % 97;
 
-function handleGenerateWitness() {
-  const v1 = mulMod(state.x, state.y);
-  // Construct Witness Vector s = [1, out, x, y, v1]
-  state.witness = [1, state.out, state.x, state.y, v1];
+    r1cs.calc.textContent = `out = (${x} * ${y}) + 2 = ${out} (Mod 97)`;
+    r1cs.witVec.textContent = `s = [1, ${out}, ${x}, ${y}, ${v1}]`;
+    r1cs.witCont.classList.remove('hidden');
 
-  els.witnessVector.innerHTML = '';
-  state.witness.forEach((val) => {
-    const span = document.createElement('span');
-    span.className = 'vec-element';
-    span.textContent = val;
-    els.witnessVector.appendChild(span);
+    setTimeout(() => {
+      r1cs.res.classList.remove('hidden');
+    }, 1000);
   });
-
-  els.witnessContainer.classList.remove('hidden');
-  els.challengeBox.classList.remove('hidden');
-  els.challengeValue.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Requesting Challenge...';
-
-  // Interactive vs Fiat-Shamir logic
-  if (state.isFiatShamir) {
-    // Compute Hash locally
-    setTimeout(() => {
-      // Pseudo-hash the witness vector as commitment
-      const rawHash = state.witness.reduce((acc, val) => acc + val * 13, 7);
-      state.challenge = rawHash % PRIME;
-      els.challengeValue.innerHTML = `Hash(Commitment) = <strong>${state.challenge}</strong> <span class="badge-fs">Fiat-Shamir</span>`;
-      els.btnGenerateProof.disabled = false;
-    }, 600);
-  } else {
-    // Wait for Verifier interaction ping
-    els.networkAnim.classList.remove('hidden');
-    els.animPacket.classList.add('reverse'); // Sending commit to verifier
-    els.packetLabel.textContent = 'Sending Commitments...';
-
-    setTimeout(() => {
-      els.packetLabel.textContent = 'Waiting for Bob...';
-
-      setTimeout(() => {
-        els.animPacket.classList.remove('reverse');
-        els.animPacket.classList.add('forward'); // Receiving challenge
-        els.packetLabel.textContent = 'Receiving Random Challenge...';
-
-        setTimeout(() => {
-          els.networkAnim.classList.add('hidden');
-          state.challenge = Math.floor(Math.random() * (PRIME - 1)) + 1; // Random 1..96
-          els.challengeValue.innerHTML = `Random Challenge from Bob = <strong>${state.challenge}</strong>`;
-          els.btnGenerateProof.disabled = false;
-        }, 1500);
-      }, 1000);
-    }, 1500);
-  }
 }
 
-function handleGenerateProof() {
-  els.btnGenerateProof.disabled = true;
-  els.btnGenerateProof.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating SNARK...';
+function buildMatrixHTML(matrix) {
+  let html = '<div class="matrix">';
+  matrix.forEach((row) => {
+    html += '<div class="matrix-row">';
+    row.forEach((val) => {
+      html += `<div class="matrix-cell">${val}</div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
 
-  setTimeout(() => {
-    els.btnGenerateProof.innerHTML = '<i class="fas fa-check"></i> Proof Generated';
+// ==========================================
+// 6. INITIALIZATION & TABS BINDINGS
+// ==========================================
 
-    // Trigger Animation
-    els.networkAnim.classList.remove('hidden');
-    els.animPacket.className = 'packet forward pulse-packet';
+function initZKP() {
+  els.tabs.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.getAttribute('data-tab');
 
-    if (state.isFiatShamir) {
-      els.packetLabel.innerHTML = 'Sending (Proof π + Hash) <i class="fas fa-bolt"></i>';
-    } else {
-      els.packetLabel.innerHTML = 'Sending Proof π';
-    }
+      // UI switch
+      els.tabs.forEach((t) => t.classList.remove('active'));
+      els.contents.forEach((c) => c.classList.remove('active'));
 
-    // Update Verifier after animation completes
-    setTimeout(() => {
-      state.isProofGenerated = true;
-      els.verifierOutput.textContent = state.out;
-      els.verifierProofStatus.innerHTML = state.isFiatShamir
-        ? 'Payload Received <i class="fas fa-link"></i>'
-        : 'Proof π Received';
-      els.verifierProofStatus.className = 'text-success';
+      btn.classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+      currentTab = tabId;
 
-      // Auto-verify in Fiat-Shamir, otherwise require click
-      if (state.isFiatShamir) {
-        handleVerification();
+      // Reset prob engine when switching to active visualizers
+      if (tabId === 'colorblind' || tabId === 'alibaba') {
+        resetProbability();
+        document.getElementById('sharedProbabilityPanel').style.display = 'block';
       } else {
-        els.btnVerify.disabled = false;
+        document.getElementById('sharedProbabilityPanel').style.display = 'none';
       }
-
-      els.btnGenerateProof.disabled = false;
-      els.btnGenerateProof.innerHTML = '<i class="fas fa-magic"></i> Generate Cryptographic Proof';
-      els.networkAnim.classList.add('hidden');
-    }, 2000);
-  }, 800);
-}
-
-// ==========================================
-// 4. THE VERIFIER (Mathematical Checking)
-// ==========================================
-
-// Dot product of two vectors modulo P
-function dotProductMod(vec1, vec2) {
-  let sum = 0;
-  for (let i = 0; i < vec1.length; i++) {
-    sum = addMod(sum, mulMod(vec1[i], vec2[i]));
-  }
-  return sum;
-}
-
-function handleVerification() {
-  if (!state.isProofGenerated) return;
-
-  els.btnVerify.disabled = true;
-  els.btnVerify.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-  els.verificationResults.classList.add('hidden');
-
-  setTimeout(() => {
-    // Mathematical Verification of R1CS: A.s * B.s == C.s
-    const s = state.witness;
-
-    // Gate 1 Check
-    const a1 = dotProductMod(A[0], s);
-    const b1 = dotProductMod(B[0], s);
-    const c1 = dotProductMod(C[0], s);
-    const isValid1 = mulMod(a1, b1) === c1;
-
-    els.checkGate1.innerHTML = `(${a1} * ${b1}) mod 97 == ${c1} <i class="fas ${isValid1 ? 'fa-check valid-math' : 'fa-times invalid-math'}"></i>`;
-
-    // Gate 2 Check
-    const a2 = dotProductMod(A[1], s);
-    const b2 = dotProductMod(B[1], s);
-    const c2 = dotProductMod(C[1], s);
-    const isValid2 = mulMod(a2, b2) === c2;
-
-    els.checkGate2.innerHTML = `(${a2} * ${b2}) mod 97 == ${c2} <i class="fas ${isValid2 ? 'fa-check valid-math' : 'fa-times invalid-math'}"></i>`;
-
-    // Final Verdict
-    els.verificationResults.classList.remove('hidden');
-
-    // Simulating the effect of Challenge `tau` on dot product
-    const finalCheck1 = isValid1
-      ? `✅ Equation holds (checked with τ=${state.challenge})`
-      : '❌ Math Invalid';
-
-    if (isValid1 && isValid2) {
-      els.finalVerdict.className = 'verdict-box success';
-      els.finalVerdict.innerHTML = `<i class="fas fa-shield-check"></i> PROOF VALID! ${state.isFiatShamir ? 'Non-Interactive verification successful.' : 'The prover knows the secret inputs.'}`;
-    } else {
-      els.finalVerdict.className = 'verdict-box error';
-      els.finalVerdict.innerHTML =
-        '<i class="fas fa-ban"></i> PROOF INVALID! The equations do not hold.';
-    }
-
-    els.btnVerify.disabled = false;
-    els.btnVerify.innerHTML = '<i class="fas fa-check-double"></i> Run Verification';
-  }, 1000);
-}
-
-// ==========================================
-// 5. AMBIENT BACKGROUND CANVAS
-// ==========================================
-function initZKCanvas() {
-  const canvas = document.getElementById('zkCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let width = (canvas.width = window.innerWidth);
-  let height = (canvas.height = window.innerHeight);
-
-  window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
+    });
   });
 
-  const particles = [];
-  const symbols = ['π', 'Σ', 'τ', 'Hash', 'ℤp', 'mod', 'R1CS', 'QAP'];
-  for (let i = 0; i < 40; i++) {
-    particles.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-      symbol: symbols[Math.floor(Math.random() * symbols.length)],
-      alpha: Math.random() * 0.3 + 0.1,
-    });
-  }
+  initGraph();
+  window.addEventListener('resize', initGraph); // Handle resize redraw
 
-  const draw = () => {
-    ctx.clearRect(0, 0, width, height);
-    ctx.font = 'bold 14px "Fira Code"';
+  // Bind Colorblind
+  cb.btnSingle.addEventListener('click', runCbSingleRound);
+  cb.btnBatch.addEventListener('click', runCbBatch);
+  cb.btnReset.addEventListener('click', () => {
+    cb.log.innerHTML = '';
+    cb.malicious.checked = false;
+    cb.ball1.style.background = '#ef4444';
+    cb.ball2.style.background = '#10b981';
+    cbSwapped = false;
+    cb.ball1.style.left = 'calc(50% - 70px)';
+    cb.ball2.style.left = 'calc(50% + 10px)';
+    resetProbability();
+  });
 
-    // Connections
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 150) {
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(168, 85, 247, ${((150 - dist) / 150) * 0.2})`;
-          ctx.stroke();
-        }
-      }
-    }
+  // Bind Alibaba
+  ab.btnSingle.addEventListener('click', runAbSingleRound);
+  ab.btnBatch.addEventListener('click', runAbBatch);
+  ab.btnReset.addEventListener('click', () => {
+    ab.log.innerHTML = '';
+    ab.malicious.checked = false;
+    ab.prover.style.transform = 'translate(0px, 0px)';
+    ab.door.classList.remove('open');
+    resetProbability();
+  });
 
-    // Particles
-    particles.forEach((p) => {
-      ctx.fillStyle = `rgba(16, 185, 129, ${p.alpha})`; // Emerald hue
-      if (p.symbol === 'π' || p.symbol === 'τ') ctx.fillStyle = `rgba(236, 72, 153, ${p.alpha})`; // Pink hue
-      ctx.fillText(p.symbol, p.x, p.y);
-
-      p.x += p.vx;
-      p.y += p.vy;
-
-      if (p.x < 0 || p.x > width) p.vx *= -1;
-      if (p.y < 0 || p.y > height) p.vy *= -1;
-    });
-
-    requestAnimationFrame(draw);
-  };
-  draw();
+  // Bind R1CS
+  initR1CS();
 }
