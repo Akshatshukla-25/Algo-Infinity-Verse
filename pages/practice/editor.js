@@ -10,6 +10,7 @@ import { loadMonaco, getMonacoLanguage, preloadMonaco, setMonacoTheme } from '..
 import { getProblem, waitForData, migrateLegacyDraft } from '../../modules/problem-store.js';
 import { getStarterCode, buildHarness, parseTestResults, getProblemSignature } from '../../modules/problem-templates.js';
 import { executeProblem, getSupportedLanguages, saveDraft, clearDraft, saveExecution } from '../../modules/execution-client.js';
+import { areKeyboardShortcutsEnabled } from '../../modules/shortcut-guard.js';
 
 // ─── State ───
 const state = {
@@ -334,6 +335,8 @@ function wireEvents(problem) {
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
+    // Shortcuts rely on a physical keyboard — skip them on mobile viewports (< 768px).
+    if (!areKeyboardShortcutsEnabled()) return;
     // Ctrl/Cmd + Enter → Run
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();

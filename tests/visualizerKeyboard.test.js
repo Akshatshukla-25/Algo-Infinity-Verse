@@ -206,4 +206,16 @@ describe('visualizer-keyboard', () => {
     const event = fireKey('s');
     expect(event.preventDefault).not.toHaveBeenCalled();
   });
+
+  it('does not bind keyboard shortcuts on a mobile viewport (< 768px)', async () => {
+    keydownHandler = undefined;
+    global.window = {
+      matchMedia: jest.fn((query) => ({ matches: query === '(max-width: 767px)' })),
+    };
+
+    const { initVisualizerKeyboardShortcuts } = await import('../modules/visualizer-keyboard.js');
+    initVisualizerKeyboardShortcuts({}, { showHelpBadge: false });
+
+    expect(keydownHandler).toBeUndefined();
+  });
 });

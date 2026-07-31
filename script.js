@@ -1,6 +1,24 @@
 /* global handleActiveNav, initPracticeSection, initProfile, initAiInterviewer, initNewsletterValidation, initFooterCurrentDate, closeTopicModal, saveProblemNotes, closeNotesModal, closeQuizEditor, closeQuizModal, openTopicModal, openQuizModal, renderQuizQuestion, handleProblemClick, escapeHtml, apiAbort, apiCache, getEditorDraft, getEditorDraftSignature, getProblemSignature, clearEditorDraft, updateEditorDisplayMode, toggleOutputPanel, updateLineNumbers, syncScroll, switchQuizTab, genCppHarness, genJavaHarness, genCHarness, genSwiftHarness, parseTestResults, setOutput, getXPForDifficulty, initializeQuizEditor, closeShortcutModal, renderProblems, updatePaginationControls, initDarkMode */
 
 // ============================================
+// MOBILE VIEWPORT GUARD
+// Keyboard shortcuts depend on a physical keyboard, so they are disabled on
+// mobile-sized viewports (< 768px). This mirrors modules/shortcut-guard.js,
+// which ES modules import directly; classic scripts reuse these globals so
+// the media-query check stays in one place. The `||` guard keeps whichever
+// definition loads first (module or classic script) so they can't clash.
+// ============================================
+window.isMobileViewport = window.isMobileViewport || function () {
+  return (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(max-width: 767px)').matches
+  );
+};
+window.areKeyboardShortcutsEnabled = window.areKeyboardShortcutsEnabled || function () {
+  return !window.isMobileViewport();
+};
+
+// ============================================
 // GLOBAL DOM EVENT GARBAGE COLLECTOR
 // Resolves innerHTML event listener memory leaks
 // ============================================
@@ -5519,6 +5537,9 @@ if (!window.location.pathname.includes('/pages/learning/tech-stacks') && (window
 
 // ===== KEYBOARD SHORTCUTS =====
 document.addEventListener('keydown', function (e) {
+  // Shortcuts are desktop-only: skip them on mobile-sized viewports (< 768px).
+  if (!window.areKeyboardShortcutsEnabled()) return;
+
   // Ctrl+K: Focus search
   if (e.ctrlKey && e.key === 'k') {
     e.preventDefault();

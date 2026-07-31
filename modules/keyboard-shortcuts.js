@@ -1,3 +1,5 @@
+import { areKeyboardShortcutsEnabled } from './shortcut-guard.js';
+
 const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '') ||
   (navigator.userAgentData && navigator.userAgentData.platform === 'macOS');
 
@@ -31,6 +33,11 @@ export function initKeyboardShortcuts() {
   }
 
   updateShortcutLabels();
+
+  // Shortcuts rely on a physical keyboard, so they are never bound on
+  // mobile-sized viewports (< 768px). The toggle button / modal wiring above
+  // stays active so the shortcuts list remains reachable by tapping.
+  if (!areKeyboardShortcutsEnabled()) return;
 
   document.addEventListener('keydown', function(e) {
     const tag = e.target.tagName;

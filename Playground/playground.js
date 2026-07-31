@@ -1,6 +1,7 @@
 import { executeSandboxedCode } from '../modules/code-executor.js';
 import { executeWasmPython, executeWasmCpp, isWasmSupported } from '../modules/wasm-executor.js';
 import { getCurrentTheme, onThemeChange, THEMES } from '../modules/theme.js';
+import { areKeyboardShortcutsEnabled } from '../modules/shortcut-guard.js';
 
 // DOM Elements
 const output = document.getElementById("output");
@@ -253,6 +254,8 @@ function setupEventListeners() {
     
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
+        // Shortcuts rely on a physical keyboard — skip them on mobile viewports (< 768px).
+        if (!areKeyboardShortcutsEnabled()) return;
         // Ctrl+Enter or Cmd+Enter to run
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();

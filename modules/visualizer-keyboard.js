@@ -14,6 +14,8 @@
 // fixed IDs. Sensible defaults matching the sorting-visualizer convention
 // are provided for pages that already follow it.
 
+import { areKeyboardShortcutsEnabled } from './shortcut-guard.js';
+
 const DEFAULT_CONFIG = {
   play: '#startBtn',
   pause: '#pauseBtn',
@@ -183,6 +185,10 @@ function renderHelpBadge(config) {
  * @param {boolean} [options.showHelpBadge=true] - render the floating shortcuts badge
  */
 export function initVisualizerKeyboardShortcuts(userConfig = {}, options = {}) {
+  // Playback shortcuts need a physical keyboard, so on mobile-sized
+  // viewports (< 768px) nothing is bound and no badge is rendered.
+  if (!areKeyboardShortcutsEnabled()) return;
+
   const config = { ...DEFAULT_CONFIG, ...userConfig };
   const { showHelpBadge = true } = options;
 
