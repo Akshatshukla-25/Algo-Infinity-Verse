@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Matrioshka Brain Orchestrator | Algo Infinity Verse</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Monaco Editor -->
+    <script src="https://unpkg.com/monaco-editor@0.36.1/min/vs/loader.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
+      .app-container { display: flex; height: 100vh; }
+      
+      .sidebar { width: 450px; background: rgba(15, 23, 42, 0.95); border-right: 1px solid #eab308; display: flex; flex-direction: column; z-index: 10; }
+      .header { padding: 20px; border-bottom: 1px solid #334155; }
+      .header h2 { margin: 0; color: #eab308; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; }
+      .header p { margin: 5px 0 0 0; font-size: 0.8rem; color: #94a3b8; }
+      
+      #editor-container { flex: 1; min-height: 300px; }
+      
+      .controls { padding: 20px; border-top: 1px solid #334155; background: rgba(0,0,0,0.5); }
+      .btn { background: linear-gradient(90deg, #ca8a04, #a16207); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+      .btn:hover { background: #eab308; transform: translateY(-2px); box-shadow: 0 0 15px rgba(234, 179, 8, 0.5); }
+      
+      .sim-container { flex: 1; position: relative; background: #000; overflow: hidden; }
+      
+      canvas { width: 100%; height: 100%; display: block; }
+      
+      .hud { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #eab308; width: 280px; z-index: 10; pointer-events: none; }
+      .hud h3 { margin: 0 0 10px 0; color: #eab308; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
+      .metric { display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
+      .val { font-weight: bold; font-family: monospace; }
+      .val-flops { color: #8b5cf6; }
+      .val-temp { color: #f97316; }
+    </style>
+  </head>
+  <body>
+    
+    <div class="app-container">
+      <div class="sidebar">
+        <div class="header">
+          <h2><i class="fas fa-microchip"></i> Matrioshka Brain Orchestrator</h2>
+          <p>Megascale thermodynamic computing</p>
+        </div>
+        
+        <div id="editor-container"></div>
+        
+        <div class="controls">
+          <button class="btn" onclick="bootSystem()"><i class="fas fa-power-off"></i> Boot Megastructure</button>
+        </div>
+      </div>
+      
+      <div class="sim-container">
+        <!-- Background -->
+        <div style="position: absolute; inset:0; background: radial-gradient(circle, #1e1b4b 0%, #000 100%); pointer-events: none; z-index: 0;"></div>
+        
+        <canvas id="brainCanvas" style="position: relative; z-index: 1;"></canvas>
+        
+        <div class="hud">
+          <h3>System Telemetry</h3>
+          <div class="metric"><span>Processing Power:</span> <span class="val val-flops" id="flopsVal">0 YFLOP/s</span></div>
+          <div class="metric"><span>Avg Core Temp:</span> <span class="val val-temp" id="tempVal">0 K</span></div>
+          <div class="metric"><span>Structural Integrity:</span> <span class="val" id="hullVal" style="color:#10b981">100%</span></div>
+          <div class="metric" style="margin-top: 10px; border-top: 1px solid #334155; padding-top: 5px;">
+            <span>Orchestrator:</span> <span class="val" id="statusVal" style="color:#94a3b8">OFFLINE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let editor;
+      require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.36.1/min/vs' }});
+      require(['vs/editor/editor.main'], function() {
+        editor = monaco.editor.create(document.getElementById('editor-container'), {
+          value: `// Matrioshka Brain Workload Orchestration
+// The brain consists of 5 nested Dyson spheres (shells).
+// Shell 0 (inner) is blisteringly hot, computing fast but melting easily.
+// Shell 4 (outer) runs near absolute zero, slow but stable.
+// Waste heat from inner shells powers the outer shells.
+
+function distributeWorkload(shellTemps, currentFlopsRequired) {
+    // Return an array of 5 floats (0.0 to 1.0) indicating workload per shell.
+    
+    // Naive logic: Max workload on all shells!
+    // Result: The inner shells instantly overheat and melt, causing structural collapse.
+    
+    return [1.0, 1.0, 1.0, 1.0, 1.0];
+}`,
+          language: 'javascript',
+          theme: 'vs-dark',
+          minimap: { enabled: false },
+          automaticLayout: true
+        });
+      });
+
+      const canvas = document.getElementById('brainCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      let isSimulating = false;
+      let time = 0;
+      
+      let shells = [];
+      let totalFlops = 0;
+      let targetFlops = 1000;
+      let integrity = 100;
+      
+      function resize() { 
+          canvas.width = canvas.clientWidth; 
+          canvas.height = canvas.clientHeight;
+          initShells();
+      }
+      
+      function initShells() {
+          shells = [
+              { radius: 50,  temp: 4000, maxTemp: 6000, workload: 0, color: '#f97316' }, // Inner (Hot)
+              { radius: 90,  temp: 2000, maxTemp: 3500, workload: 0, color: '#facc15' },
+              { radius: 140, temp: 800,  maxTemp: 1500, workload: 0, color: '#4ade80' },
+              { radius: 200, temp: 300,  maxTemp: 600,  workload: 0, color: '#38bdf8' },
+              { radius: 270, temp: 50,   maxTemp: 150,  workload: 0, color: '#8b5cf6' }  // Outer (Cold)
+          ];
+      }
+      
+      setTimeout(resize, 100);
+      window.addEventListener('resize', resize);
+
+      function animate() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          let cx = canvas.width / 2;
+          let cy = canvas.height / 2;
+
+          // Draw Central Star
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI*2); ctx.fill();
+          ctx.shadowBlur = 30; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
+
+          if (isSimulating) {
+              time += 0.05;
+              targetFlops += 2; // Increasing demand
+              
+              let currentTemps = shells.map(s => s.temp);
+              let workloads = [0,0,0,0,0];
+              
+              try {
+                  eval(editor.getValue());
+                  let res = distributeWorkload(currentTemps, targetFlops);
+                  if (Array.isArray(res) && res.length === 5) {
+                      workloads = res.map(v => Math.max(0, Math.min(1.0, v)));
+                  }
+              } catch(e) {}
+              
+              totalFlops = 0;
+              let avgTemp = 0;
+              let stress = 0;
+              
+              for(let i=0; i<5; i++) {
+                  let s = shells[i];
+                  s.workload = workloads[i];
+                  
+                  // Computing generates heat
+                  let heatGenerated = s.workload * (5000 / (i+1));
+                  
+                  // Heat flows outward from star and inner shells
+                  let heatReceived = 0;
+                  if (i === 0) heatReceived = 1000; // From star
+                  else heatReceived = shells[i-1].temp * 0.1; // From inner shell
+                  
+                  // Heat radiates outward
+                  let heatRadiated = s.temp * 0.15;
+                  
+                  s.temp += (heatGenerated + heatReceived - heatRadiated) * 0.05;
+                  
+                  // Cap minimum temp at space background (3K)
+                  if(s.temp < 3) s.temp = 3;
+                  
+                  // Flops calculation: Inner shells are faster, but throttled by high temps
+                  let efficiency = Math.max(0, 1.0 - (s.temp / s.maxTemp));
+                  let shellFlops = s.workload * (1000 / (i+1)) * efficiency;
+                  totalFlops += shellFlops;
+                  
+                  avgTemp += s.temp;
+                  
+                  // Damage calculation
+                  if (s.temp > s.maxTemp) {
+                      stress += (s.temp - s.maxTemp) * 0.01;
+                  }
+              }
+              
+              avgTemp /= 5;
+              integrity -= stress;
+              if (integrity < 0) integrity = 0;
+              
+              // Draw Data Flow
+              ctx.strokeStyle = '#fff';
+              ctx.lineWidth = 1;
+              for(let i=0; i<20; i++) {
+                  let angle = (i/20) * Math.PI*2 + time*0.5;
+                  ctx.beginPath();
+                  ctx.moveTo(cx, cy);
+                  ctx.lineTo(cx + Math.cos(angle)*shells[4].radius, cy + Math.sin(angle)*shells[4].radius);
+                  ctx.stroke();
+              }
+              
+              // HUD
+              document.getElementById('flopsVal').innerText = totalFlops.toFixed(0) + " YFLOP/s";
+              document.getElementById('tempVal').innerText = avgTemp.toFixed(0) + " K";
+              
+              let intEl = document.getElementById('hullVal');
+              intEl.innerText = integrity.toFixed(1) + "%";
+              if(integrity < 50) intEl.style.color = "#ef4444";
+              else intEl.style.color = "#10b981";
+              
+              if (integrity <= 0) {
+                  isSimulating = false;
+                  document.getElementById('statusVal').innerText = "MEGASTRUCTURE COLLAPSE";
+                  document.getElementById('statusVal').style.color = "#ef4444";
+                  
+                  // Explosion
+                  ctx.fillStyle = '#ef4444';
+                  ctx.beginPath(); ctx.arc(cx, cy, shells[4].radius, 0, Math.PI*2); ctx.fill();
+              } else if (totalFlops > 3000) {
+                  document.getElementById('statusVal').innerText = "TRANSCENDENCE ACHIEVED";
+                  document.getElementById('statusVal').style.color = "#10b981";
+              } else {
+                  document.getElementById('statusVal').innerText = "PROCESSING...";
+                  document.getElementById('statusVal').style.color = "#38bdf8";
+              }
+          }
+
+          // Draw Shells
+          for(let i=0; i<shells.length; i++) {
+              let s = shells[i];
+              
+              // Base shell
+              ctx.strokeStyle = \`rgba(148, 163, 184, 0.3)\`;
+              ctx.lineWidth = 2;
+              ctx.beginPath(); ctx.arc(cx, cy, s.radius, 0, Math.PI*2); ctx.stroke();
+              
+              // Temperature glow
+              if(s.temp > 0) {
+                  let dangerPct = Math.min(1.0, s.temp / s.maxTemp);
+                  let r = Math.floor(dangerPct * 255);
+                  let g = Math.floor((1-dangerPct) * 200);
+                  ctx.strokeStyle = \`rgba(\${r},\${g},0, 0.6)\`;
+                  ctx.lineWidth = 5;
+                  ctx.beginPath(); ctx.arc(cx, cy, s.radius, 0, Math.PI*2); ctx.stroke();
+              }
+              
+              // Workload indicator
+              if (isSimulating && s.workload > 0) {
+                  ctx.strokeStyle = '#38bdf8';
+                  ctx.lineWidth = 4;
+                  ctx.setLineDash([10, 20]);
+                  ctx.lineDashOffset = -time * 50;
+                  ctx.beginPath();
+                  ctx.arc(cx, cy, s.radius, 0, Math.PI*2 * s.workload);
+                  ctx.stroke();
+                  ctx.setLineDash([]);
+              }
+          }
+
+          requestAnimationFrame(animate);
+      }
+      
+      animate();
+
+      function bootSystem() {
+          if(isSimulating) return;
+          initShells();
+          isSimulating = true;
+          time = 0;
+          targetFlops = 1000;
+          integrity = 100;
+          document.getElementById('statusVal').innerText = "BOOTING KERNEL...";
+          document.getElementById('statusVal').style.color = "#eab308";
+      }
+    </script>
+  </body>
+</html>
