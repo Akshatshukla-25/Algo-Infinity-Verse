@@ -107,6 +107,18 @@ const languages = [
     desc: 'Modern, concise, and safe JVM language. Preferred for Android development with seamless Java interop and coroutines.',
     svgIcon: `<img src="https://cdn.simpleicons.org/kotlin/a8c8f0" alt="Kotlin" style="width:1em;height:1em;display:block;">`
   },
+
+  // ── Apple / Swift ──
+  {
+    name: 'Swift',
+    path: '/pages/learning/swift-learning/swift-learning.html',
+    category: 'General Purpose',
+    icon: 'fa-swift',
+    isBrandIcon: true,
+    langKey: 'swift',
+    desc: "Apple's modern, type-safe language for iOS, macOS, and beyond. Optionals, protocols, and closures make safe, expressive code the default.",
+    svgIcon: `<img src="https://cdn.simpleicons.org/swift/f2a88a" alt="Swift" style="width:1em;height:1em;display:block;">`
+  },
 ];
 
 /* ─── Categories ─── */
@@ -124,6 +136,7 @@ const langColors = {
   solidity: '#fbc4ab',
   kotlin: '#a8c8f0',
   csharp: '#e8b0b0',
+  swift: '#f2a88a',
 };
 
 /* ─── DOM refs ─── */
