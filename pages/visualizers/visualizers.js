@@ -101,6 +101,13 @@ const visualizers = [
     icon: 'fa-lock',
     desc: 'Interactive visualizer for the TLS 1.3 cryptographic handshake protocol (1-RTT and 0-RTT).',
   },
+  {
+    name: 'TLB Thrashing & Page Fault Simulator',
+    path: '/pages/visualizers/tlb-page-fault-simulator/tlb-page-fault-simulator.html',
+    category: 'OS & Architecture',
+    icon: 'fa-microchip',
+    desc: 'Simulate virtual memory mapping, TLB cache thrashing via stride access, and costly disk page faults.',
+  },
   // ── Sorting & Searching ──
   {
     name: 'Interpolation Search Visualizer',
