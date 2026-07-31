@@ -8,7 +8,7 @@
  */
 
 import { executeSandboxedCode } from './code-executor.js';
-import { executeWasmPython } from './wasm-executor.js';
+import { executeWasmPython, executeWasmCpp } from './wasm-executor.js';
 import { buildHarness, parseTestResults } from './problem-templates.js';
 
 // ─── Constants ───
@@ -31,7 +31,13 @@ const DEFAULT_TIMEOUT_MS = 8000;
  * @param {AbortSignal} [params.signal] - Optional AbortSignal for cancellation
  * @returns {Promise<{allPassed: boolean, testResults: Array, rawOutput: string, metrics?: object}>}
  */
-export async function executeProblem({ code, lang, problem, timeoutMs = DEFAULT_TIMEOUT_MS, signal }) {
+export async function executeProblem({
+  code,
+  lang,
+  problem,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  signal,
+}) {
   if (!code || !code.trim()) {
     return {
       allPassed: false,
@@ -71,11 +77,20 @@ export async function executeProblem({ code, lang, problem, timeoutMs = DEFAULT_
     if (BROWSER_EXECUTABLE_LANGUAGES.includes(normalLang)) {
       result = await executeInBrowser(harnessCode, normalLang, testCount, timeoutMs, signal);
     } else if (SERVER_EXECUTABLE_LANGUAGES.includes(normalLang)) {
-      result = await executeOnServer(
-        { harnessCode, originalCode: code, lang: normalLang, problemId: problem.id },
-        testCount,
-        signal
-      );
+      try {
+        result = await executeOnServer(
+          { harnessCode, originalCode: code, lang: normalLang, problemId: problem.id },
+          testCount,
+          signal
+        );
+      } catch (serverErr) {
+        if (normalLang === 'cpp' || normalLang === 'c++' || normalLang === 'c') {
+          console.warn('Server execution failed, falling back to in-browser WASM:', serverErr);
+          result = await executeInBrowser(harnessCode, normalLang, testCount, timeoutMs, signal);
+        } else {
+          throw serverErr;
+        }
+      }
     } else {
       return {
         allPassed: false,
@@ -128,6 +143,15 @@ async function executeInBrowser(harnessCode, lang, testCount, timeoutMs, signal)
   } else if (lang === 'python' || lang === 'py') {
     result = await withCancellation(
       executeWasmPython(harnessCode, timeoutMs).then((res) => ({
+        stdout: (res.logs || []).join('\n'),
+        metrics: { executionTime: res.executionTime },
+      })),
+      signal,
+      timeoutMs
+    );
+  } else if (lang === 'cpp' || lang === 'c++' || lang === 'c') {
+    result = await withCancellation(
+      executeWasmCpp(harnessCode, timeoutMs).then((res) => ({
         stdout: (res.logs || []).join('\n'),
         metrics: { executionTime: res.executionTime },
       })),
@@ -334,7 +358,18 @@ export function clearDraft(problemId, lang) {
  * @param {string|null} [params.error] - Error message if execution failed
  * @param {string|number|null} [params.problemId] - Problem identifier
  */
-export function saveExecution({ sourceCode, originalCode, language, stdout, stderr, exitCode, cpuTime, memory, error, problemId }) {
+export function saveExecution({
+  sourceCode,
+  originalCode,
+  language,
+  stdout,
+  stderr,
+  exitCode,
+  cpuTime,
+  memory,
+  error,
+  problemId,
+}) {
   fetch('/api/executions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
