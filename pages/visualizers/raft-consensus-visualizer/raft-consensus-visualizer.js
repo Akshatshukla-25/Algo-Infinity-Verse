@@ -36,7 +36,6 @@ let logEntries = []; // Shared committed log (visual)
 let snapshotIndex = null; // last snapshotted index
 let commandCounter = 0;
 let termCounter = 0;
-let leaderId = null;
 let partitionedIds = new Set();
 let preVoteEnabled = true;
 
@@ -57,17 +56,22 @@ const els = {
   btnInit: document.getElementById('btnInit'),
   btnAppendLog: document.getElementById('btnAppendLog'),
   btnPartitionLeader: document.getElementById('btnPartitionLeader'),
+  btnSimulateSplitBrain: document.getElementById('btnSimulateSplitBrain'),
   btnHealPartition: document.getElementById('btnHealPartition'),
   btnCompactLog: document.getElementById('btnCompactLog'),
   btnElectionRace: document.getElementById('btnElectionRace'),
   nodeCountSelect: document.getElementById('nodeCountSelect'),
   electionTimeout: document.getElementById('electionTimeout'),
   electionTimeoutVal: document.getElementById('electionTimeoutVal'),
+  networkLatency: document.getElementById('networkLatency'),
+  networkLatencyVal: document.getElementById('networkLatencyVal'),
+  packetLoss: document.getElementById('packetLoss'),
+  packetLossVal: document.getElementById('packetLossVal'),
   preVoteToggle: document.getElementById('preVoteToggle'),
   preVoteDesc: document.getElementById('preVoteDesc'),
   statTerm: document.getElementById('statTerm'),
   statLeader: document.getElementById('statLeader'),
-  statLog: document.getElementById('statLog'),
+  statQuorum: document.getElementById('statQuorum'),
   statSnapshot: document.getElementById('statSnapshot'),
   logEntries: document.getElementById('logEntries'),
   logCount: document.getElementById('logCount'),
@@ -76,15 +80,30 @@ const els = {
   btnClearFirewall: document.getElementById('btnClearFirewall'),
 };
 
+function getActiveLeaders() {
+  return nodes.filter((n) => n.role === ROLES.LEADER && !n.isCrashed);
+}
+
+function sendPacket(from, to, type, color) {
+  if (from.isCrashed || to.isCrashed) return;
+  const lossChance = parseInt(els.packetLoss.value);
+  if (Math.random() * 100 < lossChance) {
+    log(`[Packet Drop] ${type} from ${from.name} to ${to.name} lost due to jitter.`, 'warn');
+    return; // Dropped
+  }
+  packets.push(new Packet(from, to, type, color));
+}
+
 function canCommunicate(a, b) {
+  if (a.isCrashed || b.isCrashed) return false;
   if (a.role === ROLES.PARTITIONED || b.role === ROLES.PARTITIONED) return false;
   if (partitionedIds.has(a.id) || partitionedIds.has(b.id)) return false;
   if (firewallLine) {
     return !lineSegmentsIntersect(
-      a.x,
-      a.y,
-      b.x,
-      b.y,
+      a.baseX,
+      a.baseY,
+      b.baseX,
+      b.baseY,
       firewallLine.x1,
       firewallLine.y1,
       firewallLine.x2,
@@ -110,68 +129,92 @@ class RaftNode {
   constructor(id, x, y) {
     this.id = id;
     this.name = `N${id + 1}`;
-    this.x = x;
-    this.y = y;
+    this.baseX = x;
+    this.baseY = y;
+    this.visualX = x;
+    this.visualY = y;
     this.radius = 38;
     this.role = ROLES.FOLLOWER;
+    this.isCrashed = false;
     this.term = 0;
     this.votedFor = null;
     this.votesReceived = 0;
     this.preVotesReceived = 0;
-    this.log = []; // local log copy
+    this.log = [];
     this.snapshotIndex = null;
-    this.pulse = 0; // animation ring
+    this.pulse = 0;
   }
 
   draw(ctx) {
-    const color = COLORS[this.role];
+    // Update physical position via spring
+    this.visualX += (this.baseX - this.visualX) * 0.1;
+    this.visualY += (this.baseY - this.visualY) * 0.1;
 
-    // Election timeout ring (only for followers/candidates)
-    if (electionTimers[this.id] && this.role !== ROLES.LEADER && this.role !== ROLES.PARTITIONED) {
+    let color = this.isCrashed ? '#374151' : COLORS[this.role];
+
+    if (
+      electionTimers[this.id] &&
+      this.role !== ROLES.LEADER &&
+      this.role !== ROLES.PARTITIONED &&
+      !this.isCrashed
+    ) {
       const remaining = electionTimers[this.id].remaining;
       const total = electionTimers[this.id].total;
       const frac = 1 - remaining / total;
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius + 8, -Math.PI / 2, -Math.PI / 2 + frac * 2 * Math.PI);
+      ctx.arc(
+        this.visualX,
+        this.visualY,
+        this.radius + 8,
+        -Math.PI / 2,
+        -Math.PI / 2 + frac * 2 * Math.PI
+      );
       ctx.strokeStyle = `rgba(59,130,246,0.5)`;
       ctx.lineWidth = 3;
       ctx.stroke();
     }
 
-    // Pulse ring for leader
-    if (this.role === ROLES.LEADER) {
+    if (this.role === ROLES.LEADER && !this.isCrashed) {
       this.pulse = (this.pulse + 0.05) % (Math.PI * 2);
       const pAlpha = 0.2 + 0.2 * Math.sin(this.pulse);
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius + 12, 0, Math.PI * 2);
+      ctx.arc(this.visualX, this.visualY, this.radius + 12, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(245,158,11,${pAlpha})`;
       ctx.lineWidth = 4;
       ctx.stroke();
     }
 
-    // Node circle
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    const grad = ctx.createRadialGradient(this.x - 8, this.y - 8, 4, this.x, this.y, this.radius);
+    ctx.arc(this.visualX, this.visualY, this.radius, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(
+      this.visualX - 8,
+      this.visualY - 8,
+      4,
+      this.visualX,
+      this.visualY,
+      this.radius
+    );
     grad.addColorStop(0, color + '55');
     grad.addColorStop(1, color + '18');
     ctx.fillStyle = grad;
     ctx.fill();
     ctx.strokeStyle = color;
-    ctx.lineWidth = this.role === ROLES.LEADER ? 3 : 2;
+    ctx.lineWidth = this.role === ROLES.LEADER && !this.isCrashed ? 3 : 2;
     ctx.stroke();
 
-    // Label
-    ctx.fillStyle = '#f1f5f9';
+    ctx.fillStyle = this.isCrashed ? '#94a3b8' : '#f1f5f9';
     ctx.font = 'bold 14px Poppins';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(this.name, this.x, this.y - 6);
+    ctx.fillText(this.name, this.visualX, this.visualY - 6);
 
-    // Role badge
     ctx.font = '9px Fira Code';
     ctx.fillStyle = color;
-    ctx.fillText(this.role === ROLES.PARTITIONED ? 'ISOLATED' : this.role, this.x, this.y + 9);
+    ctx.fillText(
+      this.isCrashed ? 'CRASHED' : this.role === ROLES.PARTITIONED ? 'ISOLATED' : this.role,
+      this.visualX,
+      this.visualY + 9
+    );
 
     // Term
     ctx.font = '8px Fira Code';
@@ -201,25 +244,25 @@ class Packet {
   }
 
   update() {
+    const baseLatency = parseInt(els.networkLatency.value);
+    this.speed = 0.05 / (baseLatency / 10);
     this.progress += this.speed;
     return this.progress >= 1;
   }
 
   draw(ctx) {
-    const px = this.from.x + (this.to.x - this.from.x) * this.progress;
-    const py = this.from.y + (this.to.y - this.from.y) * this.progress;
+    const px = this.from.visualX + (this.to.visualX - this.from.visualX) * this.progress;
+    const py = this.from.visualY + (this.to.visualY - this.from.visualY) * this.progress;
 
-    // trail
     ctx.beginPath();
     ctx.setLineDash([4, 4]);
-    ctx.moveTo(this.from.x, this.from.y);
-    ctx.lineTo(this.to.x, this.to.y);
+    ctx.moveTo(this.from.visualX, this.from.visualY);
+    ctx.lineTo(this.to.visualX, this.to.visualY);
     ctx.strokeStyle = this.color + '22';
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // dot
     ctx.beginPath();
     ctx.arc(px, py, 5, 0, Math.PI * 2);
     ctx.fillStyle = this.color;
@@ -228,7 +271,6 @@ class Packet {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // label
     ctx.fillStyle = this.color;
     ctx.font = '8px Fira Code';
     ctx.textAlign = 'center';
@@ -250,6 +292,12 @@ function initRaft() {
   els.electionTimeout.addEventListener('input', (e) => {
     els.electionTimeoutVal.textContent = `${e.target.value}ms`;
   });
+  els.networkLatency.addEventListener('input', (e) => {
+    els.networkLatencyVal.textContent = `${e.target.value}ms`;
+  });
+  els.packetLoss.addEventListener('input', (e) => {
+    els.packetLossVal.textContent = `${e.target.value}%`;
+  });
 
   els.preVoteToggle.addEventListener('change', () => {
     preVoteEnabled = els.preVoteToggle.checked;
@@ -260,13 +308,53 @@ function initRaft() {
   els.btnInit.addEventListener('click', startCluster);
   els.btnAppendLog.addEventListener('click', clientAppendCommand);
   els.btnPartitionLeader.addEventListener('click', partitionLeader);
+  els.btnSimulateSplitBrain.addEventListener('click', simulateSplitBrainInteractive);
   els.btnHealPartition.addEventListener('click', healPartition);
   els.btnCompactLog.addEventListener('click', triggerSnapshot);
   els.btnClearFirewall.addEventListener('click', () => {
     firewallLine = null;
     log('Firewall cleared. Partitions resolving...', 'info');
+
+    // Move nodes back to base formation
+    const count = nodes.length;
+    const cw = canvas.width,
+      ch = canvas.height;
+    const cx = cw / 2,
+      cy = ch / 2;
+    const r = Math.min(cw, ch) * 0.32;
+    nodes.forEach((n, i) => {
+      const angle = (2 * Math.PI * i) / count - Math.PI / 2;
+      n.baseX = cx + r * Math.cos(angle);
+      n.baseY = cy + r * Math.sin(angle);
+    });
+    updateStats();
   });
   els.btnElectionRace.addEventListener('click', simulateElectionRace);
+
+  canvas.addEventListener('click', (e) => {
+    if (e.shiftKey) {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      nodes.forEach((n) => {
+        const dist = Math.hypot(n.visualX - clickX, n.visualY - clickY);
+        if (dist < n.radius) {
+          n.isCrashed = !n.isCrashed;
+          if (n.isCrashed) {
+            log(`${n.name} CRASHED!`, 'warn');
+            if (n.role === ROLES.LEADER) {
+              n.role = ROLES.FOLLOWER;
+              updateStats();
+            }
+          } else {
+            log(`${n.name} RECOVERED!`, 'info');
+            n.term = termCounter;
+            resetElectionTimer(n.id);
+          }
+        }
+      });
+    }
+  });
 
   canvas.addEventListener('mousedown', (e) => {
     isDrawingFirewall = true;
@@ -312,7 +400,6 @@ function startCluster() {
   snapshotIndex = null;
   commandCounter = 0;
   termCounter = 0;
-  leaderId = null;
   partitionedIds = new Set();
   renderLogPanel();
   updateStats();
@@ -355,6 +442,8 @@ function startElection(candidateId) {
 
   termCounter++;
   const candidate = nodes[candidateId];
+  if (candidate.isCrashed) return;
+
   candidate.term = termCounter;
   candidate.votedFor = candidateId;
   candidate.votesReceived = 0;
@@ -369,13 +458,13 @@ function startElection(candidateId) {
     const peers = nodes.filter((n) => n.id !== candidateId && canCommunicate(candidate, n));
 
     peers.forEach((peer) => {
-      packets.push(new Packet(candidate, peer, 'PRE-VOTE', '#38bdf8'));
+      sendPacket(candidate, peer, 'PRE-VOTE', '#38bdf8');
 
       // Simulate peers responding — they grant if they haven't seen a leader recently
       setTimeout(
         () => {
-          if (nodes[candidateId].role === ROLES.PARTITIONED) return;
-          packets.push(new Packet(peer, candidate, 'PRV-OK', '#38bdf8'));
+          if (nodes[candidateId].role === ROLES.PARTITIONED || nodes[candidateId].isCrashed) return;
+          sendPacket(peer, candidate, 'PRV-OK', '#38bdf8');
           preVoteCount++;
           if (preVoteCount > nodes.length / 2) {
             log(
@@ -417,11 +506,11 @@ function promoteToCandidateAndVote(candidateId) {
   const peers = nodes.filter((n) => n.id !== candidateId && canCommunicate(candidate, n));
 
   peers.forEach((peer) => {
-    packets.push(new Packet(candidate, peer, 'REQ-VOTE', '#3b82f6'));
+    sendPacket(candidate, peer, 'REQ-VOTE', '#3b82f6');
 
     setTimeout(
       () => {
-        if (candidate.role !== ROLES.CANDIDATE) return;
+        if (candidate.role !== ROLES.CANDIDATE || candidate.isCrashed) return;
         // Grant vote if peer hasn't voted in this term
         if (
           peer.term < candidate.term ||
@@ -429,7 +518,7 @@ function promoteToCandidateAndVote(candidateId) {
         ) {
           peer.votedFor = candidateId;
           peer.term = candidate.term;
-          packets.push(new Packet(peer, candidate, 'VOTE✓', '#10b981'));
+          sendPacket(peer, candidate, 'VOTE✓', '#10b981');
 
           candidate.votesReceived++;
           log(`${peer.name} → ${candidate.name}: Vote GRANTED (term ${candidate.term})`, 'elect');
@@ -438,7 +527,7 @@ function promoteToCandidateAndVote(candidateId) {
             becomeLeader(candidateId);
           }
         } else {
-          packets.push(new Packet(peer, candidate, 'VOTE✗', '#ef4444'));
+          sendPacket(peer, candidate, 'VOTE✗', '#ef4444');
           log(`${peer.name} → ${candidate.name}: Vote DENIED`, 'info');
 
           // STEP DOWN LOGIC
@@ -468,15 +557,17 @@ function promoteToCandidateAndVote(candidateId) {
 }
 
 function becomeLeader(nodeId) {
-  // Demote previous leader
-  if (leaderId !== null && nodes[leaderId]) {
-    if (nodes[leaderId].role === ROLES.LEADER) {
-      nodes[leaderId].role = ROLES.FOLLOWER;
-    }
-  }
-
-  leaderId = nodeId;
+  // Find if there's an existing leader in this partition
   const leader = nodes[nodeId];
+
+  // Demote any leader that can communicate with us
+  const activeLeaders = getActiveLeaders();
+  activeLeaders.forEach((l) => {
+    if (canCommunicate(leader, l)) {
+      l.role = ROLES.FOLLOWER;
+    }
+  });
+
   leader.role = ROLES.LEADER;
   leader.votesReceived = 0;
   delete electionTimers[nodeId];
@@ -507,95 +598,92 @@ function scheduleHeartbeat() {
 }
 
 function sendHeartbeats() {
-  if (leaderId === null) return;
-  const leader = nodes[leaderId];
-  if (!leader || leader.role !== ROLES.LEADER) return;
+  const activeLeaders = getActiveLeaders();
+  if (activeLeaders.length === 0) return;
 
-  const followers = nodes.filter((n) => n.id !== leaderId && canCommunicate(leader, n));
-  followers.forEach((f) => {
-    packets.push(new Packet(leader, f, 'HB', '#10b981'));
+  activeLeaders.forEach((leader) => {
+    const followers = nodes.filter((n) => n.id !== leader.id && canCommunicate(leader, n));
+    followers.forEach((f) => {
+      sendPacket(leader, f, 'HB', '#10b981');
 
-    // Simulate follower receiving heartbeat
-    setTimeout(
-      () => {
-        if (!canCommunicate(leader, f)) return;
-        if (leader.term >= f.term) {
-          f.term = leader.term;
-          if (f.role !== ROLES.FOLLOWER) {
-            f.role = ROLES.FOLLOWER;
-            f.votedFor = null;
-            log(
-              `${f.name} stepped down to FOLLOWER (received heartbeat from ${leader.name})`,
-              'warn'
-            );
+      setTimeout(
+        () => {
+          if (!canCommunicate(leader, f)) return;
+          if (leader.term >= f.term) {
+            f.term = leader.term;
+            if (f.role !== ROLES.FOLLOWER) {
+              f.role = ROLES.FOLLOWER;
+              f.votedFor = null;
+              log(
+                `${f.name} stepped down to FOLLOWER (received heartbeat from ${leader.name})`,
+                'warn'
+              );
+            }
+            resetElectionTimer(f.id);
+            if (
+              f.log.length > leader.log.length ||
+              (f.log.length > 0 &&
+                leader.log.length > 0 &&
+                f.log[f.log.length - 1].term !== leader.log[leader.log.length - 1].term)
+            ) {
+              f.log = leader.log.slice();
+            }
+            updateStats();
           }
-          resetElectionTimer(f.id);
-          // TRUNCATE CONFLICTING LOGS (visual simplification)
-          if (
-            f.log.length > leader.log.length ||
-            (f.log.length > 0 &&
-              leader.log.length > 0 &&
-              f.log[f.log.length - 1].term !== leader.log[leader.log.length - 1].term)
-          ) {
-            f.log = leader.log.slice();
-          }
-          updateStats();
-        }
-      },
-      400 + Math.random() * 200
-    );
+        },
+        400 + Math.random() * 200
+      );
+    });
   });
 }
 
 function clientAppendCommand() {
-  if (leaderId === null) {
+  const activeLeaders = getActiveLeaders();
+  if (activeLeaders.length === 0) {
     log('No leader elected yet!', 'warn');
-    return;
-  }
-  const leader = nodes[leaderId];
-  if (!leader || leader.role !== ROLES.LEADER) {
-    log('Leader not available!', 'warn');
     return;
   }
 
   commandCounter++;
   const cmd = `set:x=${commandCounter}`;
-  const entry = { index: logEntries.length + 1, term: leader.term, cmd, committed: false };
-  logEntries.push(entry);
 
-  log(`Client → ${leader.name}: Append [${cmd}]`, 'repl');
+  activeLeaders.forEach((leader) => {
+    const entry = { index: logEntries.length + 1, term: leader.term, cmd, committed: false };
+    logEntries.push(entry);
 
-  // Replicate to followers
-  const followers = nodes.filter((n) => n.id !== leaderId && canCommunicate(leader, n));
-  let acks = 1; // leader counts itself
+    log(`Client → ${leader.name}: Append [${cmd}]`, 'repl');
 
-  followers.forEach((f) => {
-    packets.push(new Packet(leader, f, 'AppEnt', '#0ea5e9'));
+    const followers = nodes.filter((n) => n.id !== leader.id && canCommunicate(leader, n));
+    const quorumReq = Math.floor(nodes.length / 2) + 1;
+    let acks = 1;
 
-    setTimeout(
-      () => {
-        packets.push(new Packet(f, leader, 'ACK', '#10b981'));
-        f.log.push(entry);
-        acks++;
+    followers.forEach((f) => {
+      sendPacket(leader, f, 'AppEnt', '#0ea5e9');
 
-        if (acks > nodes.length / 2 && !entry.committed) {
-          entry.committed = true;
-          leader.log.push(entry);
-          log(`Entry [${cmd}] committed (majority ACK)`, 'repl');
-          renderLogPanel();
-          updateStats();
+      setTimeout(
+        () => {
+          sendPacket(f, leader, 'ACK', '#10b981');
+          f.log.push(entry);
+          acks++;
 
-          // Auto-snapshot if log is too large
-          if (
-            logEntries.filter((e) => e.committed && e.index > (snapshotIndex || 0)).length >=
-            MAX_LOG_BEFORE_SNAPSHOT
-          ) {
-            setTimeout(() => triggerSnapshot(), 500);
+          if (acks >= quorumReq && !entry.committed) {
+            entry.committed = true;
+            leader.log.push(entry);
+            log(`Entry [${cmd}] committed by ${leader.name} (majority ACK)`, 'repl');
+            renderLogPanel();
+            updateStats();
+
+            if (
+              logEntries.filter((e) => e.committed && e.index > (snapshotIndex || 0)).length >=
+              MAX_LOG_BEFORE_SNAPSHOT
+            ) {
+              setTimeout(() => triggerSnapshot(), 500);
+            }
           }
-        }
-      },
-      300 + Math.random() * 200
-    );
+        },
+        300 + Math.random() * 200
+      );
+    });
   });
 
   renderLogPanel();
@@ -607,43 +695,75 @@ function clientAppendCommand() {
 // ══════════════════════════════════════════════
 
 function partitionLeader() {
-  if (leaderId === null) {
+  const activeLeaders = getActiveLeaders();
+  if (activeLeaders.length === 0) {
     log('No leader to partition!', 'warn');
     return;
   }
 
-  const leader = nodes[leaderId];
-  partitionedIds.add(leaderId);
+  const leader = activeLeaders[0];
+  partitionedIds.add(leader.id);
   leader.role = ROLES.PARTITIONED;
-
-  if (heartbeatTimer) clearInterval(heartbeatTimer);
-  heartbeatTimer = null;
-  leaderId = null;
 
   log(`⚠ ${leader.name} partitioned from cluster!`, 'warn');
   updateStats();
 
   // Remaining nodes trigger new election after a delay
-  const remaining = nodes.filter((n) => n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id));
+  const remaining = nodes.filter(
+    (n) => n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id) && !n.isCrashed
+  );
   if (remaining.length > 0) {
     const nextCandidate = remaining[Math.floor(Math.random() * remaining.length)];
     setTimeout(() => startElection(nextCandidate.id), 1200);
   }
 }
 
+function simulateSplitBrainInteractive() {
+  log('Simulating Split-Brain (Network Partition)...', 'warn');
+
+  firewallLine = {
+    x1: canvas.width / 2,
+    y1: 0,
+    x2: canvas.width / 2,
+    y2: canvas.height,
+  };
+
+  // Physically repel nodes
+  nodes.forEach((n) => {
+    if (n.baseX < canvas.width / 2) {
+      n.baseX -= 70;
+    } else {
+      n.baseX += 70;
+    }
+  });
+
+  clearAllTimers();
+
+  // Force elections on both sides
+  let leftNodes = nodes.filter((n) => n.baseX < canvas.width / 2 && !n.isCrashed);
+  let rightNodes = nodes.filter((n) => n.baseX > canvas.width / 2 && !n.isCrashed);
+
+  nodes.forEach((n) => {
+    if (n.role === ROLES.LEADER) n.role = ROLES.FOLLOWER;
+  });
+
+  if (leftNodes.length > 0) setTimeout(() => startElection(leftNodes[0].id), 500);
+  if (rightNodes.length > 0) setTimeout(() => startElection(rightNodes[0].id), 900);
+}
+
 function simulateElectionRace() {
-  if (leaderId !== null) {
-    const leader = nodes[leaderId];
-    partitionedIds.add(leaderId);
+  const activeLeaders = getActiveLeaders();
+  if (activeLeaders.length > 0) {
+    const leader = activeLeaders[0];
+    partitionedIds.add(leader.id);
     leader.role = ROLES.PARTITIONED;
-    if (heartbeatTimer) clearInterval(heartbeatTimer);
-    heartbeatTimer = null;
-    leaderId = null;
     log(`⚠ Leader partitioned for election race!`, 'warn');
     updateStats();
   }
 
-  const remaining = nodes.filter((n) => n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id));
+  const remaining = nodes.filter(
+    (n) => n.role !== ROLES.PARTITIONED && !partitionedIds.has(n.id) && !n.isCrashed
+  );
   if (remaining.length > 1) {
     log(`🏁 Triggering simultaneous election timeout for ${remaining.length} nodes!`, 'warn');
     remaining.forEach((node) => {
@@ -657,23 +777,24 @@ function simulateElectionRace() {
 function healPartition() {
   partitionedIds.forEach((id) => {
     const node = nodes[id];
-    if (node) {
+    if (node && !node.isCrashed) {
       node.role = ROLES.FOLLOWER;
-      if (leaderId !== null) {
-        node.term = nodes[leaderId].term;
+      const activeLeaders = getActiveLeaders();
+      if (activeLeaders.length > 0) {
+        node.term = activeLeaders[0].term;
       }
       node.votedFor = null;
       log(`${node.name} rejoined cluster. Catching up via InstallSnapshot...`, 'snap');
 
       // Send InstallSnapshot from leader to reconnected node
-      if (leaderId !== null) {
-        const leader = nodes[leaderId];
-        packets.push(new Packet(leader, node, 'SNAPSHOT', '#a855f7'));
+      if (activeLeaders.length > 0) {
+        const leader = activeLeaders[0];
+        sendPacket(leader, node, 'SNAPSHOT', '#a855f7');
 
         setTimeout(() => {
           node.snapshotIndex = snapshotIndex;
           node.log = logEntries.filter((e) => e.committed).slice();
-          packets.push(new Packet(node, leader, 'SNAP-OK', '#a855f7'));
+          sendPacket(node, leader, 'SNAP-OK', '#a855f7');
           log(`${node.name} snapshot installed. Log synced to index ${snapshotIndex || 0}`, 'snap');
         }, 800);
       }
@@ -681,6 +802,20 @@ function healPartition() {
   });
 
   partitionedIds.clear();
+  firewallLine = null;
+  // Move nodes back to base formation
+  const count = nodes.length;
+  const cw = canvas.width,
+    ch = canvas.height;
+  const cx = cw / 2,
+    cy = ch / 2;
+  const r = Math.min(cw, ch) * 0.32;
+  nodes.forEach((n, i) => {
+    const angle = (2 * Math.PI * i) / count - Math.PI / 2;
+    n.baseX = cx + r * Math.cos(angle);
+    n.baseY = cy + r * Math.sin(angle);
+  });
+
   updateStats();
 }
 
@@ -754,12 +889,13 @@ function renderLoop(time) {
   // Draw connections
   if (nodes.length > 1) {
     nodes.forEach((a) => {
+      if (a.isCrashed) return;
       nodes.forEach((b) => {
-        if (b.id <= a.id) return;
+        if (b.id <= a.id || b.isCrashed) return;
         const isPartitioned = !canCommunicate(a, b);
         ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
+        ctx.moveTo(a.visualX, a.visualY);
+        ctx.lineTo(b.visualX, b.visualY);
         ctx.strokeStyle = isPartitioned ? 'rgba(239,68,68,0.2)' : 'rgba(31,41,55,0.8)';
         ctx.lineWidth = isPartitioned ? 1 : 1.5;
         ctx.setLineDash(isPartitioned ? [5, 5] : []);
@@ -812,10 +948,14 @@ function renderLogPanel() {
 }
 
 function updateStats() {
-  const leader = leaderId !== null ? nodes[leaderId] : null;
+  const activeLeaders = getActiveLeaders();
   els.statTerm.textContent = termCounter;
-  els.statLeader.textContent = leader ? leader.name : '–';
-  els.statLog.textContent = logEntries.filter((e) => e.committed).length;
+  els.statLeader.textContent =
+    activeLeaders.length > 0 ? activeLeaders.map((l) => l.name).join(', ') : '–';
+
+  const totalAlive = nodes.filter((n) => !n.isCrashed).length;
+  // Quorum is based on TOTAL nodes, even if crashed
+  els.statQuorum.textContent = Math.floor(nodes.length / 2) + 1;
   els.statSnapshot.textContent = snapshotIndex !== null ? `idx ${snapshotIndex}` : 'None';
 }
 

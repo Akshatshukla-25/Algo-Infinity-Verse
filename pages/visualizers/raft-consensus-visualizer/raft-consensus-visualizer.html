@@ -16,11 +16,11 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <script src="/modules/lazyVisualizer.js"></script>
-    <link rel="stylesheet" href="/styles.css" />
+    <script src="../../../modules/lazyVisualizer.js"></script>
+    <link rel="stylesheet" href="../../../styles.css" />
     <link rel="stylesheet" href="raft-consensus-visualizer.css" />
-    <script src="/theme.js"></script>
-    <script src="/modules/toast.js"></script>
+    <script src="../../../theme.js"></script>
+    <script src="../../../modules/toast.js"></script>
   </head>
   <body class="raft-body">
     <nav class="navbar raft-nav">
@@ -59,6 +59,28 @@
             <span class="slider-val" id="electionTimeoutVal">2500ms</span>
           </div>
           <div class="config-row">
+            <label>Net Latency</label>
+            <input
+              type="range"
+              id="networkLatency"
+              min="1"
+              max="100"
+              value="25"
+            />
+            <span class="slider-val" id="networkLatencyVal">Normal</span>
+          </div>
+          <div class="config-row">
+            <label>Packet Loss %</label>
+            <input
+              type="range"
+              id="packetLoss"
+              min="0"
+              max="50"
+              value="0"
+            />
+            <span class="slider-val" id="packetLossVal">0%</span>
+          </div>
+          <div class="config-row">
             <label>Pre-Vote Extension</label>
             <div class="toggle-wrap">
               <input type="checkbox" id="preVoteToggle" checked />
@@ -79,8 +101,11 @@
           <button type="button" class="btn btn-warning w-100 mt-sm" id="btnPartitionLeader">
             <i class="fas fa-network-wired"></i> Partition Leader
           </button>
+          <button type="button" class="btn btn-purple w-100 mt-sm" id="btnSimulateSplitBrain">
+            <i class="fas fa-brain"></i> Simulate Split-Brain
+          </button>
           <button type="button" class="btn btn-success w-100 mt-sm" id="btnHealPartition">
-            <i class="fas fa-heart-pulse"></i> Heal Partition
+            <i class="fas fa-heart-pulse"></i> Heal Partitions
           </button>
           <button type="button" class="btn btn-danger w-100 mt-sm" id="btnClearFirewall">
             <i class="fas fa-fire-extinguisher"></i> Clear Firewall
@@ -100,10 +125,10 @@
               <span class="stat-label">Term</span><strong id="statTerm">–</strong>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Leader</span><strong id="statLeader">–</strong>
+              <span class="stat-label">Leaders</span><strong id="statLeader">–</strong>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Log Entries</span><strong id="statLog">0</strong>
+              <span class="stat-label">Quorum Reqd</span><strong id="statQuorum" class="text-purple">3</strong>
             </div>
             <div class="stat-item">
               <span class="stat-label">Snapshot</span><strong id="statSnapshot">None</strong>
@@ -116,7 +141,7 @@
       <div class="raft-center">
         <div class="canvas-wrap" style="position: relative">
           <div class="firewall-instruction">
-            <i class="fas fa-mouse-pointer"></i> Drag across canvas to draw a Firewall
+            <i class="fas fa-mouse-pointer"></i> Drag across canvas to draw a Firewall | <kbd>Shift + Click</kbd> a node to Kill/Revive
           </div>
           <canvas id="raftCanvas"></canvas>
         </div>
