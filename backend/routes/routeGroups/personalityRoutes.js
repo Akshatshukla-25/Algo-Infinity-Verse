@@ -2,6 +2,7 @@
 //
 // Issue #2402 — feature-grouped route registration.
 import { handleUserPersonality } from '../../handlers/personalityHandlers.js';
+import { API_ROUTES } from '../routeConstants.js';
 
 export const personalityRoutes = [
   {
@@ -9,7 +10,7 @@ export const personalityRoutes = [
     routes: [
       {
         method: 'GET',
-        path: '/api/user/personality',
+        path: API_ROUTES.PERSONALITY,
         handler: handleUserPersonality,
         tier: 'default',
         requiresAuth: true,

@@ -139,7 +139,15 @@ function resizeCanvas() {
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
   ctx.scale(dpr, dpr);
-  draw();
+  if (telemetryCanvas && telemetryCtx) {
+    const tRect = telemetryCanvas.getBoundingClientRect();
+    telemetryCanvas.width = tRect.width * dpr;
+    telemetryCanvas.height = tRect.height * dpr;
+    telemetryCtx.scale(dpr, dpr);
+    drawTelemetryChart();
+  } else {
+    draw();
+  }
 }
 
 // Grid Helper Functions

@@ -571,6 +571,24 @@ export class WebRTCService {
    * @param {Object} socket - Socket instance
    */
   setup(socket) {
+    // Heartbeat mechanism for stale connection cleanup
+    socket.webrtcLastPong = Date.now();
+
+    socket.on('webrtc-pong', () => {
+      socket.webrtcLastPong = Date.now();
+    });
+
+    const pingInterval = setInterval(() => {
+      if (Date.now() - socket.webrtcLastPong > 60000) {
+        console.log(`[WebRTC] Stale connection detected for socket ${socket.id}, cleaning up...`);
+        clearInterval(pingInterval);
+        this.handleDisconnect(socket);
+        socket.disconnect(true);
+      } else {
+        socket.emit('webrtc-ping');
+      }
+    }, 30000);
+
     // Join room
     socket.on('webrtc-join', (roomId, userId) => {
       this.handleJoin(socket, roomId, userId);
@@ -611,6 +629,7 @@ export class WebRTCService {
 
     // Disconnect
     socket.on('disconnect', () => {
+      clearInterval(pingInterval);
       this.handleDisconnect(socket);
     });
   }

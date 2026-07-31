@@ -50,6 +50,13 @@ class BTree {
   }
 
   insert(key, captureStep) {
+    const isReactive = document.getElementById('btSplitToggle')?.checked;
+
+    if (isReactive) {
+      this.insertReactive(this.root, null, 0, key, captureStep);
+      return;
+    }
+
     const root = this.root;
     if (root.keys.length === 2 * this.t - 1) {
       const newRoot = new BTreeNode(false);
@@ -63,6 +70,55 @@ class BTree {
       this.insertNonFull(newRoot, key, captureStep);
     } else {
       this.insertNonFull(root, key, captureStep);
+    }
+  }
+
+  insertReactive(node, parent, childIndex, key, captureStep) {
+    let i = node.keys.length - 1;
+
+    if (node.leaf) {
+      while (i >= 0 && key < node.keys[i]) i -= 1;
+      node.keys.splice(i + 1, 0, key);
+      captureStep(`Inserted key ${key} into a leaf node (Reactive).`, {
+        highlightNodes: [node.id],
+        promotedKey: null,
+        searchKey: null,
+      });
+
+      this.resolveOverflow(node, parent, childIndex, captureStep);
+      return;
+    }
+
+    while (i >= 0 && key < node.keys[i]) i -= 1;
+    i += 1;
+    captureStep('Descending into child (Reactive).', {
+      highlightNodes: [node.id, node.children[i].id],
+      promotedKey: null,
+      searchKey: null,
+    });
+
+    this.insertReactive(node.children[i], node, i, key, captureStep);
+
+    // Reactive split cascade happens on the way up during recursion backtrack!
+    this.resolveOverflow(node, parent, childIndex, captureStep);
+  }
+
+  resolveOverflow(node, parent, childIndex, captureStep) {
+    if (node.keys.length <= 2 * this.t - 1) return; // No overflow
+
+    captureStep(`Node overflow detected in Reactive mode. Splitting node and promoting median.`, {
+      highlightNodes: [node.id],
+      promotedKey: null,
+      searchKey: null,
+    });
+
+    if (!parent) {
+      const newRoot = new BTreeNode(false);
+      newRoot.children[0] = node;
+      this.root = newRoot;
+      this.splitChild(newRoot, 0, captureStep);
+    } else {
+      this.splitChild(parent, childIndex, captureStep);
     }
   }
 
@@ -347,6 +403,38 @@ function resetAll() {
   updatePlaybackButtons();
 }
 
+function runRandomFill() {
+  stopPlayback();
+  const degree = parseInt(document.getElementById('btDegree')?.value || '2', 10);
+  if (Number.isFinite(degree) && degree !== btState.tree.t) {
+    btState.tree.setDegree(degree);
+    resetAll(); // Clear tree to apply new degree
+  }
+
+  btState.steps = [];
+  btState.stepIndex = 0;
+
+  for (let i = 0; i < 10; i++) {
+    const key = Math.floor(Math.random() * 100) + 1;
+    btState.tree.insert(key, (message, extras) => {
+      btState.steps.push({
+        tree: cloneTree(btState.tree.root),
+        message,
+        highlightNodes: extras.highlightNodes || [],
+        promotedKey: extras.promotedKey ?? null,
+        searchKey: null,
+      });
+    });
+  }
+
+  applyStep(0);
+  btState.stepIndex = 1;
+  btSetStatus(`Auto-Filled 10 Random Keys.`);
+  btSetExplanation(`Inserted 10 random keys to trigger splitting cascades.`);
+  updatePlaybackButtons();
+  play();
+}
+
 function runInsert() {
   stopPlayback();
   const degree = parseInt(document.getElementById('btDegree')?.value || '2', 10);
@@ -490,15 +578,30 @@ function initHeroTyping() {
 
 function initBTreeVisualizer() {
   initHeroTyping();
+
+  const splitToggle = document.getElementById('btSplitToggle');
+  const splitModeLabel = document.getElementById('splitModeLabel');
+  if (splitToggle) {
+    splitToggle.addEventListener('change', (e) => {
+      splitModeLabel.textContent = e.target.checked
+        ? 'Reactive (Cascade Up)'
+        : 'Proactive (Split On Way Down)';
+      resetAll();
+    });
+  }
+
   const insertBtn = document.getElementById('btInsertBtn');
   const searchBtn = document.getElementById('btSearchBtn');
+  const randomBtn = document.getElementById('btRandomBtn');
   const prevBtn = document.getElementById('btPrevBtn');
   const nextBtn = document.getElementById('btNextBtn');
   const playBtn = document.getElementById('btPlayBtn');
   const pauseBtn = document.getElementById('btPauseBtn');
   const resetBtn = document.getElementById('btResetBtn');
+
   if (insertBtn) insertBtn.addEventListener('click', runInsert);
   if (searchBtn) searchBtn.addEventListener('click', runSearch);
+  if (randomBtn) randomBtn.addEventListener('click', runRandomFill);
   if (prevBtn) prevBtn.addEventListener('click', prev);
   if (nextBtn) nextBtn.addEventListener('click', next);
   if (playBtn) playBtn.addEventListener('click', play);

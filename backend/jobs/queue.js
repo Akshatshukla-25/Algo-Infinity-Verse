@@ -15,8 +15,17 @@ let dsaBattleQueue = null;
 let redisAvailable = false;
 export let redisClient = null;
 
+export function createRedisClient(options = {}) {
+  const isCluster = process.env.REDIS_CLUSTER_MODE === 'true';
+  const urls = (process.env.REDIS_URL || 'redis://127.0.0.1:6379').split(',');
+  if (isCluster) {
+    return new IORedis.Cluster(urls, { redisOptions: options });
+  }
+  return new IORedis(urls[0], options);
+}
+
 async function checkRedis() {
-  const probe = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+  const probe = createRedisClient({
     maxRetriesPerRequest: 1,
     connectTimeout: 1000,
     retryStrategy: () => null,
@@ -27,7 +36,7 @@ async function checkRedis() {
   try {
     await probe.ping();
     redisAvailable = true;
-    redisClient = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+    redisClient = createRedisClient({
       maxRetriesPerRequest: null,
       enableOfflineQueue: false,
     });

@@ -4,12 +4,19 @@
 
 const visualizers = [
   {
+    name: 'Generational GC: CMS vs G1',
+    path: '/pages/visualizers/generational-gc-profiler/generational-gc-profiler.html',
+    category: 'System Design',
+    icon: 'fa-trash-alt',
+    desc: 'Visualize and profile Stop-The-World pause times between CMS and G1 garbage collection algorithms.',
+  },
+  {
     name: 'Eventual Consistency Anti-Entropy Gossip Protocol',
     path: '/pages/visualizers/eventual-consistency-gossip/eventual-consistency-gossip.html',
     category: 'Distributed Systems',
     icon: 'fa-network-wired',
     desc: 'Visualize how databases like Cassandra use Gossip Protocol and Merkle Trees to achieve eventual consistency and repair stale nodes via anti-entropy.',
-    },
+  },
   {
     name: 'Redis Cluster Hash Slot Migration Storm',
     path: '/pages/visualizers/redis-cluster-migration-storm/redis-cluster-migration-storm.html',
@@ -835,6 +842,13 @@ const visualizers = [
     category: 'Distributed Systems',
     icon: 'fa-network-wired',
     desc: 'Load balance perfectly without using any Consistent Hash Rings.',
+  },
+  {
+    name: 'PoW vs PoS Sybil Simulator',
+    path: '/pages/visualizers/sybil-attack-simulator/sybil-attack-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-shield-alt',
+    desc: 'Visualize how Proof-of-Work and Proof-of-Stake defend against 51% Sybil attacks.',
   },
   {
     name: 'Raft Simulator',

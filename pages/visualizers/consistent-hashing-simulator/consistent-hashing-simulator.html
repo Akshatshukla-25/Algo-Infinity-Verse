@@ -3,143 +3,175 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Consistent Hashing Visualizer | Algo Infinity Verse</title>
+    <title>Consistent Hashing & Virtual Nodes | Algo Infinity Verse</title>
     <meta
       name="description"
-      content="Visualize consistent hashing on a ring, showing how nodes and keys are mapped and how minimal remapping occurs when nodes join or leave."
+      content="Interactive visualizer for Consistent Hashing. Simulates Cascading Failures and Virtual Node (vNode) load balancing on a distributed hash ring."
     />
-    <link rel="stylesheet" href="/styles.css" />
-    <link rel="stylesheet" href="consistent-hashing-simulator.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <link rel="stylesheet" href="/modules/quick-notes/quick-notes.css" />
+    <link rel="stylesheet" href="../../../styles.css" />
+    <link rel="stylesheet" href="consistent-hashing-simulator.css" />
+    <script src="../../../modules/toast.js"></script>
   </head>
-  <body>
-    <nav class="navbar">
-      <div class="logo">Algo Infinity Verse</div>
-      <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/pages/visualizers/visualizers.html">Visualizers</a>
-      </div>
-    </nav>
+  <body class="ch-body">
+    <div id="navbar-placeholder"></div>
 
-    <div class="container">
-      <header class="header">
-        <h1>Consistent Hashing & Distributed Cache Simulator</h1>
-        <p>
-          Understand how distributed systems balance load and handle node failures with minimal key
-          remapping.
+    <section class="ch-hero">
+      <div class="ch-hero-bg"></div>
+      <div class="ch-hero-inner">
+        <div class="ch-eyebrow">Distributed Systems Architecture</div>
+        <h1 class="ch-title">Consistent Hashing</h1>
+        <p class="ch-desc">
+          Visualize how distributed databases map keys to nodes on a hash ring. Discover the fatal
+          flaw of <strong>Cascading Failures</strong>, and physically see how
+          <strong>Virtual Nodes</strong> mathematically rescue clusters under extreme load.
         </p>
-      </header>
+      </div>
+    </section>
 
-      <main class="simulator-layout">
-        <aside class="controls-panel">
-          <div class="control-group">
-            <label>Node Management</label>
-            <div class="button-group">
-              <button id="add-node-btn" class="primary-btn">
-                <i class="fa-solid fa-server"></i> Add Node
+    <div class="ch-dashboard container">
+      <!-- Top Layout: Controls and Cluster Health -->
+      <div class="ch-top-grid">
+        <!-- Controls Panel -->
+        <div class="ch-panel glass-panel">
+          <div class="ch-panel-header"><i class="fas fa-server"></i> Cluster Controls</div>
+
+          <div class="ch-control-group">
+            <label>Physical Node Management</label>
+            <div class="ch-btn-group">
+              <button class="btn btn-primary" id="btnAddNode">
+                <i class="fas fa-plus"></i> Add Node
               </button>
-              <button id="remove-node-btn" class="secondary-btn">
-                <i class="fa-solid fa-trash"></i> Remove Node
+              <button class="btn btn-secondary" id="btnRemoveNode">
+                <i class="fas fa-minus"></i> Remove Node
               </button>
             </div>
           </div>
 
-          <div class="control-group" style="margin-top: 1rem">
-            <label for="key-input">Cache Data Key</label>
-            <div style="display: flex; gap: 0.5rem">
-              <input type="text" id="key-input" placeholder="e.g., user_123" style="flex: 1" />
-              <button id="route-key-btn" class="primary-btn">Route</button>
+          <div class="ch-control-group mt-4 border-top">
+            <label class="text-success"
+              ><i class="fas fa-network-wired"></i> Virtual Nodes (vNodes)</label
+            >
+            <div class="toggle-row">
+              <span class="text-sm">Map 4 Virtual Replicas per Physical Node</span>
+              <label class="switch">
+                <input type="checkbox" id="vNodeToggle" />
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <p class="ch-hint mt-2">
+              vNodes slice the hash space evenly, dispersing load fairly across the cluster.
+            </p>
+          </div>
+
+          <div class="ch-control-group mt-4 border-top">
+            <label class="text-danger"><i class="fas fa-meteor"></i> Disaster Scenarios</label>
+            <button class="btn btn-danger w-100 mb-2" id="btnTrafficSpike">
+              <i class="fas fa-bolt"></i> Trigger Targeted Traffic Spike
+            </button>
+            <p class="ch-hint">
+              Pumps 150 keys into a concentrated hash sector. Watch out for cascading meltdowns!
+            </p>
+          </div>
+
+          <div class="ch-control-group mt-4 border-top">
+            <button class="btn btn-warning w-100" id="btnResetCluster">
+              <i class="fas fa-sync"></i> Hard Reset Cluster
+            </button>
+          </div>
+        </div>
+
+        <!-- Health Dashboard -->
+        <div class="ch-panel glass-panel">
+          <div class="ch-panel-header">
+            <i class="fas fa-heartbeat"></i> Cluster Health & Load Balance
+          </div>
+
+          <div class="ch-stats-grid mb-3">
+            <div class="ch-stat-card">
+              <div class="stat-label">Physical Nodes</div>
+              <div class="stat-value" id="statPhysical">0</div>
+            </div>
+            <div class="ch-stat-card">
+              <div class="stat-label">Virtual Nodes</div>
+              <div class="stat-value text-success" id="statVirtual">0</div>
+            </div>
+            <div class="ch-stat-card">
+              <div class="stat-label">Total Keys</div>
+              <div class="stat-value" id="statKeys">0</div>
             </div>
           </div>
 
-          <div class="control-group" style="margin-top: 1rem">
-            <label>Bounded Loads</label>
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-              <input type="checkbox" id="bounded-loads-toggle" />
-              <label for="bounded-loads-toggle" style="font-size: 0.85rem; cursor: pointer;">Enable Capacity Constraints</label>
+          <div class="ch-variance-container">
+            <div class="ch-flex-between mb-2">
+              <span class="text-sm font-orbitron">Load Distribution Variance (StdDev)</span>
+              <span class="text-sm font-fira text-primary" id="statVariance">0.00</span>
             </div>
-            <div id="c-factor-group" style="display: none; margin-top: 0.75rem;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666;">
-                <span>Load Factor (c)</span>
-                <span id="c-factor-val">1.25</span>
-              </div>
-              <input type="range" id="c-factor-slider" min="1.0" max="2.0" step="0.05" value="1.25" style="width: 100%;" />
+            <p class="ch-hint mb-3">
+              Lower variance means fairer distribution. Watch vNodes flatten this chart.
+            </p>
+            <div class="ch-bar-chart" id="varianceChart">
+              <!-- Bars injected dynamically -->
             </div>
-          </div>
-
-          <div class="stats-container">
-            <h3>Current State</h3>
-            <p>Total Nodes: <span id="stat-nodes">3</span></p>
-            <p>Total Keys Cached: <span id="stat-keys">0</span></p>
-          </div>
-
-          <div class="logs-container">
-            <h3>Event Logs</h3>
-            <div id="logs-area" class="logs-area"></div>
-          </div>
-        </aside>
-
-        <section class="visualization-panel">
-          <div class="ring-container" id="ring-container">
-            <svg width="400" height="400" viewBox="-200 -200 400 400" id="hash-ring-svg">
-              <circle cx="0" cy="0" r="160" fill="none" stroke="#e2e8f0" stroke-width="20" />
-              <circle
-                cx="0"
-                cy="0"
-                r="160"
-                fill="none"
-                stroke="#4facfe"
-                stroke-width="4"
-                stroke-dasharray="1000"
-                class="ring-active"
-              />
-            </svg>
-            <!-- Nodes and Keys will be positioned absolutely here -->
           </div>
 
           <div
-            class="variance-container"
-            style="
-              margin-top: 2rem;
-              padding: 1rem;
-              background: #fff;
-              border-radius: 8px;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            "
+            class="ch-log-container mt-4"
+            id="chLog"
+            role="log"
+            aria-live="polite"
+            aria-label="Cluster event log"
           >
-            <h3>Key Distribution Variance</h3>
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem">
-              Shows the load balance across all nodes. Lower variance is better.
-            </p>
-            <div
-              id="variance-chart"
-              style="
-                display: flex;
-                align-items: flex-end;
-                gap: 0.5rem;
-                height: 120px;
-                border-bottom: 2px solid #e2e8f0;
-                padding-bottom: 0.5rem;
-              "
-            >
-              <!-- Bars will be injected here dynamically -->
-            </div>
-            <div
-              id="variance-stats"
-              style="margin-top: 1rem; font-weight: 600; font-family: monospace"
-            >
-              Variance: 0.00
-            </div>
+            <!-- Event Logs -->
           </div>
-        </section>
-      </main>
+        </div>
+      </div>
+
+      <!-- Bottom Layout: Visualizer Canvas -->
+      <div class="ch-panel glass-panel mt-4 ch-visualizer-panel">
+        <div class="ch-panel-header">
+          <i class="fas fa-circle-notch"></i> The Hash Ring <code>[0, 360°)</code>
+        </div>
+
+        <div class="ch-legend">
+          <div class="ch-leg-item"><span class="ch-dot dot-node"></span> Physical Node</div>
+          <div class="ch-leg-item"><span class="ch-dot dot-vnode"></span> Virtual Node</div>
+          <div class="ch-leg-item"><span class="ch-dot dot-key"></span> Data Key</div>
+          <div class="ch-leg-item"><span class="ch-dot dot-crash"></span> Crashed Node</div>
+        </div>
+
+        <div class="ch-ring-wrapper" id="ringWrapper">
+          <!-- Rendered via HTML5 Canvas -->
+          <canvas
+            id="chCanvas"
+            role="img"
+            aria-label="Hash ring visualization. Read the cluster health metrics and event log for the same information in text form."
+          ></canvas>
+        </div>
+      </div>
     </div>
 
+    <div id="footer-placeholder"></div>
+
+    <script src="../../../auth.js"></script>
+    <script src="../../../script.js"></script>
+    <script src="../../../theme.js"></script>
+    <script src="../../../auth-gate.js"></script>
     <script src="consistent-hashing-simulator.js"></script>
-    <script src="/modules/quick-notes/quick-notes.js"></script>
+    <script>
+      if (typeof loadPartial === 'function') {
+        loadPartial('navbar-placeholder', '/partials/navbar.html').then(function () {
+          if (typeof initNavbar === 'function') initNavbar();
+        });
+        loadPartial('footer-placeholder', '/partials/footer.html');
+      }
+    </script>
   </body>
 </html>

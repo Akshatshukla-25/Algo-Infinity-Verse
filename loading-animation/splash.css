@@ -153,15 +153,6 @@
   border-radius: 2px;
 }
 
-@media (max-width: 480px) {
-  .splash-skip-btn {
-    bottom: 18px;
-    right: 18px;
-    font-size: 0.7rem;
-    padding: 4px 10px;
-  }
-}
-
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .cursor {
@@ -181,6 +172,13 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  /* Skip button is hidden on small viewports to declutter the screen.
+     Skipping stays available via tapping the loading screen (touch) or
+     pressing the ">" key (keyboard). */
+  .splash-skip-btn {
+    display: none;
+  }
+
   .infinity-wrapper {
     width: 140px;
     height: 112px;
