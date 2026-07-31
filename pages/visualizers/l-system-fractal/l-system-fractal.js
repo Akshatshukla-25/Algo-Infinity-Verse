@@ -150,7 +150,6 @@ async function growStep() {
     console.warn('L-System reached memory limit');
     return;
   }
-
   // Disable buttons
   els.drawBtn.disabled = true;
   els.animateBtn.disabled = true;
