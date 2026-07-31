@@ -260,17 +260,31 @@
         }
         document.addEventListener('keydown', onSplashKeydown);
 
-        // Clean up the keyboard listener when the animation completes or is skipped
+        // Touch fallback: the skip button is hidden below 768px, so tapping
+        // anywhere on the loading screen skips the animation instead. Taps on
+        // the button itself are ignored to avoid skipping twice.
+        function onSplashTap(e) {
+          if (e.target && e.target.closest && e.target.closest('.splash-skip-btn')) return;
+          window.__skipLoading();
+        }
+        ls.addEventListener('click', onSplashTap);
+
+        // Clean up the listeners when the animation completes or is skipped
+        function removeSplashListeners() {
+          document.removeEventListener('keydown', onSplashKeydown);
+          ls.removeEventListener('click', onSplashTap);
+        }
+
         var _origComplete = tl.eventCallback('onComplete');
         tl.eventCallback('onComplete', function() {
-          document.removeEventListener('keydown', onSplashKeydown);
+          removeSplashListeners();
           if (typeof _origComplete === 'function') _origComplete();
         });
 
-        // Wrap __skipLoading to also clean up the listener
+        // Wrap __skipLoading to also clean up the listeners
         var _origSkip = window.__skipLoading;
         window.__skipLoading = function() {
-          document.removeEventListener('keydown', onSplashKeydown);
+          removeSplashListeners();
           _origSkip();
         };
       })();
