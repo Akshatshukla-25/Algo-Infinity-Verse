@@ -31,13 +31,31 @@ const emptyState = document.getElementById('ppEmpty');
 const countDisplay = document.getElementById('ppCountDisplay');
 const totalDisplay = document.getElementById('ppTotalDisplay');
 const resetEmptyBtn = document.getElementById('ppEmptyResetBtn');
+const aiRecommendBtn = document.getElementById('ppAiRecommendBtn');
+const aiRecommendStatusMsg = document.getElementById('ppAiRecommendStatusMsg');
+const aiRecommendDebounceInput = document.getElementById('ppAiRecommendDebounceInput');
+const aiRecommendDisableToggle = document.getElementById('ppAiRecommendDisableToggle');
 
 /* ─── State ─── */
 let activeDifficulty = 'all';
 let activeCategory = 'all';
 let searchQuery = '';
 let surpriseProblemId = null;
+let aiRecommendDebounceTimer = null;
+let aiRecommendAbortController = null;
 const pageReferrer = document.referrer;
+
+const recommendationCategoryAliases = {
+  'linked list': 'linkedlist',
+  'linked-list': 'linkedlist',
+  'linkedlist': 'linkedlist',
+  'dynamic programming': 'dp',
+  'dp': 'dp',
+  'graphs': 'graphs',
+  'arrays': 'arrays',
+  'strings': 'strings',
+  'trees': 'trees',
+};
 
 /* ─── Build filter chips ─── */
 function buildFilters() {
@@ -186,6 +204,132 @@ function escHtml(str) {
   return d.innerHTML;
 }
 
+function setAiStatus(message, tone = 'info') {
+  if (!aiRecommendStatusMsg) return;
+
+  aiRecommendStatusMsg.textContent = message;
+  aiRecommendStatusMsg.title = '';
+  aiRecommendStatusMsg.style.opacity = '1';
+  aiRecommendStatusMsg.style.color =
+    tone === 'success' ? '#86efac' : tone === 'error' ? '#fca5a5' : 'var(--text-secondary)';
+}
+
+
+function updateCategoryChipState(categoryKey) {
+  if (!catContainer) return;
+
+  catContainer.querySelectorAll('.pp-filter-chip').forEach((chip) => {
+    const isActive = chip.dataset.category === categoryKey;
+    chip.classList.toggle('active', isActive);
+  });
+}
+
+function resolveRecommendationCategory(topic) {
+  if (!topic) return 'all';
+
+  const normalized = String(topic).trim().toLowerCase();
+  if (categoryDisplayToKey[normalized]) {
+    return categoryDisplayToKey[normalized];
+  }
+
+  const aliasKey = recommendationCategoryAliases[normalized];
+  if (aliasKey) return aliasKey;
+
+  if (Object.values(categoryDisplayToKey).includes(normalized)) {
+    return normalized;
+  }
+
+  return 'all';
+}
+
+async function runAiRecommendation() {
+  const shouldDisableDuringFetch = aiRecommendDisableToggle?.checked;
+  const previousAbortController = aiRecommendAbortController;
+
+  if (previousAbortController) {
+    previousAbortController.abort();
+  }
+
+  const nextAbortController = new AbortController();
+  aiRecommendAbortController = nextAbortController;
+
+  if (aiRecommendBtn) {
+    aiRecommendBtn.disabled = shouldDisableDuringFetch;
+    aiRecommendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finding...';
+  }
+
+  setAiStatus('Waiting...', 'info');
+
+  try {
+    const response = await fetch('/api/recommendations/next', {
+      credentials: 'include',
+      signal: nextAbortController.signal,
+    });
+
+    if (response.status === 401) {
+      setAiStatus('Please sign in to use AI recommendations.', 'error');
+      return;
+    }
+
+    const data = await response.json();
+    if (!data.success || !data.recommendation?.topic) {
+      setAiStatus('No recommendation is available right now.', 'error');
+      return;
+    }
+
+    const topic = data.recommendation.topic;
+    const categoryKey = resolveRecommendationCategory(topic);
+    activeCategory = categoryKey;
+    updateCategoryChipState(categoryKey);
+    render();
+
+    const reason = data.recommendation.reason || 'Explore this topic to keep your streak moving.';
+    const tip = data.recommendation.aiTip || '';
+    const finalStatus = `${topic.toUpperCase()} — ${reason}${tip ? ` Tip: ${tip}` : ''}`;
+    setAiStatus(`New result — ${finalStatus}`, 'success');
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      if (aiRecommendAbortController === nextAbortController && aiRecommendStatusMsg) {
+        aiRecommendStatusMsg.textContent = 'Request cancelled';
+        aiRecommendStatusMsg.title = '';
+      }
+      return;
+    }
+    console.error('AI recommend error:', error);
+    setAiStatus('Something went wrong while fetching a recommendation.', 'error');
+  } finally {
+    if (aiRecommendAbortController === nextAbortController) {
+      aiRecommendAbortController = null;
+      if (aiRecommendBtn) {
+        aiRecommendBtn.disabled = false;
+        aiRecommendBtn.innerHTML = '<i class="fas fa-magic"></i> <span>AI Recommend Next</span>';
+      }
+    }
+  }
+}
+
+function queueAiRecommendation() {
+  if (!aiRecommendBtn) return;
+
+  if (aiRecommendDebounceTimer) {
+    clearTimeout(aiRecommendDebounceTimer);
+  }
+  if (aiRecommendAbortController) {
+    aiRecommendAbortController.abort();
+    aiRecommendAbortController = null;
+  }
+
+  const debounceDelay = Number.parseInt(aiRecommendDebounceInput?.value || '500', 10);
+  const safeDelay = Number.isFinite(debounceDelay) ? Math.max(0, debounceDelay) : 500;
+
+  setAiStatus('Waiting...', 'info');
+
+  aiRecommendDebounceTimer = setTimeout(() => {
+    aiRecommendDebounceTimer = null;
+    runAiRecommendation();
+  }, safeDelay);
+}
+
 /* ─── Search ─── */
 searchInput.addEventListener('input', () => {
   searchQuery = searchInput.value;
@@ -200,6 +344,19 @@ clearBtn.addEventListener('click', () => {
   render();
   searchInput.focus();
 });
+
+if (aiRecommendBtn) {
+  aiRecommendBtn.addEventListener('click', queueAiRecommendation);
+}
+
+if (aiRecommendDebounceInput) {
+  aiRecommendDebounceInput.addEventListener('change', () => {
+    const value = Number.parseInt(aiRecommendDebounceInput.value, 10);
+    if (Number.isFinite(value)) {
+      aiRecommendDebounceInput.value = String(Math.max(0, Math.min(5000, value)));
+    }
+  });
+}
 
 /* ─── Card click: open code editor ─── */
 grid.addEventListener('click', (e) => {
@@ -389,6 +546,11 @@ if (urlParams.has('search')) {
   searchQuery = searchInput.value;
   clearBtn.classList.toggle('visible', searchQuery.length > 0);
 }
+
+window.addEventListener('beforeunload', () => {
+  if (aiRecommendDebounceTimer) clearTimeout(aiRecommendDebounceTimer);
+  if (aiRecommendAbortController) aiRecommendAbortController.abort();
+});
 
 // Data scripts (data/practice-problems.js) load synchronously before this file,
 // so window.practiceProblems is guaranteed to be populated.
