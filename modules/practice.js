@@ -159,12 +159,12 @@ function initPracticeSection() {
   });
 }
 
-function getFilteredProblems() {
+async function getFilteredProblems() {
   const userProgress = window.userProgress || {};
   const practiceProblems = window.practiceProblems || [];
   let filtered = practiceProblems;
   if (currentSearch && window.dsaSearchEngine) {
-    filtered = window.dsaSearchEngine.search(currentSearch);
+    filtered = await window.dsaSearchEngine.search(currentSearch);
   } else if (currentSearch) {
     const searchLower = currentSearch.toLowerCase();
     filtered = filtered.filter(
@@ -174,21 +174,23 @@ function getFilteredProblems() {
     );
   }
   if (currentFilter !== 'all') {
-    if (currentFilter === 'favorites') filtered = filtered.filter(p => userProgress.favoriteProblems?.includes(p.id));
-    else filtered = filtered.filter(p => p.difficulty === currentFilter);
+    if (currentFilter === 'favorites')
+      filtered = filtered.filter((p) => userProgress.favoriteProblems?.includes(p.id));
+    else filtered = filtered.filter((p) => p.difficulty === currentFilter);
   }
   // Topic filter
   if (currentTopic !== 'all') {
-    filtered = filtered.filter(p =>
-      p.category === currentTopic ||
-      p.tags?.some(tag => tag.toLowerCase().includes(currentTopic.toLowerCase()))
+    filtered = filtered.filter(
+      (p) =>
+        p.category === currentTopic ||
+        p.tags?.some((tag) => tag.toLowerCase().includes(currentTopic.toLowerCase()))
     );
   }
   return filtered;
 }
 
-function renderProblems() {
-  const filtered = getFilteredProblems();
+async function renderProblems() {
+  const filtered = await getFilteredProblems();
   const totalProblems = filtered.length;
 
   const visibleCountEl = document.getElementById('visible-count');
