@@ -84,17 +84,22 @@ TypeScript Academy
                     </div>
 
                     <div class="w-full md:w-1/2 h-1/2 md:h-full flex flex-col bg-white">
-                        <div class="bg-gray-100 text-gray-600 text-xs py-2 px-4 border-b border-gray-200 flex items-center font-sans">
-                            <div class="flex space-x-1.5 mr-3">
-                                <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                        <div class="flex-1 flex flex-col min-h-0 border-b border-gray-200">
+                            <div class="bg-gray-100 text-gray-600 text-xs py-2 px-4 border-b border-gray-200 flex items-center font-sans">
+                                <div class="flex space-x-1.5 mr-3">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                                </div>
+                                <div class="bg-white px-3 py-0.5 rounded border text-[10px] flex-1 text-center text-gray-400 mx-2 shadow-inner">
+                                    <i class="fa-solid fa-lock text-gray-300 mr-1"></i> TypeScript Playground
+                                </div>
                             </div>
-                            <div class="bg-white px-3 py-0.5 rounded border text-[10px] flex-1 text-center text-gray-400 mx-2 shadow-inner">
-                                <i class="fa-solid fa-lock text-gray-300 mr-1"></i> TypeScript Playground
-                            </div>
+                            <iframe id="preview-frame" class="flex-1 w-full border-none" sandbox="allow-scripts allow-popups allow-modals"></iframe>
                         </div>
-                        <iframe id="preview-frame" class="flex-1 w-full border-none" sandbox="allow-scripts allow-popups allow-modals"></iframe>
+                        <div class="h-1/3 min-h-[150px] flex flex-col">
+                            <div id="ts-terminal" class="h-full w-full"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -106,6 +111,7 @@ TypeScript Academy
     </main>
 
       <script src="/modules/eli5-toggle.js"></script>
+      <script src="/modules/mini-terminal.js"></script>
 <script src="/modules/eli5-ts-data.js"></script>
 <script src="typescript-academy.js"></script>
   <script src="/modules/copy-code.js"></script>
