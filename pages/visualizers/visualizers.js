@@ -175,11 +175,11 @@ const visualizers = [
     desc: 'Visualize binomial heap merge and extract-min operations.',
   },
   {
-  name: 'Interval Tree Visualizer',
-  path: '/pages/visualizers/interval-tree/interval-tree.html',
-  category: 'Data Structures',
-  icon: 'fa-ruler-horizontal',
-  desc: 'Augmented BST storing intervals — max-endpoint pruning, overlap queries, and calendar conflict detection in O(log n + k).',
+    name: 'Interval Tree Visualizer',
+    path: '/pages/visualizers/interval-tree/interval-tree.html',
+    category: 'Data Structures',
+    icon: 'fa-ruler-horizontal',
+    desc: 'Augmented BST storing intervals — max-endpoint pruning, overlap queries, and calendar conflict detection in O(log n + k).',
   },
 
   // ── Graph Algorithms ──
@@ -1068,6 +1068,13 @@ const visualizers = [
     category: 'Systems & OS',
     icon: 'fa-tower-broadcast',
     desc: 'Visualize Peer-to-Peer connections, STUN hole-punching, and TURN relays.',
+  },
+  {
+    name: 'Multi-Ruleset Cellular Automata Sandbox',
+    path: '/pages/visualizers/cellular-automata/cellular-automata.html',
+    category: 'Special',
+    icon: 'fa-dice',
+    desc: "Explore Conway's Life, Wireworld, and Brian's Brain cellular automata with interactive editing and presets.",
   },
 ];
 
