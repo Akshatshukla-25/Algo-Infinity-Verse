@@ -2246,7 +2246,6 @@ const visualizers = [
     category: 'Systems & OS',
     icon: 'fa-server',
     desc: 'Simulate a microservices architecture — refresh, scale, and inject failures across services and watch health status update live.',
->>>>>>> origin/main
   },
 ];
 
