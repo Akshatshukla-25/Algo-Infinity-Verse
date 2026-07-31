@@ -5,9 +5,18 @@ const ROWS = 50;
 // Simulation State
 let currentGrid = createGrid();
 let isPlaying = false;
-let animationFrameId = null;
-let lastTickTime = 0;
 let generation = 0;
+
+// Web Worker Initialization
+const physicsWorker = new Worker('physicsWorker.js');
+physicsWorker.onmessage = function(e) {
+  if (e.data.type === 'TICK') {
+    currentGrid = e.data.grid;
+    generation = e.data.generation;
+    updateTelemetry();
+    draw();
+  }
+};
 
 // Viewport Zoom & Pan State
 let scale = 1;
@@ -43,7 +52,7 @@ const rulesDescription = document.getElementById('rulesDescription');
 const telemetryCanvas = document.getElementById('telemetryCanvas');
 const telemetryCtx = telemetryCanvas?.getContext('2d');
 
-// Ruleset Definitions
+// Ruleset Definitions (Visuals only, logic offloaded to worker)
 const RULESETS = {
   conway: {
     name: "Conway's Game of Life",
@@ -54,21 +63,6 @@ const RULESETS = {
     description: `- Any live cell with 2 or 3 live neighbours survives.<br>
                   - Any dead cell with exactly 3 live neighbours becomes a live cell.<br>
                   - All other live cells die in the next generation.`,
-    step: (grid) => {
-      const next = createGrid();
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const neighbors = countNeighbors(grid, r, c, 1);
-          const state = grid[r][c];
-          if (state === 1) {
-            next[r][c] = neighbors === 2 || neighbors === 3 ? 1 : 0;
-          } else {
-            next[r][c] = neighbors === 3 ? 1 : 0;
-          }
-        }
-      }
-      return next;
-    },
   },
   wireworld: {
     name: 'Wireworld',
@@ -82,25 +76,6 @@ const RULESETS = {
                   - Electron Heads become Electron Tails.<br>
                   - Electron Tails become Conductors.<br>
                   - Conductors become Electron Heads if exactly 1 or 2 of their neighbors are Electron Heads.`,
-    step: (grid) => {
-      const next = createGrid();
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const state = grid[r][c];
-          if (state === 0) {
-            next[r][c] = 0;
-          } else if (state === 1) {
-            next[r][c] = 2; // Head to Tail
-          } else if (state === 2) {
-            next[r][c] = 3; // Tail to Conductor
-          } else if (state === 3) {
-            const heads = countNeighbors(grid, r, c, 1);
-            next[r][c] = heads === 1 || heads === 2 ? 1 : 3;
-          }
-        }
-      }
-      return next;
-    },
   },
   briansBrain: {
     name: "Brian's Brain",
@@ -112,23 +87,6 @@ const RULESETS = {
     description: `- Off cells turn On if exactly 2 neighbors are On.<br>
                   - On cells become Dying.<br>
                   - Dying cells turn Off.`,
-    step: (grid) => {
-      const next = createGrid();
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const state = grid[r][c];
-          if (state === 1) {
-            next[r][c] = 2; // On to Dying
-          } else if (state === 2) {
-            next[r][c] = 0; // Dying to Off
-          } else if (state === 0) {
-            const activeNeighbors = countNeighbors(grid, r, c, 1);
-            next[r][c] = activeNeighbors === 2 ? 1 : 0;
-          }
-        }
-      }
-      return next;
-    },
   },
 };
 
@@ -400,6 +358,7 @@ function handleDraw(e) {
         }
       }
     }
+    physicsWorker.postMessage({ type: 'UPDATE_GRID', grid: currentGrid });
     draw();
     updateTelemetry();
   }
@@ -566,29 +525,18 @@ function loadPreset(presetName) {
 
   draw();
   updateTelemetry();
+  
+  physicsWorker.postMessage({ 
+    type: 'INIT', 
+    grid: currentGrid, 
+    generation: 0, 
+    ruleset: rulesetSelect.value 
+  });
 }
 
-// Simulation Control Loop
+// Simulation Control
 function tick() {
-  const ruleset = RULESETS[rulesetSelect.value];
-  currentGrid = ruleset.step(currentGrid);
-  generation++;
-  updateTelemetry();
-  draw();
-}
-
-function loop(timestamp) {
-  if (!isPlaying) return;
-
-  const fps = parseInt(speedRange.value, 10);
-  const interval = 1000 / fps;
-
-  if (timestamp - lastTickTime >= interval) {
-    tick();
-    lastTickTime = timestamp;
-  }
-
-  animationFrameId = requestAnimationFrame(loop);
+  physicsWorker.postMessage({ type: 'STEP' });
 }
 
 // Event Listeners for controls
@@ -601,10 +549,18 @@ rulesetSelect.addEventListener('change', () => {
   populationHistory = [];
   updateTelemetry();
   draw();
+  
+  physicsWorker.postMessage({ 
+    type: 'INIT', 
+    grid: currentGrid, 
+    generation: 0, 
+    ruleset: rulesetSelect.value 
+  });
 });
 
 speedRange.addEventListener('input', () => {
   speedDisplay.textContent = speedRange.value;
+  physicsWorker.postMessage({ type: 'UPDATE_SPEED', fps: parseInt(speedRange.value, 10) });
 });
 
 brushSizeRange.addEventListener('input', () => {
@@ -623,8 +579,7 @@ startBtn.addEventListener('click', () => {
     isPlaying = true;
     startBtn.style.display = 'none';
     pauseBtn.style.display = 'inline-block';
-    lastTickTime = performance.now();
-    animationFrameId = requestAnimationFrame(loop);
+    physicsWorker.postMessage({ type: 'START', fps: parseInt(speedRange.value, 10) });
   }
 });
 
@@ -633,7 +588,7 @@ pauseBtn.addEventListener('click', () => {
     isPlaying = false;
     pauseBtn.style.display = 'none';
     startBtn.style.display = 'inline-block';
-    cancelAnimationFrame(animationFrameId);
+    physicsWorker.postMessage({ type: 'STOP' });
   }
 });
 
@@ -647,12 +602,13 @@ clearBtn.addEventListener('click', () => {
   isPlaying = false;
   pauseBtn.style.display = 'none';
   startBtn.style.display = 'inline-block';
-  cancelAnimationFrame(animationFrameId);
   currentGrid = createGrid();
   generation = 0;
   populationHistory = [];
   updateTelemetry();
   draw();
+  physicsWorker.postMessage({ type: 'STOP' });
+  physicsWorker.postMessage({ type: 'INIT', grid: currentGrid, generation: 0, ruleset: rulesetSelect.value });
 });
 
 // Setup on load
@@ -663,3 +619,9 @@ updateDrawStateDropdown();
 updateRulesInfo();
 resizeCanvas();
 updateTelemetry();
+physicsWorker.postMessage({ 
+  type: 'INIT', 
+  grid: currentGrid, 
+  generation: 0, 
+  ruleset: rulesetSelect.value 
+});
