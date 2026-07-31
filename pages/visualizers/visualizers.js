@@ -1554,6 +1554,13 @@ const visualizers = [
     desc: 'Visualize Peer-to-Peer connections, STUN hole-punching, and TURN relays.',
   },
   {
+    name: 'Multi-Ruleset Cellular Automata Sandbox',
+    path: '/pages/visualizers/cellular-automata/cellular-automata.html',
+    category: 'Special',
+    icon: 'fa-dice',
+    desc: "Explore Conway's Life, Wireworld, and Brian's Brain cellular automata with interactive editing and presets.",
+  },
+  {
     name: 'GraphQL N+1 & DataLoader Visualizer',
     path: '/pages/visualizers/graphql-n1-simulator/graphql-n1-simulator.html',
     category: 'Architecture',
@@ -2218,6 +2225,7 @@ const visualizers = [
     category: 'Systems & OS',
     icon: 'fa-server',
     desc: 'Simulate a microservices architecture — refresh, scale, and inject failures across services and watch health status update live.',
+>>>>>>> origin/main
   },
 ];
 
