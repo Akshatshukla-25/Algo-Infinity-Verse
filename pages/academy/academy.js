@@ -5,6 +5,15 @@
 const academies = [
   // ── Featured (new) ──
   {
+    id: 'pqc-migration',
+    name: 'PQC Migration Masterclass',
+    path: '/pages/academy/pqc-migration-masterclass/index.html',
+    category: 'Cloud & DevOps',
+    icon: 'fa-solid fa-lock',
+    difficulty: 'Advanced',
+    desc: 'Post-quantum crypto masterclass: NIST ML-KEM/Dilithium, cipher audits, hybrid X25519+Kyber handshake, and migration quizzes.',
+  },
+  {
     id: 'ebpf-zero-trust',
     name: 'eBPF Zero-Trust Security',
     path: '/pages/academy/ebpf-zero-trust-security/index.html',
