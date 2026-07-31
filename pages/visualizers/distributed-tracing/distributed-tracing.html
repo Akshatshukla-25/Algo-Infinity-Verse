@@ -38,9 +38,27 @@
       <section class="tracing-panel arch-panel">
         <div class="panel-header">
           <h2><i class="fas fa-project-diagram"></i> Microservice Architecture</h2>
-          <button class="btn btn-action" id="btnTriggerRequest">
-            <i class="fas fa-play"></i> Trigger API Request
-          </button>
+          <div class="injection-controls">
+            <label for="injectTarget">Inject Delay:</label>
+            <select id="injectTarget" class="control-select">
+              <option value="none">None</option>
+              <option value="auth">Auth Service</option>
+              <option value="billing">Billing Service</option>
+              <option value="db">Database Service</option>
+            </select>
+            <input
+              type="number"
+              id="injectDelay"
+              class="control-input"
+              value="500"
+              min="0"
+              step="50"
+            />
+            <span style="font-size: 0.8rem; margin-right: 1rem">ms</span>
+            <button class="btn btn-action" id="btnTriggerRequest">
+              <i class="fas fa-play"></i> Trigger API Request
+            </button>
+          </div>
         </div>
 
         <div class="network-graph" id="networkGraph">

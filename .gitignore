@@ -49,3 +49,6 @@ dist/
 scratch/
 screenshots/
 *.cjs
+
+# Local authentication data
+data/users.json

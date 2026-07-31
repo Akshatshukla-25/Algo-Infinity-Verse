@@ -62,13 +62,13 @@ import {
   deleteAccountLimiter,
   resendVerificationLimiter,
   resumeAnalysisLimiter,
-  repoAnalysisLimiter,
   sdlcAdvisorLimiter,
   predictionLimiter,
   bulkAuditLimiter,
   logErrorLimiter,
   aiHintLimiter,
 } from './backend/utils/rateLimiter.js';
+import { applyRedisRateLimit, repoAnalysisRedisLimiter } from './backend/utils/redisRateLimiter.js';
 import { generateAIHint } from './backend/services/aiHint.service.js';
 import { applySM2 } from './backend/services/memory.service.js';
 import { sendVerificationEmail } from './backend/services/email.service.js';
@@ -138,10 +138,7 @@ const REFRESH_COOKIE = 'aiv_refresh';
 const DELETION_LOG_FILE = path.join(DATA_DIR, 'account-deletions.json');
 // ────────────────────────────────────────────────────────────────────────────
 
-const protectedPaths = new Set([
-  '/community',
-  '/community.html',
-]);
+const protectedPaths = new Set(['/community', '/community.html']);
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -880,14 +877,13 @@ async function handleApi(req, res, pathname) {
   }
 
   if (pathname === '/api/analyze-repository' && req.method === 'POST') {
-    if (
-      !applyRateLimit(
-        req,
-        res,
-        repoAnalysisLimiter,
-        'Too many repository analysis requests. Please try again later.'
-      )
-    ) {
+    const allowed = await applyRedisRateLimit(
+      req,
+      res,
+      repoAnalysisRedisLimiter,
+      'Too many repository analysis requests. Please try again later.'
+    );
+    if (!allowed) {
       return;
     }
     try {
@@ -2343,7 +2339,19 @@ async function handleApi(req, res, pathname) {
 
     try {
       const payload = await readJsonBody(req);
-      const { sourceCode, originalCode, language, stdin, stdout, stderr, exitCode, cpuTime, memory, error, problemId } = payload;
+      const {
+        sourceCode,
+        originalCode,
+        language,
+        stdin,
+        stdout,
+        stderr,
+        exitCode,
+        cpuTime,
+        memory,
+        error,
+        problemId,
+      } = payload;
 
       if (!sourceCode || !language) {
         return sendJson(res, 400, { error: 'sourceCode and language are required.' });
@@ -4244,7 +4252,9 @@ if (process.env.VERCEL !== '1' && process.env.NODE_ENV !== 'test') {
       const host = process.env.HOST || '127.0.0.1';
 
       server.listen(port, host, () => {
-        console.log(`\n\x1b[38;5;183mServer running at\x1b[0m \x1b[38;5;228mhttp://${host}:${port}\x1b[0m\n`);
+        console.log(
+          `\n\x1b[38;5;183mServer running at\x1b[0m \x1b[38;5;228mhttp://${host}:${port}\x1b[0m\n`
+        );
       });
 
       server.on('error', (err) => {

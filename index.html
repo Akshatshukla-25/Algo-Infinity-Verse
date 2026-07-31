@@ -260,17 +260,31 @@
         }
         document.addEventListener('keydown', onSplashKeydown);
 
-        // Clean up the keyboard listener when the animation completes or is skipped
+        // Touch fallback: the skip button is hidden below 768px, so tapping
+        // anywhere on the loading screen skips the animation instead. Taps on
+        // the button itself are ignored to avoid skipping twice.
+        function onSplashTap(e) {
+          if (e.target && e.target.closest && e.target.closest('.splash-skip-btn')) return;
+          window.__skipLoading();
+        }
+        ls.addEventListener('click', onSplashTap);
+
+        // Clean up the listeners when the animation completes or is skipped
+        function removeSplashListeners() {
+          document.removeEventListener('keydown', onSplashKeydown);
+          ls.removeEventListener('click', onSplashTap);
+        }
+
         var _origComplete = tl.eventCallback('onComplete');
         tl.eventCallback('onComplete', function() {
-          document.removeEventListener('keydown', onSplashKeydown);
+          removeSplashListeners();
           if (typeof _origComplete === 'function') _origComplete();
         });
 
-        // Wrap __skipLoading to also clean up the listener
+        // Wrap __skipLoading to also clean up the listeners
         var _origSkip = window.__skipLoading;
         window.__skipLoading = function() {
-          document.removeEventListener('keydown', onSplashKeydown);
+          removeSplashListeners();
           _origSkip();
         };
       })();
@@ -703,7 +717,7 @@
 
         <div class="hp-topics-grid">
           <!-- Arrays -->
-          <a href="/pages/learning/array-learning/array-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="50">
+          <a href="/pages/learning/array-learning/array-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="50" data-topic-category="arrays">
             <span class="hp-topic-icon"><i class="fas fa-chart-bar"></i></span>
             <h3 class="hp-topic-name">Arrays</h3>
             <div class="hp-topic-meta">
@@ -716,7 +730,7 @@
             </div>
           </a>
           <!-- Strings -->
-          <a href="/pages/learning/learning-topics.html?topic=strings" class="hp-topic-card hp-reveal" data-reveal-delay="100">
+          <a href="/pages/learning/learning-topics.html?topic=strings" class="hp-topic-card hp-reveal" data-reveal-delay="100" data-topic-category="strings">
             <span class="hp-topic-icon"><i class="fas fa-font"></i></span>
             <h3 class="hp-topic-name">Strings</h3>
             <div class="hp-topic-meta">
@@ -729,7 +743,7 @@
             </div>
           </a>
           <!-- Linked Lists -->
-          <a href="/pages/learning/linkedlist-learning/linkedlist-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="150">
+          <a href="/pages/learning/linkedlist-learning/linkedlist-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="150" data-topic-category="linkedlist">
             <span class="hp-topic-icon"><i class="fas fa-link"></i></span>
             <h3 class="hp-topic-name">Linked Lists</h3>
             <div class="hp-topic-meta">
@@ -742,7 +756,7 @@
             </div>
           </a>
           <!-- Trees -->
-          <a href="/pages/learning/trees-learning/trees-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="200">
+          <a href="/pages/learning/trees-learning/trees-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="200" data-topic-category="trees">
             <span class="hp-topic-icon"><i class="fas fa-tree"></i></span>
             <h3 class="hp-topic-name">Trees</h3>
             <div class="hp-topic-meta">
@@ -755,7 +769,7 @@
             </div>
           </a>
           <!-- Graphs -->
-          <a href="/pages/learning/graph-learning/graph-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="250">
+          <a href="/pages/learning/graph-learning/graph-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="250" data-topic-category="graphs">
             <span class="hp-topic-icon"><i class="fas fa-project-diagram"></i></span>
             <h3 class="hp-topic-name">Graphs</h3>
             <div class="hp-topic-meta">
@@ -768,7 +782,7 @@
             </div>
           </a>
           <!-- Dynamic Programming -->
-          <a href="/pages/learning/dp-learning/dp-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="300">
+          <a href="/pages/learning/dp-learning/dp-learning.html" class="hp-topic-card hp-reveal" data-reveal-delay="300" data-topic-category="dp">
             <span class="hp-topic-icon"><i class="fas fa-bullseye"></i></span>
             <h3 class="hp-topic-name">Dynamic Programming</h3>
             <div class="hp-topic-meta">
@@ -781,7 +795,7 @@
             </div>
           </a>
           <!-- Sorting & Searching -->
-          <a href="/pages/learning/learning-topics.html?topic=sorting" class="hp-topic-card hp-reveal" data-reveal-delay="350">
+          <a href="/pages/learning/learning-topics.html?topic=sorting" class="hp-topic-card hp-reveal" data-reveal-delay="350" data-topic-category="sorting">
             <span class="hp-topic-icon"><i class="fas fa-search"></i></span>
             <h3 class="hp-topic-name">Sorting &amp; Searching</h3>
             <div class="hp-topic-meta">
@@ -794,7 +808,7 @@
             </div>
           </a>
           <!-- All Topics -->
-          <a href="/pages/learning/learning-topics.html" class="hp-topic-card hp-reveal" data-reveal-delay="400">
+          <a href="/pages/learning/learning-topics.html" class="hp-topic-card hp-reveal" data-reveal-delay="400" data-topic-category="all">
             <span class="hp-topic-icon"><i class="fas fa-compass"></i></span>
             <h3 class="hp-topic-name">All Topics</h3>
             <div class="hp-topic-meta">
@@ -1099,5 +1113,6 @@
     </script>
 
     <script type="module" src="./modules/aiHintsBootstrap.js"></script>
+    <div class="hp-topic-tooltip" id="hpTopicTooltip" role="tooltip" aria-hidden="true"></div>
   </body>
 </html>

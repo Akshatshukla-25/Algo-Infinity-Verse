@@ -967,6 +967,95 @@ html.light-mode {
   background: var(--hp-rose);
 }
 
+/* ── Topic card hover preview ── */
+.hp-topic-tooltip {
+  position: fixed;
+  z-index: var(--z-overlay);
+  max-width: 240px;
+  min-width: 180px;
+  padding: 12px 14px;
+  background: var(--hp-card-hover);
+  border: 1px solid var(--hp-card-border-hover);
+  border-radius: var(--hp-radius-sm);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  font-family: 'Inter', sans-serif;
+  color: var(--hp-text);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity var(--hp-transition-fast),
+    transform var(--hp-transition-fast),
+    visibility 0s linear var(--hp-transition-fast);
+}
+
+.hp-topic-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.hp-topic-tooltip-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hp-topic-tooltip-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--hp-text);
+}
+
+.hp-topic-tooltip-total {
+  font-size: 0.72rem;
+  color: var(--hp-text-tertiary);
+}
+
+.hp-topic-tooltip-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.hp-topic-tooltip-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--hp-text-secondary);
+  white-space: nowrap;
+}
+
+.hp-topic-tooltip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--hp-mint);
+}
+
+.hp-topic-tooltip-row.medium .hp-topic-tooltip-dot {
+  background: var(--hp-peach);
+}
+
+.hp-topic-tooltip-row.hard .hp-topic-tooltip-dot {
+  background: var(--hp-rose);
+}
+
+/* Light mode: --hp-card-hover stays dark, so use the light card surface. */
+html.light-mode .hp-topic-tooltip {
+  background: var(--hp-card);
+  border-color: rgba(44, 30, 74, 0.15);
+}
+
+html.light-mode .hp-topic-tooltip-total,
+html.light-mode .hp-topic-tooltip-row {
+  color: var(--hp-text-secondary);
+}
+
 /* ── 11. DID YOU KNOW? ── */
 .hp-facts-card {
   padding: 36px 40px;
@@ -1680,6 +1769,7 @@ body.shortcuts-modal-open .navbar {
   .hp-hero-shapes { display: none; }
   .hp-shape { animation: none !important; }
   .hp-reveal { opacity: 1; transform: none; transition: none; }
+  .hp-topic-tooltip { transition: none; }
   .hp-hero-badge,
   .hp-hero-greeting,
   .hp-hero-title,

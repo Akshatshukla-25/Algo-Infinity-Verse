@@ -139,7 +139,6 @@ function resizeCanvas() {
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
   ctx.scale(dpr, dpr);
-
   if (telemetryCanvas && telemetryCtx) {
     const tRect = telemetryCanvas.getBoundingClientRect();
     telemetryCanvas.width = tRect.width * dpr;

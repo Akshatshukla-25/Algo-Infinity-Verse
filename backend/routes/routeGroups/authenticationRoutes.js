@@ -25,6 +25,7 @@ import {
   handleDeactivateAccount,
   handleSession,
 } from '../../handlers/authHandlers.js';
+import { API_ROUTES } from '../routeConstants.js';
 
 export const authenticationRoutes = [
   {
@@ -32,42 +33,42 @@ export const authenticationRoutes = [
     routes: [
       {
         method: 'POST',
-        path: '/api/guest',
+        path: API_ROUTES.GUEST,
         handler: handleGuestLogin,
         tier: 'default',
         requiresAuth: false,
       },
       {
         method: 'GET',
-        path: '/api/session',
+        path: API_ROUTES.SESSION,
         handler: handleSession,
         tier: 'default',
         requiresAuth: false,
       },
       {
         method: 'POST',
-        path: '/api/signup',
+        path: API_ROUTES.SIGNUP,
         handler: handleSignup,
         tier: 'default',
         requiresAuth: false,
       },
       {
         method: 'POST',
-        path: '/api/login',
+        path: API_ROUTES.LOGIN,
         handler: handleLogin,
         tier: 'default',
         requiresAuth: false,
       },
       {
         method: 'POST',
-        path: '/api/deactivate-account',
+        path: API_ROUTES.DEACTIVATE_ACCOUNT,
         handler: handleDeactivateAccount,
         tier: 'critical',
         requiresAuth: true,
       },
       {
         method: 'POST',
-        path: '/api/logout',
+        path: API_ROUTES.LOGOUT,
         handler: handleLogout,
         tier: 'default',
         requiresAuth: true,

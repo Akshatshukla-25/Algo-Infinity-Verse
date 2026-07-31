@@ -61,6 +61,45 @@ body {
   border: 0 !important;
 }
 
+/* ===== PAGE FADE-IN (Smooth Page Transitions) =====
+   Subtle, brief opacity fade-in on every page load for a polished
+   navigation feel.
+
+   Why pure CSS (@keyframes) and not a JS-triggered transition:
+   - It runs automatically on page load, so there is zero JavaScript
+     involved and no way for it to delay or block page interactivity.
+   - There is no initial `opacity: 0` default that could leave the page
+     invisible if a script fails.
+
+   Why <main> instead of <body>/<html>:
+   - An element with opacity < 1 establishes a containing block for its
+     position:fixed descendants. Animating <body> would therefore make
+     the fixed navbar, scroll-to-top button, and modals jump during the
+     fade. <main> is the content wrapper on essentially every page and
+     contains no fixed-position chrome, so it is safe to animate.
+
+   Accessibility:
+   - Gated behind `prefers-reduced-motion: no-preference`, so users who
+     opt out of motion see the page instantly, with no animation at all.
+   - Pages without a <main> element (e.g. 404/offline fallbacks) simply
+     get no fade — a graceful degradation, never a hidden page. */
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main {
+    /* `backwards` applies the opacity:0 from-frame during the pre-start
+       period too, so there is never a flash of fully-visible content. */
+    animation: pageFadeIn 0.4s ease-out backwards;
+  }
+}
+
 /* ===== ACCESSIBILITY FOCUS STATES ===== */
 :focus-visible,
 .focus-visible {

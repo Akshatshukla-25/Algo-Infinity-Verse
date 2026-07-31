@@ -289,8 +289,9 @@
                         }
                     }
                 }
-            });
-        }
+            }
+        });
+    }
 
         if (typeof lazyVisualizer !== 'undefined') {
             lazyVisualizer.lazyLoadChartJS(chartCanvas, createChart);

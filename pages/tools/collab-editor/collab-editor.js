@@ -252,6 +252,11 @@ print("Two Sum Result:", twoSum([2, 7, 11, 15], 9))
       return;
     }
 
+    // Respond to server heartbeats
+    socket.on('webrtc-ping', () => {
+      socket.emit('webrtc-pong');
+    });
+
     socket.on('connect', () => {
       state.isSocketConnected = true;
       updateSyncStatus(true, 'Live Connected');
