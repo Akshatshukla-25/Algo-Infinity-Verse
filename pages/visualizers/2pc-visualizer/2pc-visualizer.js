@@ -97,9 +97,13 @@ class DistributedNode {
             <div class="node-title">${this.name}</div>
             <div class="node-role">${this.isCoord ? 'Coordinator' : 'Participant'}</div>
             <div class="vector-clock" id="vc-${this.id}">${this.vc.toString()}</div>
+            ${!this.isCoord ? `<div class="lock-indicator" id="lock-${this.id}"><i class="fas fa-unlock"></i> Unlocked</div>` : ''}
         `;
     els.nodesLayer.appendChild(this.el);
     this.vcDisplay = document.getElementById(`vc-${this.id}`);
+    if (!this.isCoord) {
+      this.lockDisplay = document.getElementById(`lock-${this.id}`);
+    }
   }
 
   updatePosition(width, height) {
@@ -112,6 +116,16 @@ class DistributedNode {
   setState(newState) {
     this.state = newState;
     this.el.className = `dist-node ${this.isCoord ? 'coord' : ''} ${this.state}`;
+
+    if (!this.isCoord && this.lockDisplay) {
+      if (newState === 'PREPARED') {
+        this.lockDisplay.innerHTML = '<i class="fas fa-lock"></i> Locked';
+        this.lockDisplay.className = 'lock-indicator locked';
+      } else {
+        this.lockDisplay.innerHTML = '<i class="fas fa-unlock"></i> Unlocked';
+        this.lockDisplay.className = 'lock-indicator';
+      }
+    }
   }
 
   updateClockUI() {
