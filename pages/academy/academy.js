@@ -3,6 +3,17 @@
    ============================================ */
 
 const academies = [
+  // ── Featured (new) ──
+  {
+    id: 'ebpf-zero-trust',
+    name: 'eBPF Zero-Trust Security',
+    path: '/pages/academy/ebpf-zero-trust-security/index.html',
+    category: 'Cloud & DevOps',
+    icon: 'fa-solid fa-shield-halved',
+    difficulty: 'Advanced',
+    desc: 'Interactive masterclass on eBPF probes, XDP, Falco syscall rules, ring buffers, and zero-trust runtime policy with quizzes.',
+  },
+
   // ── Frontend ──
   {
     id: 'nextjs',

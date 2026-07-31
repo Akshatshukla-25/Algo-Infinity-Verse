@@ -3,6 +3,29 @@
    ============================================ */
 
 const aiTools = [
+  // ── Featured (new) ──
+  {
+    name: 'AI OpenAPI Contract Linter',
+    path: '/pages/ai-features/ai-openapi-contract-linter/index.html',
+    category: 'Code Quality',
+    icon: 'fa-file-contract',
+    desc: 'Diff OpenAPI/Swagger specs for breaking changes, OWASP API Top 10 risks, compatibility score, and AI-style security patches.',
+  },
+  {
+    name: 'AI Distributed Tracing Analyzer',
+    path: '/pages/ai-features/ai-distributed-tracing-analyzer/index.html',
+    category: 'Analysis & Profiling',
+    icon: 'fa-diagram-project',
+    desc: 'Parse OpenTelemetry traces, compute critical path latency, detect cascading timeouts and N+1 queries, and get remediation tips.',
+  },
+  {
+    name: 'WebGPU KV-Cache Profiler',
+    path: '/pages/ai-features/webgpu-kv-cache-profiler/index.html',
+    category: 'Advanced Tech',
+    icon: 'fa-microchip',
+    desc: 'Profile LLM KV-cache VRAM across FP16/INT8/INT4, context lengths, and PagedAttention — with max batch and exportable reports.',
+  },
+
   // ── Learning Assistants ──
   {
     name: 'AI Tutor',
