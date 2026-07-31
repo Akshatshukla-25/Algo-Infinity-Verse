@@ -37,35 +37,35 @@ export const memoryRoutesGroup = [
     routes: [
       {
         method: 'POST',
-        path: '/api/memory/log',
+        path: API_ROUTES.MEMORY_LOG,
         handler: handleMemoryLog,
         tier: 'memory',
         requiresAuth: true,
       },
       {
         method: 'GET',
-        path: '/api/memory/due',
+        path: API_ROUTES.MEMORY_DUE,
         handler: handleMemoryDue,
         tier: 'memory',
         requiresAuth: true,
       },
       {
         method: 'GET',
-        path: '/api/memory/all',
+        path: API_ROUTES.MEMORY_ALL,
         handler: handleMemoryAll,
         tier: 'memory',
         requiresAuth: true,
       },
       {
         method: 'GET',
-        path: '/api/memory/stats',
+        path: API_ROUTES.MEMORY_STATS,
         handler: handleMemoryStats,
         tier: 'memory',
         requiresAuth: true,
       },
       {
         method: 'POST',
-        path: '/api/memory/reset',
+        path: API_ROUTES.MEMORY_RESET,
         handler: handleMemoryReset,
         tier: 'critical',
         requiresAuth: true,
@@ -80,10 +80,10 @@ export const memoryRoutesGroup = [
         // (length cap + character class + URIError surfacing) is the same
         // as the inline version that previously lived in `setupApiRoutes`.
         match(req, res, pathname, { wrapHandler }) {
-          if (!pathname.startsWith('/api/memory/') || req.method !== 'DELETE') {
+          if (!pathname.startsWith(API_ROUTES.MEMORY_PREFIX) || req.method !== 'DELETE') {
             return false;
           }
-          const rawTopic = pathname.replace('/api/memory/', '');
+          const rawTopic = pathname.replace(API_ROUTES.MEMORY_PREFIX, '');
           if (!rawTopic || rawTopic.length === 0) {
             return false;
           }

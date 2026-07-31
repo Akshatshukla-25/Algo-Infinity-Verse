@@ -2,6 +2,7 @@
 //
 // Issue #2402 — feature-grouped route registration.
 import { handleSubmitFeedback } from '../../handlers/feedbackHandlers.js';
+import { API_ROUTES } from '../routeConstants.js';
 
 export const feedbackRoutes = [
   {
@@ -9,7 +10,7 @@ export const feedbackRoutes = [
     routes: [
       {
         method: 'POST',
-        path: '/api/feedback',
+        path: API_ROUTES.FEEDBACK,
         handler: handleSubmitFeedback,
         tier: 'default',
         requiresAuth: true,
