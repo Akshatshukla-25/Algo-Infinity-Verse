@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alcubierre Warp Drive Solver | Algo Infinity Verse</title>
+    <title>Alcubierre Warp Bubble Stabilizer | Algo Infinity Verse</title>
     <link rel="stylesheet" href="/styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -13,26 +13,27 @@
       body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
       .app-container { display: flex; height: 100vh; }
       
-      .sidebar { width: 450px; background: rgba(15, 23, 42, 0.95); border-right: 1px solid #f43f5e; display: flex; flex-direction: column; z-index: 10; }
+      .sidebar { width: 450px; background: rgba(15, 23, 42, 0.95); border-right: 1px solid #8b5cf6; display: flex; flex-direction: column; z-index: 10; }
       .header { padding: 20px; border-bottom: 1px solid #334155; }
-      .header h2 { margin: 0; color: #f43f5e; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; }
+      .header h2 { margin: 0; color: #8b5cf6; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; }
       .header p { margin: 5px 0 0 0; font-size: 0.8rem; color: #94a3b8; }
       
       #editor-container { flex: 1; min-height: 300px; }
       
       .controls { padding: 20px; border-top: 1px solid #334155; background: rgba(0,0,0,0.5); }
-      .btn { background: linear-gradient(90deg, #e11d48, #be123c); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
-      .btn:hover { background: #f43f5e; transform: translateY(-2px); box-shadow: 0 0 15px rgba(244, 63, 94, 0.5); }
+      .btn { background: linear-gradient(90deg, #7c3aed, #6d28d9); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+      .btn:hover { background: #8b5cf6; transform: translateY(-2px); box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
       
-      .sim-container { flex: 1; position: relative; background: radial-gradient(circle at center, #020617 0%, #000 100%); overflow: hidden; }
-      canvas { width: 100%; height: 100%; display: block; filter: brightness(1.2); }
+      .sim-container { flex: 1; position: relative; background: #000; overflow: hidden; }
       
-      .hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #f43f5e; width: 280px; z-index: 10; pointer-events: none; }
-      .hud h3 { margin: 0 0 10px 0; color: #f43f5e; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
+      canvas { width: 100%; height: 100%; display: block; }
+      
+      .hud { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #8b5cf6; width: 280px; z-index: 10; pointer-events: none; }
+      .hud h3 { margin: 0 0 10px 0; color: #8b5cf6; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
       .metric { display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 5px; }
       .val { font-weight: bold; font-family: monospace; }
-      .val-velocity { color: #facc15; }
-      .val-tidal { color: #ef4444; }
+      .val-speed { color: #facc15; }
+      .val-stress { color: #ef4444; }
     </style>
   </head>
   <body>
@@ -40,31 +41,29 @@
     <div class="app-container">
       <div class="sidebar">
         <div class="header">
-          <h2><i class="fas fa-rocket"></i> Spacetime Metric Solver</h2>
-          <p>Bend the fabric of reality for FTL travel</p>
+          <h2><i class="fas fa-space-shuttle"></i> Warp Field Matrix</h2>
+          <p>Compress spacetime without killing the crew</p>
         </div>
         
         <div id="editor-container"></div>
         
         <div class="controls">
-          <button class="btn" onclick="engageWarp()"><i class="fas fa-space-shuttle"></i> Engage Alcubierre Drive</button>
+          <button class="btn" onclick="engageWarp()"><i class="fas fa-bolt"></i> Engage FTL Drive</button>
         </div>
       </div>
       
       <div class="sim-container">
-        <!-- Starfield -->
-        <div id="starfield" style="position: absolute; inset:0; z-index: 0; background: transparent;"></div>
-        
-        <canvas id="warpCanvas" style="position: relative; z-index: 1;"></canvas>
+        <!-- Spacetime Grid Background -->
+        <canvas id="spacetimeCanvas" style="position: absolute; inset: 0; z-index: 1;"></canvas>
+        <!-- Ship Overlay -->
+        <canvas id="shipCanvas" style="position: absolute; inset: 0; z-index: 2; pointer-events: none;"></canvas>
         
         <div class="hud">
-          <h3>Warp Field Telemetry</h3>
-          <div class="metric"><span>Apparent Velocity:</span> <span class="val val-velocity" id="velVal">0.00c</span></div>
-          <div class="metric"><span>Forward Contraction (Δs):</span> <span class="val" id="conVal" style="color:#60a5fa">0.00</span></div>
-          <div class="metric"><span>Aft Expansion (Δs):</span> <span class="val" id="expVal" style="color:#60a5fa">0.00</span></div>
-          <div class="metric"><span>Hull Tidal Stress:</span> <span class="val val-tidal" id="tidalVal">Norminal</span></div>
+          <h3>Navigational Telemetry</h3>
+          <div class="metric"><span>Velocity:</span> <span class="val val-speed" id="speedVal">0.0 c</span></div>
+          <div class="metric"><span>Tidal Stress (Hull):</span> <span class="val val-stress" id="stressVal">0%</span></div>
           <div class="metric" style="margin-top: 10px; border-top: 1px solid #334155; padding-top: 5px;">
-            <span>Drive Status:</span> <span class="val" id="statusVal" style="color:#94a3b8">OFFLINE</span>
+            <span>Drive Status:</span> <span class="val" id="statusVal" style="color:#94a3b8">STANDBY</span>
           </div>
         </div>
       </div>
@@ -75,22 +74,20 @@
       require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.36.1/min/vs' }});
       require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-          value: `// Stress-Energy Tensor Controller
-// Modulate negative mass (exotic matter) to bend spacetime.
-// Goal: Contract space in front (>0), expand space behind (<0).
-// Warning: High gradients cause fatal tidal forces on the hull!
+          value: `// Alcubierre Metric Manipulation
+// You must dynamically balance negative energy density in front and behind the ship.
+// If the differential is too high, the ship accelerates faster but tidal forces (stress) will rip it apart.
 
-function calculateMetricTensors(time, shipPosition) {
-    // Return the tensor values for the front and back of the ship.
-    // For FTL, you need massive contraction and expansion.
+function calculateExoticMatter(targetSpeed, currentStress) {
+    // Return { frontCompression: float, rearExpansion: float }
+    // Values between 0.0 and 1.0
     
-    // Example (Fails FTL, generates high tidal stress):
-    let frontContraction = 0.5 * Math.sin(time); 
-    let backExpansion = -0.5 * Math.sin(time);
+    // Naive logic: Max warp!
+    // Result: The hull is instantly crushed by infinite tidal forces.
     
     return {
-        front: frontContraction,
-        back: backExpansion
+        frontCompression: 1.0,
+        rearExpansion: 1.0
     };
 }`,
           language: 'javascript',
@@ -100,169 +97,230 @@ function calculateMetricTensors(time, shipPosition) {
         });
       });
 
-      // Simple CSS starfield
-      let stars = "";
-      for(let i=0; i<100; i++) {
-          stars += \`\${Math.random()*100}vw \${Math.random()*100}vh \${Math.random()*2+1}px #fff,\`;
-      }
-      document.getElementById('starfield').style.boxShadow = stars.slice(0, -1);
-
-      const canvas = document.getElementById('warpCanvas');
-      const ctx = canvas.getContext('2d');
+      const gridCanvas = document.getElementById('spacetimeCanvas');
+      const gridCtx = gridCanvas.getContext('2d');
+      const shipCanvas = document.getElementById('shipCanvas');
+      const shipCtx = shipCanvas.getContext('2d');
       
       let isSimulating = false;
       let time = 0;
-      let shipX = 0;
-      let velocity = 0; // units of c
-      let tidalStress = 0;
       
-      function resize() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; }
-      window.addEventListener('resize', resize);
-      resize();
+      let speed = 0; // units of c
+      let targetSpeed = 5.0; // 5c
+      let tidalStress = 0; // 0 to 100
+      
+      let frontC = 0;
+      let rearE = 0;
 
-      function drawSpacetimeGrid(front, back) {
-          let cx = canvas.width / 2;
-          let cy = canvas.height / 2;
+      function resize() { 
+          gridCanvas.width = gridCanvas.clientWidth; 
+          gridCanvas.height = gridCanvas.clientHeight;
+          shipCanvas.width = shipCanvas.clientWidth; 
+          shipCanvas.height = shipCanvas.clientHeight;
+      }
+      
+      setTimeout(resize, 100);
+      window.addEventListener('resize', resize);
+
+      function drawSpacetimeGrid() {
+          gridCtx.fillStyle = '#020617';
+          gridCtx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
           
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
-          ctx.lineWidth = 1;
+          let cx = gridCanvas.width / 2;
+          let cy = gridCanvas.height / 2;
+          
+          gridCtx.strokeStyle = 'rgba(139, 92, 246, 0.3)';
+          gridCtx.lineWidth = 1;
           
           let gridSpacing = 40;
-          let gridW = canvas.width;
-          let gridH = canvas.height;
           
-          // Draw a deformed grid to represent gravity/warp
-          ctx.beginPath();
-          for(let y = 0; y < gridH; y += gridSpacing) {
-              ctx.moveTo(0, y);
-              for(let x = 0; x <= gridW; x += 10) {
-                  let dy = y;
-                  // Deformation based on tensors
-                  let distToCenter = x - cx;
-                  if (distToCenter > 0 && distToCenter < 300) {
-                      // Front contraction (pulls grid lines in)
-                      dy += Math.sin((distToCenter/300) * Math.PI) * front * 50;
-                  } else if (distToCenter < 0 && distToCenter > -300) {
-                      // Back expansion (pushes grid lines out)
-                      dy -= Math.sin((-distToCenter/300) * Math.PI) * back * 50;
+          // Draw vertical lines (affected by warp)
+          for(let x = 0; x <= gridCanvas.width; x += gridSpacing) {
+              gridCtx.beginPath();
+              
+              for(let y = 0; y <= gridCanvas.height; y += 10) {
+                  // Base coordinate
+                  let dx = x - cx;
+                  let dy = y - cy;
+                  
+                  // Apply Alcubierre distortion
+                  let distortedX = x;
+                  
+                  if (isSimulating) {
+                      // Front compression (dx > 0)
+                      if (dx > 20 && dx < 200 && Math.abs(dy) < 100) {
+                          let strength = frontC * Math.exp(-(Math.pow(dx-100, 2) + Math.pow(dy, 2))/5000);
+                          distortedX -= strength * 50;
+                      }
+                      
+                      // Rear expansion (dx < -20)
+                      if (dx < -20 && dx > -200 && Math.abs(dy) < 100) {
+                          let strength = rearE * Math.exp(-(Math.pow(dx+100, 2) + Math.pow(dy, 2))/5000);
+                          distortedX -= strength * 50; // Expands outward from center
+                      }
                   }
-                  ctx.lineTo(x, dy);
+                  
+                  // Move stars backward based on speed
+                  distortedX -= (time * speed * 20) % gridSpacing;
+                  
+                  if(y === 0) gridCtx.moveTo(distortedX, y);
+                  else gridCtx.lineTo(distortedX, y);
+              }
+              gridCtx.stroke();
+          }
+          
+          // Draw horizontal lines
+          for(let y = 0; y <= gridCanvas.height; y += gridSpacing) {
+              gridCtx.beginPath();
+              
+              for(let x = 0; x <= gridCanvas.width; x += 10) {
+                  let dx = x - cx;
+                  let dy = y - cy;
+                  
+                  let distortedX = x;
+                  let distortedY = y;
+                  
+                  if (isSimulating) {
+                       if (dx > 20 && dx < 200 && Math.abs(dy) < 100) {
+                          let strength = frontC * Math.exp(-(Math.pow(dx-100, 2) + Math.pow(dy, 2))/5000);
+                          distortedX -= strength * 50;
+                      }
+                      if (dx < -20 && dx > -200 && Math.abs(dy) < 100) {
+                          let strength = rearE * Math.exp(-(Math.pow(dx+100, 2) + Math.pow(dy, 2))/5000);
+                          distortedX -= strength * 50;
+                      }
+                  }
+                  
+                  distortedX -= (time * speed * 20) % gridSpacing;
+                  
+                  if(x === 0) gridCtx.moveTo(distortedX, distortedY);
+                  else gridCtx.lineTo(distortedX, distortedY);
+              }
+              gridCtx.stroke();
+          }
+      }
+
+      function drawShip() {
+          shipCtx.clearRect(0, 0, shipCanvas.width, shipCanvas.height);
+          
+          let cx = shipCanvas.width / 2;
+          let cy = shipCanvas.height / 2;
+          
+          // Warp Bubble Visual
+          if (isSimulating && (frontC > 0 || rearE > 0)) {
+              shipCtx.beginPath();
+              shipCtx.ellipse(cx, cy, 150, 80, 0, 0, Math.PI*2);
+              
+              let grad = shipCtx.createRadialGradient(cx, cy, 0, cx, cy, 150);
+              grad.addColorStop(0, 'rgba(0,0,0,0)');
+              grad.addColorStop(0.8, 'rgba(139, 92, 246, 0.1)');
+              grad.addColorStop(1, 'rgba(167, 139, 250, 0.5)');
+              
+              shipCtx.fillStyle = grad;
+              shipCtx.fill();
+              
+              shipCtx.strokeStyle = 'rgba(196, 181, 253, 0.8)';
+              shipCtx.lineWidth = 2;
+              shipCtx.stroke();
+              
+              // Stress indicators
+              if(tidalStress > 50) {
+                  shipCtx.strokeStyle = \`rgba(239, 68, 68, \${(tidalStress-50)/50})\`;
+                  shipCtx.lineWidth = 4;
+                  shipCtx.stroke();
               }
           }
           
-          for(let x = 0; x < gridW; x += gridSpacing) {
-              ctx.moveTo(x, 0);
-              for(let y = 0; y <= gridH; y += 10) {
-                  let dx = x;
-                  let distToCenter = x - cx;
-                  if (distToCenter > 0 && distToCenter < 300) {
-                      dx -= Math.sin((distToCenter/300) * Math.PI) * front * 20;
-                  } else if (distToCenter < 0 && distToCenter > -300) {
-                      dx -= Math.sin((-distToCenter/300) * Math.PI) * back * 20;
-                  }
-                  ctx.lineTo(dx, y);
-              }
-          }
-          ctx.stroke();
-          
-          // Draw Ship (Warp Bubble)
-          let bubbleRadius = 60 + Math.abs(front*10);
-          let grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, bubbleRadius);
-          grad.addColorStop(0, 'rgba(0,0,0,0)');
-          grad.addColorStop(0.8, 'rgba(56, 189, 248, 0.2)');
-          grad.addColorStop(1, 'rgba(56, 189, 248, 0.8)');
-          
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(cx, cy, bubbleRadius, 0, Math.PI*2);
-          ctx.fill();
-          
-          // Ship Sprite
-          ctx.fillStyle = '#cbd5e1';
-          ctx.beginPath();
-          ctx.moveTo(cx + 40, cy);
-          ctx.lineTo(cx - 30, cy - 15);
-          ctx.lineTo(cx - 30, cy + 15);
-          ctx.fill();
+          // Starship
+          shipCtx.fillStyle = '#cbd5e1';
+          shipCtx.beginPath();
+          shipCtx.moveTo(cx + 40, cy);
+          shipCtx.lineTo(cx - 30, cy - 15);
+          shipCtx.lineTo(cx - 20, cy);
+          shipCtx.lineTo(cx - 30, cy + 15);
+          shipCtx.closePath();
+          shipCtx.fill();
           
           // Engine glow
-          if(isSimulating) {
-              ctx.fillStyle = '#f43f5e';
-              ctx.shadowBlur = 20;
-              ctx.shadowColor = '#f43f5e';
-              ctx.beginPath();
-              ctx.arc(cx - 32, cy, 8 + Math.random()*5, 0, Math.PI*2);
-              ctx.fill();
-              ctx.shadowBlur = 0;
+          if (speed > 0) {
+              shipCtx.fillStyle = '#38bdf8';
+              shipCtx.beginPath();
+              shipCtx.arc(cx - 25, cy, 8, 0, Math.PI*2);
+              shipCtx.fill();
+              shipCtx.shadowBlur = 15;
+              shipCtx.shadowColor = '#38bdf8';
+              shipCtx.fill();
+              shipCtx.shadowBlur = 0;
           }
       }
 
       function animate() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          let frontTensor = 0;
-          let backTensor = 0;
-
           if (isSimulating) {
-              time += 0.05;
+              time += 0.1;
               
               try {
                   eval(editor.getValue());
-                  let tensors = calculateMetricTensors(time, shipX);
-                  if (tensors) {
-                      frontTensor = tensors.front || 0;
-                      backTensor = tensors.back || 0;
+                  let result = calculateExoticMatter(targetSpeed, tidalStress);
+                  if (result) {
+                      frontC = Math.max(0, Math.min(1.0, result.frontCompression || 0));
+                      rearE = Math.max(0, Math.min(1.0, result.rearExpansion || 0));
                   }
-              } catch (e) {}
-
-              // Physics logic
-              // Contraction pulls us forward, Expansion pushes us forward.
-              // We need front > 0 and back < 0
-              let netForce = frontTensor - backTensor; 
+              } catch(e) {}
               
-              if(frontTensor > 0 && backTensor < 0) {
-                  velocity += netForce * 0.01; 
+              // Physics Calculation
+              // Speed is determined by the differential
+              let deltaWarp = (frontC + rearE) / 2; // Average warp power
+              let efficiency = 1.0 - Math.abs(frontC - rearE); // Differential causes inefficiency and stress
+              
+              let acceleration = deltaWarp * efficiency * 0.5;
+              
+              if(frontC > 0 && rearE > 0) {
+                  speed += acceleration;
               } else {
-                  velocity *= 0.9; // Drag if improperly configured
+                  speed *= 0.9; // Drag if bubble collapses
               }
               
-              // Tidal Stress is the gradient (difference) between front and back
-              // If they are wildly unbalanced, the ship is crushed.
-              tidalStress = Math.abs(frontTensor + backTensor) * 100;
+              // Tidal stress is caused by high differentials or raw power exceeding hull limits
+              let imbalance = Math.abs(frontC - rearE);
+              tidalStress += (imbalance * 10) - 1; // Unbalanced bubble causes stress
+              tidalStress += (deltaWarp * 2) - 0.5; // High absolute power causes stress
               
-              // Move starfield to simulate speed
-              shipX += velocity;
-              document.getElementById('starfield').style.backgroundPosition = \`\${-shipX * 10}px 0\`;
+              tidalStress = Math.max(0, Math.min(200, tidalStress));
               
-              // Check Failure State
-              if (tidalStress > 80) {
+              // Cap speed for sim
+              if(speed > 10) speed = 10;
+
+              // HUD Updates
+              document.getElementById('speedVal').innerText = speed.toFixed(2) + " c";
+              
+              let strPct = Math.min(tidalStress, 100);
+              document.getElementById('stressVal').innerText = strPct.toFixed(1) + "%";
+              
+              if(strPct > 80) document.getElementById('stressVal').style.color = "#ef4444";
+              else document.getElementById('stressVal').style.color = "#10b981";
+              
+              if (tidalStress >= 100) {
+                  // HULL BREACH
                   isSimulating = false;
-                  document.getElementById('statusVal').innerText = "STRUCTURAL FAILURE";
+                  document.getElementById('statusVal').innerText = "TIDAL FORCES CRUSHED HULL";
                   document.getElementById('statusVal').style.color = "#ef4444";
-              } else if (velocity > 1.0) {
-                  // Achieved FTL!
-                  document.getElementById('statusVal').innerText = "SUPERLUMINAL VELOCITY";
+                  
+                  // Explosion
+                  shipCtx.fillStyle = '#ef4444';
+                  shipCtx.beginPath();
+                  shipCtx.arc(shipCanvas.width/2, shipCanvas.height/2, 50, 0, Math.PI*2);
+                  shipCtx.fill();
+              } else if (speed >= 4.9) {
+                  document.getElementById('statusVal').innerText = "STABLE FTL CRUISING";
                   document.getElementById('statusVal').style.color = "#10b981";
+              } else {
+                  document.getElementById('statusVal').innerText = "ACCELERATING...";
+                  document.getElementById('statusVal').style.color = "#38bdf8";
               }
           }
-
-          drawSpacetimeGrid(frontTensor, backTensor);
-
-          // Update HUD
-          document.getElementById('velVal').innerText = velocity.toFixed(2) + " c";
-          document.getElementById('conVal').innerText = frontTensor.toFixed(2);
-          document.getElementById('expVal').innerText = backTensor.toFixed(2);
           
-          if(tidalStress < 20) {
-              document.getElementById('tidalVal').innerText = "Nominal";
-              document.getElementById('tidalVal').style.color = "#10b981";
-          } else if (tidalStress < 80) {
-              document.getElementById('tidalVal').innerText = "Warning";
-              document.getElementById('tidalVal').style.color = "#facc15";
-          } else {
-              document.getElementById('tidalVal').innerText = "CRITICAL";
-              document.getElementById('tidalVal').style.color = "#ef4444";
-          }
+          drawSpacetimeGrid();
+          drawShip();
 
           requestAnimationFrame(animate);
       }
@@ -271,11 +329,11 @@ function calculateMetricTensors(time, shipPosition) {
       function engageWarp() {
           if(isSimulating) return;
           isSimulating = true;
-          velocity = 0;
           time = 0;
-          shipX = 0;
-          document.getElementById('statusVal').innerText = "WARP FIELD ENGAGED";
-          document.getElementById('statusVal').style.color = "#f43f5e";
+          speed = 0;
+          tidalStress = 0;
+          frontC = 0;
+          rearE = 0;
       }
     </script>
   </body>
