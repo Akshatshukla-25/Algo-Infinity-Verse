@@ -1547,6 +1547,13 @@ const visualizers = [
     desc: 'Spectre side-channel attack — speculative execution visualized.',
   },
   {
+    name: 'Octree 3D Spatial Partitioning Sandbox',
+    path: '/pages/visualizers/octree-3d/octree-3d.html',
+    category: 'Special',
+    icon: 'fa-cubes',
+    desc: 'Interactive 3D spatial partitioning using Octrees, point cloud presets, and perspective ray-casting queries.',
+  },
+  {
     name: 'DNS Resolution Visualizer',
     path: '/pages/visualizers/dns-simulator/dns-simulator.html',
     category: 'Distributed Systems',
