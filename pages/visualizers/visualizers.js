@@ -1028,6 +1028,13 @@ const visualizers = [
     desc: 'A cryptography sandbox demonstrating the core mechanism of zk-SNARKs.',
   },
   {
+    name: 'Hybrid Post-Quantum TLS 1.3 Handshake Lab',
+    path: '/pages/visualizers/pqc-tls13/pqc-tls13.html',
+    category: 'Security & Crypto',
+    icon: 'fa-key',
+    desc: 'Interactive Hybrid Post-Quantum TLS 1.3 handshake combining classical ECDHE and NIST ML-KEM/Kyber lattice key encapsulation.',
+  },
+  {
     name: 'Shamir Secret Sharing',
     path: '/pages/visualizers/shamir-visualizer/shamir-visualizer.html',
     category: 'Security & Crypto',
