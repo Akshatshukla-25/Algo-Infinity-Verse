@@ -5954,7 +5954,7 @@ document.addEventListener('keydown', function (e) {
     try {
       // Skip bookmark injection on learning pages with custom bookmark systems
       var pageData = document.body && document.body.getAttribute('data-page');
-      if (pageData === 'quizzes' || pageData === 'csharp-learning' || pageData === 'php-learning' || pageData === 'solidity-learning' || pageData === 'typescript-learning' || pageData === 'swift-learning' || pageData === 'kotlin-learning' || pageData === 'flutter-learning') return;
+      if (pageData === 'quizzes' || pageData === 'csharp-learning' || pageData === 'php-learning' || pageData === 'solidity-learning' || pageData === 'typescript-learning' || pageData === 'swift-learning' || pageData === 'kotlin-learning' || pageData === 'flutter-learning' || pageData === 'java-learning' || pageData === 'cplusplus-learning' || pageData === 'javascript-learning' || pageData === 'c-learning') return;
       injectHeaderBookmarks();
       injectCardBookmarks();
     } catch (err) {
