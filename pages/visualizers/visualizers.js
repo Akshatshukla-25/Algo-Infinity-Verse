@@ -990,6 +990,13 @@ const visualizers = [
     icon: 'fa-clone',
     desc: 'Simulate the Rsync algorithm showing rolling hashes and delta transfers.',
   },
+  {
+    name: 'Dynamo-Style Leaderless Quorum Sandbox',
+    path: '/pages/visualizers/dynamo-quorum/dynamo-quorum.html',
+    category: 'Distributed Systems',
+    icon: 'fa-server',
+    desc: 'Interactive leaderless quorum replication, version vector conflict resolution, read repair, and Merkle anti-entropy sync.',
+  },
 
   // ── Security & Cryptography ──
   {
