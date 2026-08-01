@@ -273,19 +273,18 @@ function collidePolygons(m) {
 
   // Simple contact point generation: average overlapping vertices
   const contacts = [];
+  const projB = projectVertices(ptsB, collisionNormal);
+  const projA = projectVertices(ptsA, collisionNormal);
+
   for (const pA of ptsA) {
-    if (
-      projectVertices(ptsB, collisionNormal).min <= pA.dot(collisionNormal) + 0.1 &&
-      pA.dot(collisionNormal) <= projectVertices(ptsB, collisionNormal).max + 0.1
-    ) {
+    const dotVal = pA.dot(collisionNormal);
+    if (projB.min <= dotVal + 0.1 && dotVal <= projB.max + 0.1) {
       contacts.push(pA);
     }
   }
   for (const pB of ptsB) {
-    if (
-      projectVertices(ptsA, collisionNormal).min <= pB.dot(collisionNormal) + 0.1 &&
-      pB.dot(collisionNormal) <= projectVertices(ptsA, collisionNormal).max + 0.1
-    ) {
+    const dotVal = pB.dot(collisionNormal);
+    if (projA.min <= dotVal + 0.1 && dotVal <= projA.max + 0.1) {
       contacts.push(pB);
     }
   }
@@ -405,6 +404,8 @@ function resolveCollision(m) {
       raCrossN * raCrossN * bodyA.invInertia +
       rbCrossN * rbCrossN * bodyB.invInertia;
 
+    if (invMassSum === 0) continue;
+
     let j = (-(1.0 + restitution) * velAlongNormal) / invMassSum;
     j /= m.contacts.length;
 
@@ -425,6 +426,8 @@ function resolveCollision(m) {
       raCrossT * raCrossT * bodyA.invInertia +
       rbCrossT * rbCrossT * bodyB.invInertia;
 
+    if (invMassSumT === 0) continue;
+
     let jt = -velAlongTangent / invMassSumT;
     jt /= m.contacts.length;
 
@@ -442,9 +445,9 @@ function resolveCollision(m) {
 function positionalCorrection(m) {
   const percent = 0.2; // Penetration percentage to correct
   const slop = 0.01; // Penetration allowance
-  const correction = m.normal.mult(
-    (Math.max(m.penetration - slop, 0) / (m.bodyA.invMass + m.bodyB.invMass)) * percent
-  );
+  const sumInvMass = m.bodyA.invMass + m.bodyB.invMass;
+  if (sumInvMass === 0) return;
+  const correction = m.normal.mult((Math.max(m.penetration - slop, 0) / sumInvMass) * percent);
 
   if (!m.bodyA.isStatic) m.bodyA.position = m.bodyA.position.sub(correction.mult(m.bodyA.invMass));
   if (!m.bodyB.isStatic) m.bodyB.position = m.bodyB.position.add(correction.mult(m.bodyB.invMass));
@@ -482,6 +485,8 @@ let _animId = null;
 let lastTime = performance.now();
 let dragJoint = null; // Mouse joint representation
 
+let resizeTimeout = null;
+
 function initPhysicsSandbox() {
   ctx = els.canvas.getContext('2d');
   resizeCanvas();
@@ -500,6 +505,13 @@ function resizeCanvas() {
   els.canvas.width = rect.width * dpr;
   els.canvas.height = rect.height * dpr;
   ctx.scale(dpr, dpr);
+
+  if (resizeTimeout) clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    // Remove old borders and recreate them
+    bodies = bodies.filter((b) => !b.isBorder);
+    spawnStaticBorders();
+  }, 150);
 }
 
 function bindEvents() {
@@ -508,11 +520,19 @@ function bindEvents() {
   });
 
   els.restitutionSlider.addEventListener('input', (e) => {
-    els.restitutionVal.textContent = parseFloat(e.target.value).toFixed(2);
+    const val = parseFloat(e.target.value);
+    els.restitutionVal.textContent = val.toFixed(2);
+    bodies.forEach((b) => {
+      if (!b.isStatic) b.restitution = val;
+    });
   });
 
   els.frictionSlider.addEventListener('input', (e) => {
-    els.frictionVal.textContent = parseFloat(e.target.value).toFixed(2);
+    const val = parseFloat(e.target.value);
+    els.frictionVal.textContent = val.toFixed(2);
+    bodies.forEach((b) => {
+      if (!b.isStatic) b.friction = val;
+    });
   });
 
   els.spawnCircleBtn.addEventListener('click', () => spawnShape('circle'));
@@ -531,70 +551,70 @@ function spawnStaticBorders() {
   const thickness = 40;
 
   // Floor
-  bodies.push(
-    new Body({
-      position: new Vec2(rect.width / 2, rect.height + thickness / 2 - 10),
-      vertices: [
-        new Vec2(-rect.width / 2, -thickness / 2),
-        new Vec2(rect.width / 2, -thickness / 2),
-        new Vec2(rect.width / 2, thickness / 2),
-        new Vec2(-rect.width / 2, thickness / 2),
-      ],
-      type: 'polygon',
-      isStatic: true,
-    })
-  );
+  const floor = new Body({
+    position: new Vec2(rect.width / 2, rect.height + thickness / 2 - 10),
+    vertices: [
+      new Vec2(-rect.width / 2, -thickness / 2),
+      new Vec2(rect.width / 2, -thickness / 2),
+      new Vec2(rect.width / 2, thickness / 2),
+      new Vec2(-rect.width / 2, thickness / 2),
+    ],
+    type: 'polygon',
+    isStatic: true,
+  });
+  floor.isBorder = true;
+  bodies.push(floor);
 
   // Ceil
-  bodies.push(
-    new Body({
-      position: new Vec2(rect.width / 2, -thickness / 2 + 10),
-      vertices: [
-        new Vec2(-rect.width / 2, -thickness / 2),
-        new Vec2(rect.width / 2, -thickness / 2),
-        new Vec2(rect.width / 2, thickness / 2),
-        new Vec2(-rect.width / 2, thickness / 2),
-      ],
-      type: 'polygon',
-      isStatic: true,
-    })
-  );
+  const ceil = new Body({
+    position: new Vec2(rect.width / 2, -thickness / 2 + 10),
+    vertices: [
+      new Vec2(-rect.width / 2, -thickness / 2),
+      new Vec2(rect.width / 2, -thickness / 2),
+      new Vec2(rect.width / 2, thickness / 2),
+      new Vec2(-rect.width / 2, thickness / 2),
+    ],
+    type: 'polygon',
+    isStatic: true,
+  });
+  ceil.isBorder = true;
+  bodies.push(ceil);
 
   // Left Wall
-  bodies.push(
-    new Body({
-      position: new Vec2(-thickness / 2 + 10, rect.height / 2),
-      vertices: [
-        new Vec2(-thickness / 2, -rect.height / 2),
-        new Vec2(thickness / 2, -rect.height / 2),
-        new Vec2(thickness / 2, rect.height / 2),
-        new Vec2(-thickness / 2, rect.height / 2),
-      ],
-      type: 'polygon',
-      isStatic: true,
-    })
-  );
+  const leftWall = new Body({
+    position: new Vec2(-thickness / 2 + 10, rect.height / 2),
+    vertices: [
+      new Vec2(-thickness / 2, -rect.height / 2),
+      new Vec2(thickness / 2, -rect.height / 2),
+      new Vec2(thickness / 2, rect.height / 2),
+      new Vec2(-thickness / 2, rect.height / 2),
+    ],
+    type: 'polygon',
+    isStatic: true,
+  });
+  leftWall.isBorder = true;
+  bodies.push(leftWall);
 
   // Right Wall
-  bodies.push(
-    new Body({
-      position: new Vec2(rect.width + thickness / 2 - 10, rect.height / 2),
-      vertices: [
-        new Vec2(-thickness / 2, -rect.height / 2),
-        new Vec2(thickness / 2, -rect.height / 2),
-        new Vec2(thickness / 2, rect.height / 2),
-        new Vec2(-thickness / 2, rect.height / 2),
-      ],
-      type: 'polygon',
-      isStatic: true,
-    })
-  );
+  const rightWall = new Body({
+    position: new Vec2(rect.width + thickness / 2 - 10, rect.height / 2),
+    vertices: [
+      new Vec2(-thickness / 2, -rect.height / 2),
+      new Vec2(thickness / 2, -rect.height / 2),
+      new Vec2(thickness / 2, rect.height / 2),
+      new Vec2(-thickness / 2, rect.height / 2),
+    ],
+    type: 'polygon',
+    isStatic: true,
+  });
+  rightWall.isBorder = true;
+  bodies.push(rightWall);
 }
 
 function spawnShape(shapeType, x, y, isStatic = false) {
   const rect = els.wrapper.getBoundingClientRect();
-  const px = x || rect.width / 2 + (Math.random() - 0.5) * 60;
-  const py = y || rect.height / 3 + (Math.random() - 0.5) * 30;
+  const px = x !== undefined && x !== null ? x : rect.width / 2 + (Math.random() - 0.5) * 60;
+  const py = y !== undefined && y !== null ? y : rect.height / 3 + (Math.random() - 0.5) * 30;
 
   const rest = parseFloat(els.restitutionSlider.value);
   const fric = parseFloat(els.frictionSlider.value);

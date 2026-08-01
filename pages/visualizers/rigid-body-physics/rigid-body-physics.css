@@ -277,3 +277,28 @@ canvas {
   height: 100%;
   cursor: crosshair;
 }
+
+/* Accessibility Focus Indicator */
+.btn:focus-visible,
+input[type='range']:focus-visible,
+.toggle-item input[type='checkbox']:focus-visible,
+.styled-select:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Responsive Layout */
+@media (max-width: 768px) {
+  .workspace {
+    flex-direction: column;
+    height: auto;
+    overflow-y: auto;
+  }
+  .panel-left {
+    flex: none;
+    width: 100%;
+  }
+  .panel-right {
+    height: 500px;
+  }
+}

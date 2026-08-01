@@ -42,8 +42,10 @@
 
           <!-- Spawning Shapes -->
           <div class="input-group">
-            <label>Spawn Object</label>
-            <div class="spawn-buttons">
+            <span id="spawnLabel" style="font-size: 0.85rem; color: #cbd5e1; font-weight: 500"
+              >Spawn Object</span
+            >
+            <div class="spawn-buttons" role="group" aria-labelledby="spawnLabel">
               <button type="button" id="spawnCircleBtn" class="btn btn-secondary">
                 <i class="fas fa-circle"></i> Circle
               </button>
@@ -115,13 +117,15 @@
               <span>FPS:</span>
               <strong id="fpsStat">60</strong>
             </div>
-            <div class="stat-row">
-              <span>Active Bodies:</span>
-              <strong id="bodiesStat">0</strong>
-            </div>
-            <div class="stat-row">
-              <span>Contacts Checked:</span>
-              <strong id="contactsStat">0</strong>
+            <div aria-live="polite">
+              <div class="stat-row">
+                <span>Active Bodies:</span>
+                <strong id="bodiesStat">0</strong>
+              </div>
+              <div class="stat-row">
+                <span>Contacts Checked:</span>
+                <strong id="contactsStat">0</strong>
+              </div>
             </div>
             <div class="legend-hint">
               <small
@@ -136,7 +140,11 @@
       <!-- Right Panel: Canvas -->
       <div class="panel-right">
         <div class="canvas-wrapper" id="canvasWrapper">
-          <canvas id="physicsCanvas"></canvas>
+          <canvas
+            id="physicsCanvas"
+            tabindex="0"
+            aria-label="2D Physics Simulation Sandbox Canvas"
+          ></canvas>
         </div>
       </div>
     </main>
