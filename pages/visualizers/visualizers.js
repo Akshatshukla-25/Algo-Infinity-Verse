@@ -1134,6 +1134,13 @@ const visualizers = [
     icon: 'fa-bezier-curve',
     desc: "Explore Bézier curves and De Casteljau's recursive linear interpolation algorithm step-by-step.",
   },
+  {
+    name: 'Rigid Body Physics Engine Sandbox',
+    path: '/pages/visualizers/rigid-body-physics/rigid-body-physics.html',
+    category: 'Math & Geometry',
+    icon: 'fa-cubes',
+    desc: 'Interactive 2D rigid body physics engine demonstrating rotational dynamics, impulse resolution, and SAT collision detection.',
+  },
 
   // ── AI & Machine Learning ──
   {
