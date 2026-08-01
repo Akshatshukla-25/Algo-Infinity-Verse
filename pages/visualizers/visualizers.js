@@ -1165,6 +1165,13 @@ const visualizers = [
     desc: 'Visualize attention heads in Transformer architectures.',
   },
   {
+    name: 'LLM KV-Cache & vLLM PagedAttention Simulator',
+    path: '/pages/visualizers/llm-kv-cache/llm-kv-cache.html',
+    category: 'AI & ML',
+    icon: 'fa-microchip',
+    desc: 'Interactive simulator comparing traditional contiguous KV-caching vs PagedAttention memory management for LLM serving.',
+  },
+  {
     name: 'LLM Inference Visualizer',
     path: '/pages/visualizers/llm-inference/llm-inference.html',
     category: 'AI & ML',
